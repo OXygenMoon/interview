@@ -1,0 +1,219 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}组织架构管理{% endblock %}
+
+{% block content %}
+<div class="space-y-6 h-[calc(100vh-8rem)]">
+
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">🏫 组织架构与学生管理</h2>
+            <p class="text-sm text-slate-500">创建系部、班级，并批量导入学生名单</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/api/admin/student/template" class="btn btn-outline btn-sm gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                下载模板
+            </a>
+            <button onclick="document.getElementById('import_modal').showModal()" class="btn btn-primary btn-sm text-white gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                批量导入学生
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+        
+        <div class="col-span-1 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <span class="font-bold text-slate-700">系部列表</span>
+                <button onclick="addDepartment()" class="btn btn-xs btn-ghost text-primary">+ 新增</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                {% for dept in departments %}
+                <div onclick='selectDept({{ dept.id }}, "{{ dept.name }}", {{ dept.classes | tojson }})'
+                     class="dept-item flex justify-between items-center p-3 rounded-lg cursor-pointer hover:bg-indigo-50 transition-colors group"
+                     id="dept-{{ dept.id }}">
+                    <span class="font-medium text-slate-700">{{ dept.name }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="badge badge-sm badge-ghost">{{ dept.classes|length }}个班</span>
+                        <button onclick="event.stopPropagation(); deleteDept({{ dept.id }})" class="btn btn-square btn-xs btn-ghost text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-span-2 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-100 relative">
+            
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                <p>请点击左侧系部进行管理</p>
+            </div>
+
+            <div id="class-content" class="hidden flex-col h-full">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div>
+                        <span class="text-xs text-slate-400">当前管理</span>
+                        <h3 class="font-bold text-lg text-indigo-700" id="current-dept-name">--</h3>
+                    </div>
+                    <button onclick="addClasses()" class="btn btn-sm btn-primary text-white">
+                        + 批量创建班级
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div id="class-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<dialog id="import_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">批量导入学生</h3>
+        <p class="py-4 text-sm text-slate-500">请上传填写好的 Excel 模板。若班级不存在，系统将自动在该系部下创建。</p>
+        
+        <input type="file" id="import-file" class="file-input file-input-bordered file-input-primary w-full" accept=".xlsx, .xls" />
+        
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">取消</button>
+            </form>
+            <button onclick="submitImport()" class="btn btn-primary text-white">开始导入</button>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    let currentDeptId = null;
+
+    // 1. 选择系部
+    function selectDept(id, name, classes) {
+        currentDeptId = id;
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('class-content').classList.remove('hidden');
+        document.getElementById('class-content').classList.add('flex');
+        
+        document.getElementById('current-dept-name').innerText = name;
+        
+        // 高亮左侧
+        document.querySelectorAll('.dept-item').forEach(el => el.classList.remove('bg-indigo-50', 'border-l-4', 'border-indigo-500'));
+        const activeItem = document.getElementById(`dept-${id}`);
+        activeItem.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-500');
+
+        renderClasses(classes);
+    }
+
+    // 渲染班级列表
+    function renderClasses(classes) {
+        const grid = document.getElementById('class-grid');
+        grid.innerHTML = '';
+        
+        if (classes.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10">该系部暂无班级</div>';
+            return;
+        }
+
+        classes.forEach(cls => {
+            const div = document.createElement('div');
+            div.className = 'p-4 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition group relative bg-white';
+            div.innerHTML = `
+                <div class="font-bold text-slate-700 text-center">${cls.name}</div>
+                <button onclick="deleteClass(${cls.id})" class="absolute top-1 right-1 text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    // 2. 新增系部
+    async function addDepartment() {
+        const name = prompt("请输入系部名称：");
+        if (!name) return;
+
+        const res = await fetch('/api/admin/department/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name})
+        });
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert("添加失败，可能是名称重复");
+        }
+    }
+
+    // 3. 删除系部
+    async function deleteDept(id) {
+        if (!confirm("确定删除该系部吗？其下所有班级也会被删除（学生数据保留但失去关联）。")) return;
+        const res = await fetch(`/api/admin/department/delete/${id}`, {method: 'POST'});
+        if (res.ok) location.reload();
+    }
+
+    // 4. 新增班级
+    async function addClasses() {
+        if (!currentDeptId) return;
+        const input = prompt("请输入班级名称，多个班级用逗号分隔（例如：23级Python1班, 23级Python2班）：");
+        if (!input) return;
+
+        const res = await fetch('/api/admin/class/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({dept_id: currentDeptId, class_names: input})
+        });
+        if (res.ok) {
+            alert("创建成功");
+            location.reload(); // 简单起见直接刷新
+        } else {
+            alert("添加失败");
+        }
+    }
+
+    // 5. 删除班级
+    async function deleteClass(id) {
+        if (!confirm("确定删除该班级吗？")) return;
+        const res = await fetch(`/api/admin/class/delete/${id}`, {method: 'POST'});
+        if (res.ok) location.reload();
+    }
+
+    // 6. 导入学生
+    async function submitImport() {
+        const fileInput = document.getElementById('import-file');
+        if (!fileInput.files[0]) return alert("请选择文件");
+
+        const btn = document.querySelector('button[onclick="submitImport()"]');
+        const originalText = btn.innerText;
+        btn.innerText = "导入中...";
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const res = await fetch('/api/admin/student/import', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert(`导入成功！共处理 ${data.count} 名学生。`);
+                location.reload();
+            } else {
+                alert("导入失败: " + data.error);
+            }
+        } catch (e) {
+            alert("网络错误");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

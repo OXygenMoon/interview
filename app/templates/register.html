@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <title>注册 - AI 模拟面试</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-base-200 h-screen flex items-center justify-center">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title justify-center text-2xl font-bold mb-4">注册新账号 🚀</h2>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-warning text-sm py-2 mb-4"><span>{{ messages[0] }}</span></div>
+                {% endif %}
+            {% endwith %}
+
+<form method="POST">
+                <div class="form-control w-full">
+                    <label class="label"><span class="label-text">账号</span></label>
+                    <input type="text" name="username" class="input input-bordered w-full" required />
+                </div>
+                <div class="form-control w-full mt-2">
+                    <label class="label"><span class="label-text">真实姓名</span></label>
+                    <input type="text" name="truename" class="input input-bordered w-full" required />
+                </div>
+                <div class="form-control w-full mt-2">
+                    <label class="label"><span class="label-text">密码</span></label>
+                    <input type="password" name="password" class="input input-bordered w-full" required />
+                </div>
+
+                <div class="divider text-xs text-stone-400">身份信息</div>
+
+                <div class="form-control w-full">
+                    <label class="label"><span class="label-text">选择身份</span></label>
+                    <select name="role" class="select select-bordered" onchange="toggleFields(this.value)">
+                        <option value="student">学生</option>
+                        <option value="teacher">班主任</option>
+                        <option value="dept_head">系部负责人</option>
+                        <option value="admin">学校负责人</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="form-control w-full">
+                        <label class="label"><span class="label-text">所属系部</span></label>
+                        <input type="text" name="department" placeholder="如：数字经济系" class="input input-bordered w-full" />
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label"><span class="label-text">所属班级</span></label>
+                        <input type="text" name="class_name" placeholder="如：23计应1班" class="input input-bordered w-full" />
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-6">
+                    <button type="submit" class="btn btn-primary w-full text-white">注 册</button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('auth.login') }}" class="link link-hover text-sm">已有账号？去登录</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

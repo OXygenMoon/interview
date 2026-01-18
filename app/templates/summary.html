@@ -1,0 +1,243 @@
+{% extends base_template %}
+
+{% block title %}面试深度复盘{% endblock %}
+
+{% block content %}
+<div class="w-full pb-10">
+
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 mb-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+
+        <div class="flex items-center gap-5 z-10">
+            <div class="p-4 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-inner">
+                {% if session.total_score >= 85 %}
+                    <span class="text-4xl">🌟</span>
+                {% elif session.total_score >= 60 %}
+                    <span class="text-4xl">👍</span>
+                {% else %}
+                    <span class="text-4xl">💪</span>
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">{{ session.target_role }} 面试报告</h2>
+                <div class="text-white/70 text-sm mt-1 flex flex-wrap gap-x-6 gap-y-1 font-mono">
+                    <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg> {{ session.user.truename }}</span>
+                    <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg> {{ session.start_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 md:mt-0 flex items-center gap-6 z-10">
+            <div class="text-right hidden md:block">
+                <div class="text-xs text-white/50 uppercase tracking-widest font-bold">综合得分</div>
+                <div class="text-sm text-white/80">击败了同岗位 85% 的面试者</div>
+            </div>
+            <div class="radial-progress text-orange-400 bg-slate-700/50 border-4 border-transparent text-xl font-black shadow-lg" style="--value:{{ session.total_score }}; --size:4.5rem; --thickness: 0.5rem;">
+                {{ session.total_score }}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <div class="lg:col-span-4 space-y-6 h-fit sticky top-4">
+
+            <div class="card bg-white shadow-sm border border-stone-200">
+                <div class="card-body">
+                    <h3 class="font-bold text-stone-700 flex items-center gap-2 mb-3 pb-2 border-b border-stone-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        面试官总评
+                    </h3>
+                    <div class="text-stone-600 text-sm leading-7 text-justify bg-stone-50 p-4 rounded-xl border border-stone-100 italic relative">
+                        <span class="absolute top-2 left-2 text-3xl text-stone-200 font-serif">“</span>
+                        <span class="relative z-10">{{ session.summary_comment }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-sm border border-stone-200">
+                <div class="card-body">
+                    <h3 class="font-bold text-stone-700 mb-2">能力模型分析</h3>
+                    <div class="h-64 relative w-full flex justify-center">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+
+                    <div class="mt-4 space-y-3">
+                        {% if session.radar_data %}
+                            {% for key, value in session.radar_data.items() %}
+                            <div>
+                                <div class="flex justify-between text-xs mb-1 font-medium">
+                                    <span class="text-stone-500">{{ key }}</span>
+                                    <span class="text-stone-700">{{ value }}分</span>
+                                </div>
+                                <progress class="progress progress-primary w-full h-2" value="{{ value }}" max="100"></progress>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <a href="/" class="btn btn-outline flex-1 border-stone-300 text-stone-600 hover:bg-stone-100 hover:text-stone-800">返回大厅</a>
+                <a href="{{ url_for('routes.interview_room', session_id=session.id) }}" class="btn btn-primary text-white flex-1 shadow-md shadow-orange-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    回听录音
+                </a>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8">
+            <div class="card bg-white shadow-sm border border-stone-200 min-h-screen">
+                <div class="card-header px-6 py-5 border-b border-stone-100 flex justify-between items-center bg-stone-50/50 rounded-t-2xl">
+                    <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
+                        对话深度复盘
+                    </h3>
+                    <span class="badge badge-primary badge-outline text-xs">AI 逐句诊断模式</span>
+                </div>
+
+                <div class="card-body p-6 space-y-8 bg-stone-50/30">
+
+                    {% for msg in messages %}
+
+                        {% if msg.sender == 'ai' %}
+                            <div class="flex gap-4 max-w-[90%]">
+                                <div class="flex-shrink-0 mt-1">
+                                    <div class="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-400 mb-1 ml-1">面试官</div>
+                                    <div class="bg-white border border-stone-200 p-4 rounded-2xl rounded-tl-none text-stone-700 text-sm shadow-sm leading-relaxed">
+                                        {{ msg.content }}
+                                    </div>
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <div class="flex flex-col items-end gap-2 group">
+                                <div class="flex gap-4 flex-row-reverse max-w-[90%]">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md shadow-orange-100">
+                                            我
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col items-end w-full">
+                                        <div class="bg-orange-500 text-white p-4 rounded-2xl rounded-tr-none text-sm shadow-md shadow-orange-100 leading-relaxed text-left w-fit max-w-full">
+                                            {{ msg.content }}
+                                        </div>
+
+                                        {% if msg.suggestion %}
+                                            <div class="mt-3 w-full max-w-2xl relative animate-pulse-once">
+                                                <div class="absolute -top-3 right-6 w-0.5 h-3 bg-indigo-200/50"></div>
+
+                                                <div class="relative bg-indigo-50/80 border border-indigo-100 rounded-xl p-4 text-sm hover:bg-indigo-50 transition-colors duration-200">
+
+                                                    <div class="flex gap-3 pl-2">
+                                                        <div class="mt-0.5 flex-shrink-0">
+                                                            {% if msg.is_good_response %}
+                                                                <span class="badge badge-success badge-sm text-white gap-1 pl-1 pr-2">回答不错</span>
+                                                            {% else %}
+                                                                <span class="badge badge-info badge-sm text-white gap-1 pl-1 pr-2">优化建议</span>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <p class="text-indigo-900 font-bold text-xs opacity-70 mb-1 uppercase tracking-wider">AI Coach Feedback</p>
+                                                            <p class="text-indigo-800 leading-6">{{ msg.suggestion }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {% if msg.reference_answer %}
+                                                    <div class="collapse collapse-arrow border border-indigo-100 bg-white mt-3 rounded-lg shadow-sm">
+                                                        <input type="checkbox" />
+                                                        <div class="collapse-title text-xs font-bold text-indigo-600 flex items-center gap-2 py-3 min-h-0">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                                            查看满分参考回答 (Reference)
+                                                        </div>
+                                                        <div class="collapse-content">
+                                                            <div class="pt-2 pb-1 border-t border-indigo-50">
+                                                                <p class="text-stone-600 leading-relaxed italic bg-stone-50 p-3 rounded border border-stone-100">
+                                                                    "{{ msg.reference_answer }}"
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="divider text-stone-300 text-xs py-8">对话结束 · 共 {{ messages|length }} 条记录</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const rawData = {{ session.radar_data | tojson | safe }} || {};
+        const labels = Object.keys(rawData);
+        const dataPoints = Object.values(rawData);
+        const finalLabels = labels.length > 0 ? labels : ['维度A', '维度B', '维度C', '维度D', '维度E'];
+        const finalData = dataPoints.length > 0 ? dataPoints : [0, 0, 0, 0, 0];
+
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: finalLabels,
+                datasets: [{
+                    label: '能力评估',
+                    data: finalData,
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    borderColor: 'rgba(249, 115, 22, 0.8)',
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: 'rgba(249, 115, 22, 1)',
+                    pointHoverBackgroundColor: 'rgba(249, 115, 22, 1)',
+                    borderWidth: 2,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#f3f4f6' },
+                        grid: { color: '#f3f4f6' },
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                        pointLabels: {
+                            font: { size: 11, weight: 'bold' },
+                            color: '#78716c'
+                        },
+                        ticks: { display: false, stepSize: 20 }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    });
+</script>
+
+<style>
+    @keyframes pulse-once {
+        0% { transform: scale(0.98); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pulse-once {
+        animation: pulse-once 0.5s ease-out forwards;
+    }
+</style>
+{% endblock %}

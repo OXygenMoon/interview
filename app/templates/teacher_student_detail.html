@@ -1,0 +1,134 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}学生档案 - {{ student.truename }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-10">
+    
+    <div>
+        <a href="{{ url_for('routes.teacher_students') }}" class="btn btn-sm btn-ghost gap-2 text-slate-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            返回花名册
+        </a>
+    </div>
+
+    <div class="card bg-white shadow-sm border border-slate-200">
+        <div class="card-body flex flex-col md:flex-row gap-6 items-center md:items-start">
+            <div class="avatar">
+                <div class="w-24 h-24 rounded-full ring ring-indigo-50 ring-offset-2">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ student.username }}" />
+                </div>
+            </div>
+            
+            <div class="flex-1 text-center md:text-left space-y-2">
+                <h2 class="text-2xl font-bold text-slate-800">
+                    {{ student.truename }} 
+                    <span class="text-base font-normal text-slate-400 ml-2">#{{ student.student_id }}</span>
+                </h2>
+                <div class="flex flex-wrap justify-center md:justify-start gap-2">
+                    <span class="badge badge-ghost">{{ student.department }}</span>
+                    <span class="badge badge-ghost">{{ student.class_name }}</span>
+                </div>
+                
+                <div class="flex flex-wrap justify-center md:justify-start gap-1 pt-2">
+                    {% if student.resume_tags %}
+                        {% for tag in student.resume_tags.split(',') %}
+                            {% if tag.strip() %}
+                                <span class="badge badge-outline badge-primary badge-sm">{{ tag.strip() }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-xs text-slate-400">暂无技能标签 (未完善简历)</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stats stats-vertical lg:stats-horizontal shadow border border-slate-100 bg-slate-50">
+                <div class="stat place-items-center">
+                    <div class="stat-title">平均得分</div>
+                    <div class="stat-value text-indigo-600">{{ stats.avg_score }}</div>
+                </div>
+                <div class="stat place-items-center">
+                    <div class="stat-title">练习次数</div>
+                    <div class="stat-value">{{ stats.total_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-white shadow-sm border border-slate-200">
+        <div class="card-body">
+            <h3 class="font-bold text-slate-700 mb-4">近期成长曲线</h3>
+            <div class="h-64 w-full relative">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-white shadow-sm border border-slate-200">
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th>面试时间</th>
+                            <th>岗位</th>
+                            <th>得分</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                        <tr class="hover">
+                            <td class="text-slate-500">{{ s.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="font-bold text-slate-700">{{ s.target_role }}</td>
+                            <td>
+                                {% if s.total_score >= 85 %}
+                                    <span class="text-green-600 font-bold">{{ s.total_score }}</span>
+                                {% elif s.total_score >= 60 %}
+                                    <span class="text-amber-500 font-bold">{{ s.total_score }}</span>
+                                {% else %}
+                                    <span class="text-red-400 font-bold">{{ s.total_score }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('routes.interview_summary', session_id=s.id) }}" class="btn btn-xs btn-outline btn-indigo">
+                                    查看报告
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.labels | tojson | safe }},
+            datasets: [{
+                label: '分数',
+                data: {{ stats.trend | tojson | safe }},
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: false, suggestedMin: 40, suggestedMax: 100 }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endblock %}

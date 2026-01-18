@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html data-theme="cupcake">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - AI模拟面试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 复用您提供的样式 */
+        .sidebar-content::-webkit-scrollbar { width: 4px; }
+        .sidebar-content::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+
+        .menu-item {
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.75rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #57534e;
+            border: 1px solid transparent;
+        }
+
+        .menu-item:hover {
+            background-color: #ffffff;
+            color: #ea580c; /* Orange-600 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .menu-item.active {
+            background-color: #ffffff !important;
+            color: #d97706 !important; /* Amber-600 */
+            font-weight: 700;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #fce7f3;
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 6px;
+            width: 6px;
+            background-color: #d97706;
+            border-radius: 50%;
+        }
+
+        .menu-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #a8a29e;
+            font-weight: 800;
+            padding: 1.5rem 1rem 0.5rem 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content { margin-left: 16rem; }
+        }
+    </style>
+</head>
+<body class="bg-base-200 text-base-content font-sans">
+
+    <div class="lg:hidden navbar bg-base-100 shadow-md fixed top-0 w-full z-40">
+        <div class="navbar-start">
+            <button id="mobile-menu-btn" class="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+        </div>
+        <div class="navbar-center">
+            <a class="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">AI 面试官</a>
+        </div>
+        <div class="navbar-end"></div>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-45 hidden lg:hidden transition-opacity"></div>
+
+    <aside id="sidebar" style="background-color: #faf7f5;" class="fixed left-0 top-0 h-screen w-64 border-r border-stone-200/60 shadow-xl z-50 sidebar-transition transform -translate-x-full lg:translate-x-0 flex flex-col">
+
+        <div class="h-20 flex items-center px-6 border-b border-stone-200/50">
+            <a href="{{ url_for('routes.home') }}" class="flex items-center gap-3 w-full group">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-100 group-hover:rotate-3 transition-transform duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-stone-700 tracking-tight">AI 模拟面试</h1>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                        <p class="text-[10px] text-stone-400 font-medium uppercase">Online</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto sidebar-content px-4 py-2">
+
+            <div class="menu-section-title">核心功能</div>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{{ url_for('routes.home') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.home' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span>面试大厅</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('routes.learning_index') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint and 'learning' in request.endpoint else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                        <span>知识充电站</span>
+                    </a>
+                </li>
+                </ul>
+
+            <div class="menu-section-title">个人中心</div>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{{ url_for('routes.profile_resume') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.profile_resume' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span>我的简历</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('routes.ability_radar') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.ability_radar' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        <span>能力雷达</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('routes.history') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.history' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>历史记录</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="p-4 border-t border-stone-200/50 bg-[#faf7f5]">
+            {% if current_user.is_authenticated %}
+                {% set avatar_styles = [
+                    'bg-rose-100 text-rose-700 border border-rose-200',
+                    'bg-orange-100 text-orange-700 border border-orange-200',
+                    'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                    'bg-cyan-100 text-cyan-700 border border-cyan-200',
+                    'bg-blue-100 text-blue-700 border border-blue-200',
+                    'bg-violet-100 text-violet-700 border border-violet-200',
+                    'bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200'
+                ] %}
+                {% set style_class = avatar_styles[(current_user.id) % 7] %}
+
+                <div class="flex items-center gap-3 w-full p-3 bg-white rounded-xl shadow-sm border border-stone-100">
+                    <div class="avatar placeholder">
+                        <div class="{{ style_class }} w-9 h-9 rounded-full grid place-items-center ring-2 ring-stone-50">
+                            <span class="text-sm font-bold leading-none select-none mt-[1px]">{{ current_user.truename[0] if current_user.truename else '我' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 min-w-0 text-left">
+                        <p class="text-sm font-bold text-stone-700 truncate">{{ current_user.truename }}</p>
+                        <p class="text-xs text-stone-400 truncate">{{ current_user.username }}</p>
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-xs btn-square text-stone-400 hover:text-red-500" title="退出登录">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </a>
+                </div>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-full text-white">立即登录</a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <main class="min-h-screen main-content pt-16 lg:pt-0 transition-all duration-300">
+        <div class="p-4 sm:p-6 lg:p-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        // 侧栏控制逻辑
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+
+        function toggleSidebar() {
+            if (!sidebar || !overlay) return;
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+        mobileMenuBtn?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', toggleSidebar);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

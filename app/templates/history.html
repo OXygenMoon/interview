@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}历史复盘{% endblock %}
+
+{% block content %}
+<div class="space-y-8 pb-12">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">历史档案库</h1>
+            <p class="text-slate-500 mt-2 font-medium">回顾每一次实战，见证能力进阶曲线。</p>
+        </div>
+        <div class="flex gap-3">
+            <span class="inline-flex items-center px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm font-bold">
+                <span class="w-2 h-2 bg-slate-400 rounded-full mr-2"></span>
+                共 {{ stats.total_count }} 场
+            </span>
+            <span class="inline-flex items-center px-4 py-2 rounded-full bg-orange-50 text-orange-600 text-sm font-bold">
+                <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                最高 {{ stats.max_score }} 分
+            </span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body flex flex-row items-center justify-between p-6">
+                <div>
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">累计模拟</div>
+                    <div class="text-4xl font-black text-slate-800">{{ stats.total_count }}<span class="text-lg text-slate-400 font-medium ml-1">场</span></div>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-500 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body flex flex-row items-center justify-between p-6">
+                <div>
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">平均得分</div>
+                    <div class="text-4xl font-black text-indigo-600">{{ stats.avg_score }}<span class="text-lg text-indigo-300 font-medium ml-1">分</span></div>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+            </div>
+            <div class="h-1 w-full bg-slate-100 mt-auto">
+                <div class="h-full bg-indigo-500 transition-all duration-1000" style="width: {{ stats.avg_score }}%"></div>
+            </div>
+        </div>
+
+        <div class="card bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200 group hover:-translate-y-1 transition-all duration-300">
+            <div class="card-body flex flex-row items-center justify-between p-6">
+                <div>
+                    <div class="text-orange-100 text-xs font-bold uppercase tracking-wider mb-1">历史最佳</div>
+                    <div class="text-4xl font-black">{{ stats.max_score }}<span class="text-lg text-white/60 font-medium ml-1">分</span></div>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-white/20 text-white flex items-center justify-center backdrop-blur-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="card bg-white shadow-sm border border-slate-200 lg:col-span-2">
+            <div class="card-body p-6">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2 mb-6">
+                    <span class="w-1 h-5 bg-indigo-500 rounded-full"></span>
+                    能力成长曲线
+                </h3>
+                <div class="h-[300px] w-full">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-sm border border-slate-200">
+            <div class="card-body p-6">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2 mb-6">
+                    <span class="w-1 h-5 bg-orange-500 rounded-full"></span>
+                    练习岗位分布
+                </h3>
+                <div class="h-[300px] w-full flex justify-center items-center relative">
+                    <canvas id="roleChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-3xl font-black text-slate-700">{{ stats.total_count }}</span>
+                        <span class="text-xs text-slate-400">Total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h3 class="font-bold text-lg text-slate-800">
+                📄 详细记录列表
+            </h3>
+            <div class="hidden sm:block relative">
+                <input type="text" placeholder="搜索记录..." class="input input-sm input-bordered w-full max-w-xs pl-9 bg-white" disabled />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto p-2">
+            <table class="table w-full" id="history-table">
+                <thead class="text-slate-500 border-b border-slate-100">
+                    <tr>
+                        <th class="bg-transparent pl-6">时间 / 岗位</th>
+                        <th class="bg-transparent">面试官</th>
+                        <th class="bg-transparent">难度</th>
+                        <th class="bg-transparent">得分</th>
+                        <th class="bg-transparent pr-6 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-600">
+                    {% if sessions %}
+                        {% for s in sessions %}
+                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none">
+                            <td class="pl-6">
+                                <div class="font-mono text-xs text-slate-400 mb-1">{{ s.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
+                                <div class="font-bold text-slate-800">{{ s.target_role }}</div>
+                            </td>
+
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="avatar placeholder">
+                                        <div class="bg-slate-100 text-slate-400 rounded-full w-8 h-8 flex items-center justify-center">
+                                            {% if 'female' in s.voice_type or 'BV001' in s.voice_type %}👩{% else %}👨{% endif %}
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-medium">
+                                        {% if 'female' in s.voice_type or 'BV001' in s.voice_type %}面试官(女){% else %}面试官(男){% endif %}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge badge-sm border-slate-200 bg-white text-slate-500">
+                                    {{ s.difficulty or '标准' }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if s.status == 'processing' %}
+                                    <span class="loading loading-dots loading-xs text-warning"></span>
+                                {% elif s.total_score is not none %}
+                                    {% if s.total_score >= 85 %}
+                                        <span class="text-emerald-600 font-bold">{{ s.total_score }}</span>
+                                    {% elif s.total_score >= 60 %}
+                                        <span class="text-amber-500 font-bold">{{ s.total_score }}</span>
+                                    {% else %}
+                                        <span class="text-slate-300 font-bold">{{ s.total_score }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-slate-300">-</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="pr-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    {% if s.status == 'processing' %}
+                                        <button class="btn btn-xs btn-ghost text-slate-400 cursor-not-allowed" disabled>
+                                            <span class="loading loading-spinner loading-xs"></span>
+                                        </button>
+
+                                    {% elif s.status == 'completed' %}
+                                        <a href="{{ url_for('routes.interview_summary', session_id=s.id) }}" class="btn btn-xs btn-outline btn-primary" title="查看报告">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                        </a>
+
+                                    {% else %}
+                                        <a href="{{ url_for('routes.interview_room', session_id=s.id) }}" class="btn btn-xs btn-ghost text-indigo-600 bg-indigo-50" title="继续面试">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </a>
+                                    {% endif %}
+
+                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="删除">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-20 text-slate-400">
+                                暂无数据
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="pagination-controls" class="p-4 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/30"></div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // 全局字体配置
+    Chart.defaults.font.family = '"Inter", sans-serif';
+    Chart.defaults.color = '#94a3b8';
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // === 1. 绘制折线图 ===
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+
+        // 渐变背景
+        const gradient = trendCtx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)'); // Indigo
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ stats.date_labels | tojson | safe }},
+                datasets: [{
+                    label: '得分',
+                    data: {{ stats.recent_trend | tojson | safe }},
+                    borderColor: '#6366f1', // Indigo-500
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#6366f1',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.4, // 平滑
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false, suggestedMin: 40, suggestedMax: 100,
+                        grid: { borderDash: [4, 4], color: '#f1f5f9' }
+                    },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // === 2. 绘制甜甜圈图 ===
+        const roleCtx = document.getElementById('roleChart').getContext('2d');
+        new Chart(roleCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ stats.role_dist_keys | tojson | safe }},
+                datasets: [{
+                    data: {{ stats.role_dist_values | tojson | safe }},
+                    backgroundColor: [
+                        '#6366f1', // Indigo
+                        '#f97316', // Orange
+                        '#10b981', // Emerald
+                        '#ec4899', // Pink
+                        '#3b82f6'  // Blue
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%', // 更细的环
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 20 } }
+                }
+            }
+        });
+
+        // === 3. 分页逻辑 ===
+        const table = document.getElementById('history-table');
+        const rows = Array.from(table.querySelector('tbody').querySelectorAll('tr'));
+        const controls = document.getElementById('pagination-controls');
+        const rowsPerPage = 10; // 每页显示 10 条
+
+        if (rows.length > rowsPerPage) {
+            const pageCount = Math.ceil(rows.length / rowsPerPage);
+            let currentPage = 1;
+
+            function showPage(page) {
+                currentPage = page;
+                const start = (page - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+
+                rows.forEach((row, index) => {
+                    row.style.display = (index >= start && index < end) ? '' : 'none';
+                });
+                renderButtons();
+            }
+
+            function renderButtons() {
+                controls.innerHTML = '';
+
+                // 上一页
+                const prev = document.createElement('button');
+                prev.className = `btn btn-sm btn-ghost ${currentPage === 1 ? 'btn-disabled' : ''}`;
+                prev.innerText = '←';
+                prev.onclick = () => showPage(currentPage - 1);
+                controls.appendChild(prev);
+
+                // 页码
+                for (let i = 1; i <= pageCount; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = `btn btn-sm ${i === currentPage ? 'btn-primary text-white' : 'btn-ghost'}`;
+                    btn.innerText = i;
+                    btn.onclick = () => showPage(i);
+                    controls.appendChild(btn);
+                }
+
+                // 下一页
+                const next = document.createElement('button');
+                next.className = `btn btn-sm btn-ghost ${currentPage === pageCount ? 'btn-disabled' : ''}`;
+                next.innerText = '→';
+                next.onclick = () => showPage(currentPage + 1);
+                controls.appendChild(next);
+            }
+
+            showPage(1);
+        } else {
+            controls.style.display = 'none';
+        }
+    });
+
+    // === 4. 删除逻辑 ===
+    async function deleteSession(sid) {
+        if(!confirm("⚠️ 确定要删除这条面试记录吗？\n删除后将无法恢复，且相关统计数据也会被移除。")) return;
+
+        try {
+            const res = await fetch(`/api/interview/${sid}/delete`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                location.reload();
+            } else {
+                alert("删除失败: " + (data.error || "未知错误"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("网络请求失败");
+        }
+    }
+</script>
+{% endblock %}

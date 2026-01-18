@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}能力雷达{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="space-y-8 pb-12">
+
+    <div class="rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-black text-white shadow-2xl shadow-slate-200 overflow-hidden relative p-8 md:p-12">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div class="absolute bottom-0 left-20 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl translate-y-1/2"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div class="max-w-2xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-white/10 rounded-lg backdrop-blur-md border border-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+                    </div>
+                    <span class="text-indigo-200 font-bold tracking-widest text-xs uppercase">Competency Radar</span>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-4">
+                    全景能力画像
+                </h1>
+                <p class="text-slate-300 text-lg leading-relaxed max-w-xl">
+                    基于您过去的 <span class="text-white font-bold border-b border-indigo-500">{{ stats.total if has_data else 0 }}</span> 场实战数据。
+                    AI 持续追踪您的五维能力变化，助您精准补短板。
+                </p>
+            </div>
+
+            <div class="flex gap-4">
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 min-w-[120px]">
+                    <div class="text-xs text-slate-400 uppercase font-bold mb-1">综合战力</div>
+                    <div class="text-3xl font-black text-emerald-400">{{ stats.avg }}</div>
+                </div>
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 min-w-[120px]">
+                    <div class="text-xs text-slate-400 uppercase font-bold mb-1">历史最佳</div>
+                    <div class="text-3xl font-black text-amber-400">{{ stats.max }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not has_data %}
+        <div class="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-slate-200">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                <span class="text-4xl">📊</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-700">暂无能力数据</h3>
+            <p class="text-slate-500 mt-2 mb-8">完成首次模拟面试后，AI 将自动为您生成画像。</p>
+            <a href="{{ url_for('routes.home') }}" class="btn btn-primary px-8 rounded-full shadow-lg shadow-primary/30 text-white">
+                立即开始面试
+            </a>
+        </div>
+    {% else %}
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+        <div class="xl:col-span-2">
+            <div class="card bg-white shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden h-full">
+                <div class="card-body p-8">
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800" id="chart-title">五维能力模型</h3>
+                            <p class="text-sm text-slate-400 mt-1" id="chart-desc">您与班级平均水平的对比分析</p>
+                        </div>
+
+                        <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
+                            <button onclick="switchChart('radar')" id="btn-radar" class="px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm bg-white text-indigo-600">
+                                能力雷达
+                            </button>
+                            <button onclick="switchChart('trend')" id="btn-trend" class="px-4 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 hover:text-slate-700">
+                                成长轨迹
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="radar-container" class="h-[400px] flex justify-center items-center relative fade-in">
+                        <canvas id="radarChart"></canvas>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
+                            <div class="w-[300px] h-[300px] border-4 border-slate-900 rounded-full"></div>
+                            <div class="absolute w-[200px] h-[200px] border-4 border-slate-900 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <div id="trend-container" class="h-[400px] w-full hidden fade-in">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="xl:col-span-1 space-y-6">
+
+            <div class="card bg-gradient-to-b from-white to-indigo-50/50 border border-indigo-100 shadow-lg relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                </div>
+
+                <div class="card-body p-6 relative z-10">
+                    <h3 class="font-bold text-indigo-900 text-lg flex items-center gap-2 mb-4">
+                        <span>🤖 AI 职业诊断师</span>
+                        <span class="loading loading-ring loading-md text-indigo-500 hidden" id="ai-loading"></span>
+                    </h3>
+
+                    <div id="ai-content" class="text-sm text-slate-600 leading-relaxed min-h-[120px] bg-white/60 p-4 rounded-xl border border-indigo-100/50 backdrop-blur-sm">
+                        <p class="text-slate-400 italic flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span>
+                            点击下方按钮，生成基于你当前数据的深度分析报告...
+                        </p>
+                    </div>
+
+                    <div class="card-actions justify-end mt-6">
+                        <button onclick="generateReport()" class="btn btn-primary bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-lg shadow-indigo-200 w-full" id="ai-btn">
+                            ✨ 生成诊断报告
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white border border-slate-100 shadow-sm">
+                <div class="card-body p-6">
+                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        智能推荐训练
+                    </h3>
+                    <ul class="space-y-3">
+                        {% if my_avg_data[0] < 70 %}
+                        <li>
+                            <a href="#" class="block p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 transition-colors border border-transparent hover:border-indigo-100 group">
+                                <div class="font-bold text-sm mb-1">📘 强化技术基础</div>
+                                <div class="text-xs text-slate-400 group-hover:text-indigo-400">检测到专业技能较弱，建议复习 Python/Java 题库。</div>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if my_avg_data[2] < 70 %}
+                        <li>
+                            <a href="#" class="block p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 transition-colors border border-transparent hover:border-indigo-100 group">
+                                <div class="font-bold text-sm mb-1">🗣️ STAR 法则特训</div>
+                                <div class="text-xs text-slate-400 group-hover:text-indigo-400">语言表达有待提升，尝试结构化表达技巧。</div>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li>
+                            <a href="{{ url_for('routes.home') }}" class="block p-3 rounded-xl bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors text-center group">
+                                <span class="font-bold text-indigo-600 text-sm group-hover:scale-105 inline-block transition-transform">🚀 立即开始新的模拟</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+{% if has_data %}
+<script>
+    // 全局字体
+    Chart.defaults.font.family = '"Inter", sans-serif';
+    Chart.defaults.color = '#64748b';
+
+    const dimensions = {{ dimensions | tojson }};
+    const myData = {{ my_avg_data | tojson }};
+    const classData = {{ class_avg_data | tojson }};
+    const trendLabels = {{ trend_labels | tojson }};
+    const trendData = {{ trend_data | tojson }};
+
+    // 1. 初始化雷达图
+    const ctxRadar = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: dimensions,
+            datasets: [{
+                label: '我的能力',
+                data: myData,
+                fill: true,
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                borderColor: 'rgb(99, 102, 241)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgb(99, 102, 241)',
+                pointBorderColor: '#fff',
+                pointRadius: 4
+            }, {
+                label: '班级平均',
+                data: classData,
+                fill: true,
+                backgroundColor: 'rgba(203, 213, 225, 0.2)',
+                borderColor: 'rgba(203, 213, 225, 1)',
+                borderWidth: 2,
+                borderDash: [4, 4],
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(0,0,0,0.05)' },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    pointLabels: { font: { size: 12, weight: '700' }, color: '#334155' },
+                    suggestedMin: 0, suggestedMax: 100,
+                    ticks: { display: false, stepSize: 20 }
+                }
+            },
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+        }
+    });
+
+    // 2. 初始化趋势图
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    const gradientTrend = ctxTrend.createLinearGradient(0, 0, 0, 300);
+    gradientTrend.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+    gradientTrend.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: trendLabels,
+            datasets: [{
+                label: '面试得分',
+                data: trendData,
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: gradientTrend,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: 'rgb(16, 185, 129)',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false, suggestedMin: 40, suggestedMax: 100,
+                    grid: { borderDash: [4, 4], color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 3. 切换图表逻辑
+    function switchChart(type) {
+        const radarContainer = document.getElementById('radar-container');
+        const trendContainer = document.getElementById('trend-container');
+        const btnRadar = document.getElementById('btn-radar');
+        const btnTrend = document.getElementById('btn-trend');
+        const title = document.getElementById('chart-title');
+        const desc = document.getElementById('chart-desc');
+
+        // 样式类常量
+        const activeClass = "bg-white text-indigo-600 shadow-sm";
+        const inactiveClass = "text-slate-500 hover:text-slate-700 bg-transparent shadow-none";
+
+        if (type === 'radar') {
+            radarContainer.classList.remove('hidden');
+            trendContainer.classList.add('hidden');
+
+            // 更新按钮样式
+            btnRadar.className = `px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeClass}`;
+            btnTrend.className = `px-4 py-2 rounded-lg text-sm font-bold transition-all ${inactiveClass}`;
+
+            title.innerText = "五维能力模型";
+            desc.innerText = "您与班级平均水平的对比分析";
+        } else {
+            radarContainer.classList.add('hidden');
+            trendContainer.classList.remove('hidden');
+
+            // 更新按钮样式
+            btnTrend.className = `px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeClass}`;
+            btnRadar.className = `px-4 py-2 rounded-lg text-sm font-bold transition-all ${inactiveClass}`;
+
+            title.innerText = "近期成长轨迹";
+            desc.innerText = "最近 10 次面试得分走势图";
+        }
+    }
+
+    // 4. AI 诊断逻辑
+    async function generateReport() {
+        const btn = document.getElementById('ai-btn');
+        const loading = document.getElementById('ai-loading');
+        const content = document.getElementById('ai-content');
+
+        btn.disabled = true;
+        btn.innerHTML = '正在深度分析...';
+        loading.classList.remove('hidden');
+
+        content.innerHTML = `
+            <div class="flex flex-col gap-2 animate-pulse">
+                <div class="h-2 bg-slate-200 rounded w-3/4"></div>
+                <div class="h-2 bg-slate-200 rounded w-full"></div>
+                <div class="h-2 bg-slate-200 rounded w-5/6"></div>
+            </div>
+        `;
+
+        try {
+            const res = await fetch('/api/radar/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    my_scores: myData,
+                    dimensions: dimensions
+                })
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                const formatted = result.analysis.replace(/\n/g, '<br>');
+                content.innerHTML = `<div class="prose prose-sm prose-indigo leading-relaxed">${formatted}</div>`;
+                btn.innerHTML = '✨ 重新生成';
+            } else {
+                content.innerText = "生成失败: " + result.error;
+                btn.innerText = "重试";
+            }
+        } catch (e) {
+            content.innerText = "网络错误，请检查连接";
+            btn.innerText = "重试";
+        } finally {
+            btn.disabled = false;
+            loading.classList.add('hidden');
+        }
+    }
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}面试大厅{% endblock %}
+
+{% block content %}
+<meta http-equiv="refresh" content="30">
+
+<div class="space-y-8 pb-10">
+
+    <div class="hero rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white shadow-xl shadow-orange-200 overflow-hidden relative group">
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
+        <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white/10 rounded-full"></div>
+
+        <div class="hero-content flex-col md:flex-row-reverse justify-between w-full p-8 md:p-12 z-10">
+            <div class="text-center md:text-right max-w-lg">
+                <h1 class="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-sm">准备好挑战了吗？</h1>
+                <p class="py-2 opacity-90 text-sm md:text-lg font-medium leading-relaxed">
+                    AI 面试官已就位。选择心仪岗位，开启模拟实战，<br>让每一次练习都成为 Offer 的垫脚石。
+                </p>
+                <div class="mt-6">
+                    <button onclick="document.getElementById('setup_modal').showModal()" class="btn btn-lg bg-white text-orange-600 border-none hover:bg-orange-50 px-10 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group-hover:ring-4 ring-white/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        立即开始面试
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col justify-center">
+                <div class="text-xl font-medium opacity-80 mb-1">Welcome back,</div>
+                <div class="text-5xl font-black tracking-tight mb-4">{{ current_user.truename }} <span class="animate-wave inline-block origin-[70%_70%]">👋</span></div>
+                <div class="flex gap-2">
+                    <div class="badge badge-warning bg-white/20 border-none text-white backdrop-blur-sm p-3">
+                        {{ current_user.department or '未设置系部' }}
+                    </div>
+                    <div class="badge badge-warning bg-white/20 border-none text-white backdrop-blur-sm p-3">
+                        {{ current_user.class_name or '未设置班级' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
+            <div class="card-body p-6 flex flex-row items-center justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">累计实战</div>
+                    <div class="text-3xl font-black text-slate-800">{{ stats.total_count }} <span class="text-sm font-normal text-slate-400">场</span></div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
+            <div class="card-body p-6 flex flex-row items-center justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">平均得分</div>
+                    <div class="flex items-end gap-2">
+                        <div class="text-3xl font-black text-slate-800">{{ stats.avg_score }}</div>
+                        <div class="text-xs font-bold mb-1.5
+                            {% if stats.latest_trend > 0 %} text-emerald-500
+                            {% elif stats.latest_trend < 0 %} text-rose-500
+                            {% else %} text-slate-400 {% endif %}">
+                            {% if stats.latest_trend > 0 %} ▲ {{ stats.latest_trend }}
+                            {% elif stats.latest_trend < 0 %} ▼ {{ stats.latest_trend|abs }}
+                            {% else %} - {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
+            <div class="card-body p-6 flex flex-row items-center justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">历史最佳</div>
+                    <div class="text-3xl font-black text-slate-800">{{ stats.max_score }}</div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('routes.learning_index') }}" class="card bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 cursor-pointer group">
+            <div class="card-body p-6 flex flex-row items-center justify-between">
+                <div>
+                    <div class="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">提升技能</div>
+                    <div class="text-xl font-bold group-hover:underline decoration-2 underline-offset-4">知识充电站 →</div>
+                    <p class="text-xs text-indigo-100 mt-1 opacity-80">查看学习资料与题库</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <div class="w-2 h-6 bg-orange-500 rounded-full"></div>
+                近期面试记录
+            </h3>
+            <span class="text-xs text-slate-400">仅显示最近记录</span>
+        </div>
+
+        <div class="overflow-x-auto p-2">
+            <table class="table w-full" id="recent-records-table">
+                <thead class="text-slate-500 border-b border-slate-100">
+                    <tr>
+                        <th class="bg-transparent pl-6">岗位 / 时间</th>
+                        <th class="bg-transparent">面试模式</th>
+                        <th class="bg-transparent">综合得分</th>
+                        <th class="bg-transparent">当前状态</th>
+                        <th class="bg-transparent pr-6 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-600">
+                    {% if sessions %}
+                        {% for s in sessions %}
+                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none">
+                            <td class="pl-6">
+                                <div class="font-bold text-slate-800 text-base mb-0.5">{{ s.target_role }}</div>
+                                <div class="text-xs text-slate-400 font-mono">{{ s.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
+                            </td>
+
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="badge badge-sm text-xs py-2
+                                        {% if s.difficulty == '压力模式' %}badge-error bg-red-100 text-red-700 border-none
+                                        {% elif s.difficulty == '新手模式' %}badge-success bg-emerald-100 text-emerald-700 border-none
+                                        {% else %}badge-ghost bg-slate-100 text-slate-600 border-none{% endif %}">
+                                        {{ s.difficulty or '标准模式' }}
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                        {% if 'female' in s.voice_type or 'BV001' in s.voice_type %}👩 女声{% else %}👨 男声{% endif %}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td>
+                                {% if s.status == 'processing' %}
+                                    <div class="flex items-center gap-2 text-warning">
+                                        <span class="loading loading-ring loading-sm"></span>
+                                        <span class="text-xs font-bold">计算中...</span>
+                                    </div>
+                                {% elif s.total_score is not none %}
+                                    {% if s.total_score >= 85 %}
+                                        <span class="text-emerald-600 font-black text-xl">{{ s.total_score }}</span>
+                                    {% elif s.total_score >= 60 %}
+                                        <span class="text-amber-500 font-black text-xl">{{ s.total_score }}</span>
+                                    {% else %}
+                                        <span class="text-slate-300 font-bold text-xl">{{ s.total_score }}</span>
+                                    {% endif %}
+                                    <span class="text-xs text-slate-400 ml-0.5">分</span>
+                                {% else %}
+                                    <span class="text-slate-300">-</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if s.status == 'completed' %}
+                                    <span class="badge badge-xs bg-emerald-500 border-none text-white gap-1 py-2 px-2">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span> 完成
+                                    </span>
+                                {% elif s.status == 'processing' %}
+                                    <span class="badge badge-xs bg-amber-500 border-none text-white gap-1 py-2 px-2">
+                                        <span class="loading loading-spinner loading-xs h-3 w-3"></span> 生成中
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-xs bg-blue-500 border-none text-white gap-1 py-2 px-2">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> 进行中
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="pr-6 text-right">
+                                {% if s.status == 'processing' %}
+                                    <button class="btn btn-sm btn-disabled bg-slate-50 text-slate-400 border-slate-200">
+                                        请稍候
+                                    </button>
+                                {% elif s.status == 'completed' %}
+                                    <a href="{{ url_for('routes.interview_summary', session_id=s.id) }}" class="btn btn-sm btn-outline border-slate-200 text-slate-600 hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all shadow-sm">
+                                        查看报告
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('routes.interview_room', session_id=s.id) }}" class="btn btn-sm bg-indigo-600 text-white border-none hover:bg-indigo-700 shadow-md shadow-indigo-100">
+                                        继续面试
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-20">
+                                <div class="flex flex-col items-center justify-center opacity-40">
+                                    <div class="bg-slate-100 p-4 rounded-full mb-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    </div>
+                                    <p class="text-slate-500">还没有面试记录</p>
+                                    <button onclick="document.getElementById('setup_modal').showModal()" class="btn btn-link btn-sm text-orange-500 no-underline hover:underline">去创建第一个面试</button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="pagination-controls" class="p-4 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/30">
+            </div>
+    </div>
+</div>
+
+<dialog id="setup_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white p-0 overflow-hidden rounded-3xl">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-lg text-slate-800">创建新的面试</h3>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-slate-600">✕</button>
+            </form>
+        </div>
+
+        <form id="setup-form" class="p-6 space-y-5">
+            <div class="form-control">
+                <label class="label pt-0"><span class="label-text font-bold text-slate-600">目标岗位</span></label>
+                <input type="text" name="target_role" placeholder="例如：Python开发、新媒体运营..." class="input input-bordered w-full bg-slate-50 focus:bg-white transition-colors" required />
+            </div>
+
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold text-slate-600">选择面试官风格</span></label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for name, voice_id in voice_options.items() %}
+                    <label class="cursor-pointer label border border-slate-200 rounded-xl p-3 hover:border-orange-400 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50 has-[:checked]:ring-1 has-[:checked]:ring-orange-500 transition-all">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="voice_type" value="{{ voice_id }}" class="radio radio-warning radio-sm" {% if loop.first %}checked{% endif %} />
+                            <div>
+                                <span class="label-text font-bold block text-slate-700">{{ name }}</span>
+                                <span class="text-xs text-slate-400">
+                                    {% if '男' in name %} 技术专家 / 严厉 {% else %} HRBP / 亲和 {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold text-slate-600">面试难度</span></label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
+                        <input type="radio" name="difficulty" value="新手模式" class="hidden" />
+                        <div class="text-xl mb-1">🌱</div>
+                        <div class="text-xs font-bold">新手模式</div>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
+                        <input type="radio" name="difficulty" value="标准模式" class="hidden" checked />
+                        <div class="text-xl mb-1">👔</div>
+                        <div class="text-xs font-bold">标准模式</div>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
+                        <input type="radio" name="difficulty" value="压力模式" class="hidden" />
+                        <div class="text-xl mb-1">🔥</div>
+                        <div class="text-xs font-bold">压力模式</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-action pt-4">
+                <button type="button" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<style>
+    /* 简单的招手动画 */
+    @keyframes wave { 0% { transform: rotate(0deg); } 20% { transform: rotate(14deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(14deg); } 80% { transform: rotate(-4deg); } 100% { transform: rotate(10deg); } }
+    .animate-wave { animation: wave 2.5s infinite; }
+</style>
+
+<script>
+// === 自动分页逻辑 (Client-side Pagination) ===
+document.addEventListener("DOMContentLoaded", function() {
+    const table = document.getElementById('recent-records-table');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const controls = document.getElementById('pagination-controls');
+
+    // 配置：每页显示 5 条
+    const rowsPerPage = 5;
+
+    // 如果没有数据或数据少于一页，不显示分页控件
+    if (rows.length === 0 || rows.length <= rowsPerPage) {
+        controls.style.display = 'none';
+        return;
+    }
+
+    const pageCount = Math.ceil(rows.length / rowsPerPage);
+    let currentPage = 1;
+
+    function showPage(page) {
+        currentPage = page;
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        // 切换行的显示/隐藏
+        rows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        renderControls();
+    }
+
+    function renderControls() {
+        controls.innerHTML = '';
+
+        // 上一页
+        const prevBtn = document.createElement('button');
+        prevBtn.className = `btn btn-sm ${currentPage === 1 ? 'btn-disabled' : 'btn-ghost'}`;
+        prevBtn.innerText = '上一页';
+        prevBtn.onclick = () => showPage(currentPage - 1);
+        controls.appendChild(prevBtn);
+
+        // 页码
+        for (let i = 1; i <= pageCount; i++) {
+            const btn = document.createElement('button');
+            // 高亮当前页：使用橙色背景
+            const activeClass = i === currentPage ? 'btn-active bg-orange-500 text-white border-orange-500' : 'btn-ghost';
+            btn.className = `btn btn-sm ${activeClass}`;
+            btn.innerText = i;
+            btn.onclick = () => showPage(i);
+            controls.appendChild(btn);
+        }
+
+        // 下一页
+        const nextBtn = document.createElement('button');
+        nextBtn.className = `btn btn-sm ${currentPage === pageCount ? 'btn-disabled' : 'btn-ghost'}`;
+        nextBtn.innerText = '下一页';
+        nextBtn.onclick = () => showPage(currentPage + 1);
+        controls.appendChild(nextBtn);
+    }
+
+    // 初始化显示第一页
+    showPage(1);
+});
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function submitSetup() {
+    const form = document.getElementById('setup-form');
+    const formData = new FormData(form);
+    const btn = document.querySelector('button[onclick="submitSetup()"]');
+
+    if(!formData.get('target_role')) {
+        alert("请输入你想面试的岗位！");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading loading-spinner"></span> 正在创建面试间...';
+
+    try {
+        const res = await fetch('/api/interview/create', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if(data.session_id) {
+            window.location.href = `/interview/room/${data.session_id}`;
+        } else {
+            alert("创建失败: " + (data.error || "未知错误"));
+            btn.disabled = false;
+            btn.innerHTML = '开始模拟面试';
+        }
+    } catch(e) {
+        console.error(e);
+        alert("网络请求失败");
+        btn.disabled = false;
+        btn.innerHTML = '开始模拟面试';
+    }
+}
+</script>
+{% endblock %}

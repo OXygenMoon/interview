@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html data-theme="cupcake">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - 教师管理后台</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 复用全局样式，保持风格统一 */
+        .sidebar-content::-webkit-scrollbar { width: 4px; }
+        .sidebar-content::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+
+        .menu-item {
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.75rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #57534e;
+            border: 1px solid transparent;
+        }
+
+        .menu-item:hover {
+            background-color: #ffffff;
+            color: #4f46e5; /* 教师端使用 Indigo/Blue 色系，区别于学生的 Orange */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* 激活状态：使用紫色/深蓝色系，显得更稳重专业 */
+        .menu-item.active {
+            background-color: #ffffff !important;
+            color: #4f46e5 !important;
+            font-weight: 700;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #e0e7ff;
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 6px;
+            width: 6px;
+            background-color: #4f46e5;
+            border-radius: 50%;
+        }
+
+        .menu-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            font-weight: 800;
+            padding: 1.5rem 1rem 0.5rem 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content { margin-left: 16rem; }
+        }
+
+        /* 教师端特有的背景色微调，偏冷色调一点点 */
+        #sidebar { background-color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-50 text-base-content font-sans">
+
+    <div class="lg:hidden navbar bg-base-100 shadow-md fixed top-0 w-full z-40">
+        <div class="navbar-start">
+            <button id="mobile-menu-btn" class="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+        </div>
+        <div class="navbar-center">
+            <a class="text-xl font-bold text-slate-700">教师控制台</a>
+        </div>
+        <div class="navbar-end"></div>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-45 hidden lg:hidden transition-opacity"></div>
+
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 border-r border-slate-200 shadow-xl z-50 sidebar-transition transform -translate-x-full lg:translate-x-0 flex flex-col">
+
+        <div class="h-20 flex items-center px-6 border-b border-slate-200/50">
+            <a href="{{ url_for('routes.dashboard') }}" class="flex items-center gap-3 w-full group">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-100 group-hover:scale-105 transition-transform duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-700 tracking-tight">教学管理</h1>
+                    <div class="flex items-center gap-1">
+                        <span class="badge badge-xs badge-primary badge-outline text-[10px]">TEACHER</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto sidebar-content px-4 py-2">
+
+            <div class="menu-section-title">教学概览</div>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{{ url_for('routes.dashboard') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.dashboard' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        <span>数据驾驶舱</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="menu-section-title">学生管理</div>
+            <ul class="space-y-1">
+                <li>
+                    <a href="{{ url_for('routes.teacher_students') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.teacher_students' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <span>
+                            {% if current_user.role == 'dept_head' %}系部学生名册
+                            {% elif current_user.role == 'admin' %}全校学生名册
+                            {% else %}本班花名册
+                            {% endif %}
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="menu-item flex items-center gap-3 px-3 py-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        <span>面试记录流水</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="menu-section-title">统计分析</div>
+            <ul class="space-y-1">
+                <li>
+                    <a href="#" class="menu-item flex items-center gap-3 px-3 py-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                        <span>班级能力画像</span>
+                    </a>
+                </li>
+            </ul>
+
+            {% if current_user.role == 'admin' %}
+                <li>
+                    <a href="{{ url_for('routes.admin_learning') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_learning' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span>课程内容管理</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('routes.admin_organization') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_organization' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                        <span>组织与学生管理</span>
+                    </a>
+                </li>
+                {% endif %}
+
+        </nav>
+
+        <div class="p-4 border-t border-slate-200/50 bg-[#f1f5f9]">
+            <div class="flex items-center gap-3 w-full p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                <div class="avatar">
+                    <div class="w-9 h-9 rounded-full ring-2 ring-indigo-100">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ current_user.username }}&backgroundColor=c0aede" />
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0 text-left">
+                    <p class="text-sm font-bold text-slate-700 truncate">{{ current_user.truename }}</p>
+                    <p class="text-xs text-slate-400 truncate uppercase">{{ current_user.role }}</p>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-xs btn-square text-slate-400 hover:text-red-500" title="退出登录">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="min-h-screen main-content pt-16 lg:pt-0 transition-all duration-300">
+        <div class="p-4 sm:p-6 lg:p-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        // 侧栏控制逻辑 (与 Student Base 相同)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+
+        function toggleSidebar() {
+            if (!sidebar || !overlay) return;
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+        mobileMenuBtn?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', toggleSidebar);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

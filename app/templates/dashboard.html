@@ -1,0 +1,286 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+{% set avatar_styles = [
+    'bg-rose-100 text-rose-700 border border-rose-200',
+    'bg-orange-100 text-orange-700 border border-orange-200',
+    'bg-emerald-100 text-emerald-700 border border-emerald-200',
+    'bg-cyan-100 text-cyan-700 border border-cyan-200',
+    'bg-blue-100 text-blue-700 border border-blue-200',
+    'bg-violet-100 text-violet-700 border border-violet-200',
+    'bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200'
+] %}
+
+<div class="space-y-8 pb-12">
+
+    <div class="rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 text-white shadow-xl shadow-indigo-200 relative overflow-hidden p-8 md:p-10">
+        <div class="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div class="absolute bottom-0 left-20 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-2xl"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div class="flex items-center gap-6">
+                <div class="p-4 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight mb-2">教学数据驾驶舱</h1>
+                    <p class="text-indigo-100 font-medium opacity-90 flex items-center gap-3">
+                        <span>欢迎回来，{{ current_user.truename }} 老师</span>
+                        <span class="badge badge-warning border-none text-white bg-orange-500/80 backdrop-blur-sm font-bold shadow-sm uppercase text-xs px-2 py-1 h-auto">
+                            {{ current_user.role }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="hidden md:block text-right bg-black/20 px-5 py-3 rounded-xl backdrop-blur-sm border border-white/10">
+                <div class="text-[10px] text-indigo-200 font-bold uppercase tracking-widest mb-1">Today</div>
+                <div class="text-xl font-mono font-bold text-white" id="current-date">--/--</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div class="card bg-slate-800 text-white shadow-lg shadow-slate-200 overflow-hidden relative group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/10 transition-colors"></div>
+            <div class="card-body relative z-10">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">总面试场次</div>
+                        <div class="text-5xl font-black tracking-tight">{{ total_interviews }}</div>
+                        <div class="text-slate-400 text-sm mt-2">范围内累计完成</div>
+                    </div>
+                    <div class="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
+            <div class="card-body">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">平均综合得分</div>
+                        <div class="text-5xl font-black text-slate-800">{{ avg_score }}</div>
+                        <div class="text-slate-400 text-sm mt-2">整体表现评估</div>
+                    </div>
+                    <div class="radial-progress text-indigo-500 font-bold text-sm bg-indigo-50 border-4 border-indigo-50" style="--value:{{ avg_score }}; --size:4.5rem; --thickness: 0.5rem;">
+                        {{ avg_score|int }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('routes.teacher_students') }}" class="card bg-gradient-to-br from-indigo-50 to-white shadow-sm border border-indigo-100 hover:shadow-md hover:border-indigo-200 transition-all duration-300 group cursor-pointer">
+            <div class="card-body flex flex-row items-center justify-between">
+                <div>
+                    <div class="text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">快捷管理</div>
+                    <h3 class="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">学生花名册 →</h3>
+                    <p class="text-xs text-slate-500 mt-1">查看班级详情 & 进度</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+        <div class="lg:col-span-1">
+            <div class="card bg-white shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <span class="text-xl">🏆</span> 优秀表现 Top 5
+                    </h3>
+                </div>
+
+                <div class="divide-y divide-slate-50">
+                    {% for s in top_students %}
+                    <div class="flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors group">
+                        <div class="font-black text-sm w-6 h-6 rounded flex items-center justify-center shadow-sm
+                            {% if loop.index == 1 %}bg-amber-100 text-amber-600
+                            {% elif loop.index == 2 %}bg-slate-100 text-slate-500
+                            {% elif loop.index == 3 %}bg-orange-100 text-orange-600
+                            {% else %}bg-transparent text-slate-300{% endif %}">
+                            {{ loop.index }}
+                        </div>
+
+                        <div class="avatar placeholder">
+                            {% set style_class = avatar_styles[(s.user.id) % 7] %}
+                            <div class="{{ style_class }} rounded-full w-8 h-8 flex items-center justify-center ring-2 ring-white shadow-sm">
+                                <span class="text-xs font-bold">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold text-slate-700 text-sm truncate group-hover:text-indigo-600 transition-colors">{{ s.user.truename }}</div>
+                            <div class="text-[10px] text-slate-400 truncate">{{ s.target_role }}</div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="font-black text-emerald-600 text-sm">{{ s.total_score }}</div>
+                            <a href="/interview/summary/{{ s.id }}" class="text-[10px] text-indigo-400 hover:text-indigo-600 font-bold uppercase tracking-wider">查看</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-8 text-center text-slate-400 text-sm">暂无面试数据</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2">
+            <div class="card bg-white shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        实时面试流水
+                    </h3>
+                    <span class="badge badge-ghost text-xs font-normal text-slate-400">最近动态</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full" id="realtime-table">
+                        <thead class="text-slate-500 bg-white border-b border-slate-100">
+                            <tr>
+                                <th class="pl-6 font-medium">学生信息</th>
+                                <th class="font-medium">归属</th>
+                                <th class="font-medium">岗位 & 得分</th>
+                                <th class="font-medium">时间</th>
+                                <th class="pr-6 text-right font-medium">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600">
+                            {% for s in sessions %}
+                            <tr class="group hover:bg-indigo-50/30 transition-colors">
+                                <td class="pl-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="avatar placeholder">
+                                            {% set style_class = avatar_styles[(s.user.id) % 7] %}
+                                            <div class="{{ style_class }} rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
+                                                <span class="text-xs font-bold">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="font-bold text-slate-700">{{ s.user.truename }}</div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-slate-500">{{ s.user.department }}</span>
+                                        <span class="text-xs text-slate-400">{{ s.user.class_name }}</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="font-medium text-slate-800 text-sm mb-1">{{ s.target_role }}</div>
+                                    {% if s.total_score >= 85 %}
+                                        <span class="badge badge-sm badge-success text-white font-bold border-none">{{ s.total_score }}分</span>
+                                    {% elif s.total_score >= 60 %}
+                                        <span class="badge badge-sm badge-warning text-white font-bold border-none">{{ s.total_score }}分</span>
+                                    {% else %}
+                                        <span class="badge badge-sm badge-error text-white font-bold border-none">{{ s.total_score }}分</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-slate-400 text-xs font-mono">
+                                    {{ s.start_time.strftime('%m-%d %H:%M') }}
+                                </td>
+
+                                <td class="pr-6 text-right">
+                                    <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-ghost text-indigo-600 hover:bg-indigo-100">
+                                        查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-10 text-slate-400">
+                                    暂无记录
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagination-controls" class="p-4 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/30"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. 日期显示
+    const dateEl = document.getElementById('current-date');
+    const now = new Date();
+    dateEl.innerText = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+
+    // 2. 分页逻辑 (与 Index.html 风格保持一致)
+    document.addEventListener("DOMContentLoaded", function() {
+        const table = document.getElementById('realtime-table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const controls = document.getElementById('pagination-controls');
+        const rowsPerPage = 5; // 每页显示 5 条
+
+        // 如果没有数据或数据少于一页，不显示分页控件
+        if (rows.length === 0 || rows.length <= rowsPerPage) {
+            controls.style.display = 'none';
+            return;
+        }
+
+        const pageCount = Math.ceil(rows.length / rowsPerPage);
+        let currentPage = 1;
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                row.style.display = (index >= start && index < end) ? '' : 'none';
+            });
+
+            renderControls();
+        }
+
+        function renderControls() {
+            controls.innerHTML = '';
+
+            // 上一页
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `btn btn-sm ${currentPage === 1 ? 'btn-disabled' : 'btn-ghost'}`;
+            prevBtn.innerText = '上一页';
+            prevBtn.onclick = () => showPage(currentPage - 1);
+            controls.appendChild(prevBtn);
+
+            // 页码
+            for (let i = 1; i <= pageCount; i++) {
+                const btn = document.createElement('button');
+                const activeClass = i === currentPage ? 'btn-active bg-indigo-500 text-white border-indigo-500' : 'btn-ghost';
+                btn.className = `btn btn-sm ${activeClass}`;
+                btn.innerText = i;
+                btn.onclick = () => showPage(i);
+                controls.appendChild(btn);
+            }
+
+            // 下一页
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `btn btn-sm ${currentPage === pageCount ? 'btn-disabled' : 'btn-ghost'}`;
+            nextBtn.innerText = '下一页';
+            nextBtn.onclick = () => showPage(currentPage + 1);
+            controls.appendChild(nextBtn);
+        }
+
+        // 初始化
+        showPage(1);
+    });
+</script>
+{% endblock %}

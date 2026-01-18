@@ -1,0 +1,162 @@
+{% extends "teacher_base.html" %}
+{% block title %}课程内容管理{% endblock %}
+{% block content %}
+<div class="space-y-6 h-[calc(100vh-8rem)]">
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">📚 知识充电站内容管理</h2>
+            <p class="text-sm text-slate-500">管理学习分类、上传文章和配置测验题库</p>
+        </div>
+        <button onclick="addCategory()" class="btn btn-primary btn-sm text-white">+ 新建分类</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 h-full">
+        <div class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">课程分类</div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                {% for cat in categories %}
+              <div onclick='selectCategory({{ cat.id }}, "{{ cat.name }}", {{ cat.materials | tojson }})'
+                     class="cat-item p-3 rounded-lg cursor-pointer hover:bg-indigo-50 flex justify-between group" id="cat-{{ cat.id }}">
+                    <span>{{ cat.icon }} {{ cat.name }}</span>
+                    <button onclick="event.stopPropagation(); deleteCategory({{ cat.id }})" class="text-slate-300 hover:text-red-500 hidden group-hover:block">✕</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-span-3 bg-white rounded-xl shadow-sm border border-slate-100 relative">
+            <div id="empty-state" class="absolute inset-0 flex items-center justify-center text-slate-400">请点击左侧分类进行管理</div>
+            
+            <div id="content-area" class="hidden flex-col h-full">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-indigo-700" id="current-cat-name">--</h3>
+                    <button onclick="document.getElementById('add_material_modal').showModal()" class="btn btn-sm btn-outline btn-primary">+ 添加内容</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4">
+                    <table class="table w-full">
+                        <thead><tr><th>标题</th><th>类型</th><th>操作</th></tr></thead>
+                        <tbody id="material-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<dialog id="add_material_modal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+        <h3 class="font-bold text-lg mb-4">添加学习内容</h3>
+        <div class="flex flex-col gap-4">
+            <input type="text" id="m-title" placeholder="标题 (例如: 面试着装指南)" class="input input-bordered w-full" />
+            <select id="m-type" class="select select-bordered w-full" onchange="toggleTemplate()">
+                <option value="article">文章 (Article)</option>
+                <option value="quiz">测验 (Quiz)</option>
+            </select>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">内容 (HTML文本 或 JSON题目)</span>
+                    <span class="label-text-alt text-indigo-600 cursor-pointer" onclick="fillTemplate()">填入示例模板</span>
+                </label>
+                <textarea id="m-content" class="textarea textarea-bordered h-64 font-mono text-xs" placeholder="在此输入内容..."></textarea>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn">取消</button></form>
+            <button onclick="submitMaterial()" class="btn btn-primary text-white">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    let currentCatId = null;
+
+    function selectCategory(id, name, materials) {
+        currentCatId = id;
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('content-area').classList.remove('hidden');
+        document.getElementById('content-area').classList.add('flex');
+        document.getElementById('current-cat-name').innerText = name;
+        
+        // 高亮
+        document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('bg-indigo-50', 'text-indigo-700'));
+        document.getElementById('cat-'+id).classList.add('bg-indigo-50', 'text-indigo-700');
+
+        renderMaterials(materials);
+    }
+
+    function renderMaterials(list) {
+        const tbody = document.getElementById('material-list');
+        tbody.innerHTML = '';
+        list.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="font-bold">${m.title}</td>
+                <td><span class="badge ${m.type==='quiz'?'badge-warning':'badge-ghost'}">${m.type}</span></td>
+                <td><button onclick="deleteMaterial(${m.id})" class="btn btn-xs btn-error text-white">删除</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 交互逻辑
+    async function addCategory() {
+        const name = prompt("请输入分类名称：");
+        if(name) {
+            await fetch('/api/admin/learning/category/add', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({name})
+            });
+            location.reload();
+        }
+    }
+    
+    async function deleteCategory(id) {
+        if(confirm("确定删除分类及旗下所有内容吗？")) {
+            await fetch(`/api/admin/learning/category/delete/${id}`, {method:'POST'});
+            location.reload();
+        }
+    }
+
+    async function deleteMaterial(id) {
+        if(confirm("确定删除吗？")) {
+            await fetch(`/api/admin/learning/material/delete/${id}`, {method:'POST'});
+            // 简单处理：刷新页面
+            location.reload();
+        }
+    }
+
+    function toggleTemplate() {
+        // 切换类型时可以自动清空或提示，这里暂不处理
+    }
+
+    function fillTemplate() {
+        const type = document.getElementById('m-type').value;
+        const textarea = document.getElementById('m-content');
+        
+        if (type === 'article') {
+            textarea.value = `<h3>第一章：引言</h3>\n<p>这里是正文内容，支持 <b>HTML</b> 标签。</p>\n<ul>\n  <li>要点1</li>\n  <li>要点2</li>\n</ul>`;
+        } else {
+            textarea.value = `[\n  {\n    "question": "面试时可以迟到吗？",\n    "options": ["可以", "不可以", "看情况"],\n    "answer": "不可以"\n  },\n  {\n    "question": "STAR法则中的R代表什么？",\n    "options": ["Reason", "Result", "Role"],\n    "answer": "Result"\n  }\n]`;
+        }
+    }
+
+    async function submitMaterial() {
+        if(!currentCatId) return;
+        const title = document.getElementById('m-title').value;
+        const type = document.getElementById('m-type').value;
+        const content = document.getElementById('m-content').value;
+        
+        const res = await fetch('/api/admin/learning/material/add', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({category_id: currentCatId, title, type, content})
+        });
+        const data = await res.json();
+        if(res.ok) {
+            location.reload();
+        } else {
+            alert("错误: " + data.error);
+        }
+    }
+</script>
+{% endblock %}

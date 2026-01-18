@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}知识充电站{% endblock %}
+{% block content %}
+
+<div class="space-y-8 pb-10">
+
+    <div class="hero rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 text-white shadow-xl shadow-indigo-200 overflow-hidden relative group">
+        <div class="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="absolute bottom-0 left-10 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-2xl"></div>
+
+        <div class="absolute right-10 top-10 opacity-10 text-9xl font-serif select-none pointer-events-none">
+            Book
+        </div>
+
+        <div class="hero-content flex-col md:flex-row justify-between w-full p-8 md:p-12 z-10">
+            <div class="max-w-xl">
+                <div class="badge badge-primary bg-white/20 border-none text-white mb-4 backdrop-blur-sm">
+                    Skill Up
+                </div>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 drop-shadow-sm">
+                    知识充电站
+                </h1>
+                <p class="py-2 opacity-90 text-lg font-medium leading-relaxed">
+                    不仅要会“练”，更要会“学”。<br>
+                    这里汇集了高频考点、面试礼仪与核心技术栈，助你构建完整的知识体系。
+                </p>
+            </div>
+
+            <div class="hidden md:flex gap-4">
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center min-w-[100px] border border-white/10">
+                    <div class="text-3xl font-bold">{{ categories|length }}</div>
+                    <div class="text-xs opacity-70 uppercase tracking-wider mt-1">课程模块</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center min-w-[100px] border border-white/10">
+                    <div class="text-3xl font-bold">
+                        {% set total_progress = progress_map.values() | sum %}
+                        {% set count = progress_map | length %}
+                        {{ (total_progress / count)|int if count > 0 else 0 }}%
+                    </div>
+                    <div class="text-xs opacity-70 uppercase tracking-wider mt-1">总体进度</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for cat in categories %}
+            {% set progress = progress_map[cat.id] %}
+            {% set progress_color = 'text-slate-300' %}
+            {% if progress == 100 %}
+                {% set progress_color = 'text-emerald-500' %}
+            {% elif progress > 0 %}
+                {% set progress_color = 'text-indigo-500' %}
+            {% endif %}
+
+        <a href="{{ url_for('routes.learning_detail', material_id=cat.materials[0].id) if cat.materials else '#' }}"
+           class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group h-full">
+
+            <div class="card-body p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        {{ cat.icon }}
+                    </div>
+
+                    <div class="relative flex items-center justify-center">
+                        <div class="radial-progress {{ progress_color }} transition-all duration-500 group-hover:scale-110"
+                             style="--value:{{ progress }}; --size:3rem; --thickness: 4px;">
+                            <span class="text-xs font-bold text-slate-600">{{ progress }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <h2 class="card-title text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">
+                        {{ cat.name }}
+                    </h2>
+                    <div class="flex items-center gap-2 text-sm text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span>共 {{ cat.materials|length }} 个章节</span>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end mt-6 pt-4 border-t border-slate-50">
+                    {% if progress == 100 %}
+                        <button class="btn btn-sm btn-ghost text-emerald-600 gap-1 pl-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                            已学完，去复习
+                        </button>
+                    {% else %}
+                        <button class="btn btn-sm btn-ghost text-indigo-600 gap-1 pr-0 group-hover:translate-x-1 transition-transform">
+                            {{ '继续学习' if progress > 0 else '开始学习' }}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% else %}
+            <div class="col-span-full py-20 flex flex-col items-center justify-center text-center opacity-60">
+                <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-600">暂无课程内容</h3>
+                <p class="text-slate-400 text-sm mt-1">管理员正在快马加鞭整理资料中...</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
