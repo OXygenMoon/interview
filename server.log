@@ -1,0 +1,895 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 848-231-070
+127.0.0.1 - - [02/Feb/2026 01:49:12] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:49:12] "GET /dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:00] "[32mGET /dashboard HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:50:00] "GET /login?next=/dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:01] "[32mPOST /login?next=/dashboard HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:50:01] "GET /dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:03] "[32mGET /logout HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:50:03] "GET /login HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:06] "[32mPOST /login HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:50:06] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:06] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:11] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:11] "GET /interview/room/128 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:19] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:22] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:27] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:32] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:37] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:43] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:47] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:54] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:50:57] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:06] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:08] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:12] "[32mGET /interview/room/128 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:51:12] "GET /login?next=/interview/room/128 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:14] "POST /api/interview/128/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:29] "[32mPOST /login?next=/interview/room/128 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:51:29] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:29] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 01:51:46] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 01:51:46] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 02:10:01] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 02:10:01] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 02:10:01] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 02:17:32] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:38:38] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:38:38] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:49] "[32mPOST /login?next=/ HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:38:49] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:49] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:53] "GET /login HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:53] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:38:53] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:58] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:38:58] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:38:59] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:38:59] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:38:59] "GET /interview/room/129 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:39:00] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:39:00] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:39:57] "[32mGET /interview/room/129 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:39:57] "GET /login?next=/interview/room/129 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:39:59] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:40:08] "[32mPOST /login?next=/interview/room/129 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:40:08] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:40:09] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:40:18] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:40:18] "GET /interview/room/130 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:40:57] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:41:09] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:14] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:18] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:29] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:31] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:34] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:41] "POST /api/interview/130/chat HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:42] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:41:50] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:55] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:58] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:41:58] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:07] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:07] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:14] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:14] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:28] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:33] "POST /api/interview/130/chat HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:33] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:38] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:43] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:49] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:53] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:42:58] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:03] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:09] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:13] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:18] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:28] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:34] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:39] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:43] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:49] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:53] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:43:58] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:04] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:09] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:14] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:19] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:24] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:29] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:34] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:38] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:43] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:49] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:54] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:44:59] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情严肃", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "身体放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "身体放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_86462e09a560492cabf80a5ae7d54014.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_86462e09a560492cabf80a5ae7d54014.webm ...
+识别结果: 目前只能转成。
+🎤 [STT] 转录结果: 目前只能转成。
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+正在调用火山引擎: 好的，了解了。那你在之前的岗位...
+✅ 语音生成成功! 耗时: 3.31s
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_858fabf5a2754304ae9d15f2aa0ffa33.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_858fabf5a2754304ae9d15f2aa0ffa33.webm ...
+识别结果: 啊，我是一个中级学生现在五年级，我想呃去应聘这个岗位，你能跟我讲一下需要哪些方面吗？
+🎤 [STT] 转录结果: 啊，我是一个中级学生现在五年级，我想呃去应聘这个岗位，你能跟我讲一下需要哪些方面吗？
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+👁️ 视觉分析结果: [
+  "眼神坚定",
+  "表情自然",
+  "坐姿端正"
+]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+正在调用火山引擎: 哦，原来你还在上学。这个岗位要...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "神情严肃", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+✅ 语音生成成功! 耗时: 10.45s
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神不聚焦", "表情严肃", "坐姿放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿不正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "身体僵硬"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]127.0.0.1 - - [02/Feb/2026 06:45:04] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:45:09] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:03] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:07] "[32mPOST /login?next=/ HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:57:07] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:08] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:41] "[32mGET /interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:57:41] "GET /login?next=/interview/room/130 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:41] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:57:44] "[32mPOST /login?next=/interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Feb/2026 06:57:44] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:44] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:53] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:57:53] "GET /interview/room/131 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:00] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:04] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:08] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:09] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:14] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:17] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:19] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:24] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:28] "POST /api/interview/131/chat HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:29] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [02/Feb/2026 06:58:29] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:34] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:42] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:44] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:49] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:54] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:58:59] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:00] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:04] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:06] "POST /api/interview/131/chat HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:09] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:16] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:19] "POST /api/interview/131/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:20] "POST /api/interview/131/finish HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:21] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:21] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:30] "GET /resume_dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 06:59:33] "GET /resume/edit/4 HTTP/1.0" 200 -
+127.0.0.1 - - [02/Feb/2026 07:00:17] "POST /api/resume/optimize HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:15:06] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 01:15:07] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:15:29] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 01:15:34] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:15:56] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 01:55:49] "[32mGET /interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 01:55:50] "GET /login?next=/interview/room/130 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:55:51] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 01:55:53] "[32mPOST /login?next=/interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 01:55:53] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:55:54] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:10] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:10] "GET /interview/room/132 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:17] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:22] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:27] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:32] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:37] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:42] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:47] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:52] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:56:57] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:01] "POST /api/interview/132/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:02] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 01:57:02] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:07] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:12] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:17] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:22] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:27] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:32] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:37] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:42] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:47] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:52] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:57:57] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:02] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:07] "POST /api/interview/132/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:07] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:18] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:18] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:22] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:27] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:32] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_67e06caa65d44e85b5ede72407203efd.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_67e06caa65d44e85b5ede72407203efd.webm ...
+❌ 语音识别失败: Error code: 500 - {'error': {'message': 'Audio transcription failed or produced no output', 'type': 'transcription_error'}}
+🎤 [STT] 转录结果: 
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_a71c5dfe93234ebba754d6786b1763a3.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_a71c5dfe93234ebba754d6786b1763a3.webm ...
+识别结果: 我是一个即将毕业的学生，我想做普工，有什么具体要求吗？
+🎤 [STT] 转录结果: 我是一个即将毕业的学生，我想做普工，有什么具体要求吗？
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在调用火山引擎: 你好，欢迎来到嘉善富鼎电子科技...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神向下", "表情严肃", "身体放松"]
+✅ 语音生成成功! 耗时: 7.05s
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "身体放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_0af21becceda4d71b4b6534f1f98be2f.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_0af21becceda4d71b4b6534f1f98be2f.webm ...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+识别结果: 这些基本的技能我都学会了，但是一些复杂的项目我没怎么做过。接下来我应该怎么做？
+🎤 [STT] 转录结果: 这些基本的技能我都学会了，但是一些复杂的项目我没怎么做过。接下来我应该怎么做？
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+正在调用火山引擎: 好的，了解了。我们公司会提供一...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+✅ 语音生成成功! 耗时: 3.53s
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+⏳ [后台任务] 开始为 Session 131 生成报告...
+🚀 开始生成面试报告 (含参考答案)...
+📊 正在进行整体打分...
+📝 正在分析 2 组问答数据 (生成点评+范例)...
+✅ [后台任务] Session 131 报告生成完毕！
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["坐姿端正", "表情自然", "眼神坚定"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在调用火山引擎: 好的，这个岗位的主要职责包括向...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+✅ 语音生成成功! 耗时: 6.39s
+👁️ 视觉分析结果: ["眼神向下", "表情严肃", "坐姿放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "身体僵硬"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神向下", "表情严肃", "坐姿放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情严肃", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+🖼️ 正在进行视觉分析...
+正在调用火山引擎: 这些兴趣与我们公司文化和岗位要...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+✅ 语音生成成功! 耗时: 5.45s
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...127.0.0.1 - - [03/Feb/2026 01:58:37] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:38] "POST /api/interview/132/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:42] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:47] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:52] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:58:57] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:02] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:07] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:14] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:26] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:26] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:27] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:32] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:37] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:41] "GET /learning HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:42] "POST /api/interview/132/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:44] "GET /learning/material/3 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:47] "GET /learning/material/6 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:52] "GET /resume_dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 01:59:55] "GET /resume/edit/4 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:00:48] "POST /api/resume/optimize HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:01:08] "GET /radar HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:01:24] "GET /leaderboard HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:01:25] "GET /radar HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:01:46] "GET /leaderboard HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:01:49] "GET /history HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:06:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 02:08:04] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:38:21] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 02:38:31] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 02:38:31] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 02:38:31] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 04:42:26] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 04:42:26] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 04:42:27] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 05:40:03] "[32mGET /interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 05:40:03] "GET /login?next=/interview/room/130 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:03] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 05:40:05] "[32mPOST /login?next=/interview/room/130 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 05:40:05] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:05] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:17] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:17] "GET /interview/room/133 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:24] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:29] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:34] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:39] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:44] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:48] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:49] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:54] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:57] "POST /api/interview/133/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:40:57] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 05:40:59] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:04] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:09] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:14] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:16] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:19] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:23] "POST /api/interview/133/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:24] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:29] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:34] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:39] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:44] "POST /api/interview/133/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:47] "POST /api/interview/133/finish HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:48] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 05:41:48] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:23] "GET /interview/room/130 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:34] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:35] "POST /api/interview/130/finish HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:41] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:48] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:48] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:21:49] "POST /api/interview/130/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:22:00] "GET /learning HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:22:05] "GET /resume_dashboard HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:22:29] "GET /resume/edit/4 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:23:26] "POST /api/resume/optimize HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:05] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:05] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:30] "POST /api/interview/create HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:30] "GET /interview/room/134 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:37] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:41] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:46] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:51] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:24:56] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:01] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:01] "POST /api/interview/134/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:02] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 07:25:06] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:11] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:16] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:21] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:26] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:31] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:33] "POST /api/interview/transcribe HTTP/1.0" 200 -
+
+正在调用火山引擎: 这个岗位更需要我们关注客户的需...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "身体僵硬"]
+✅ 语音生成成功! 耗时: 4.05s
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "身体放松"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "神情紧张", "坐姿不端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: [
+  "眼神飘忽",
+  "神情紧张",
+  "坐姿端正"
+]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: [
+    "眼神坚定",
+    "表情自然",
+    "坐姿端正"
+]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_81960d37b21d4283a82a0dbf7f9ca352.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_81960d37b21d4283a82a0dbf7f9ca352.webm ...
+识别结果: 你好，我是一个高级工的毕业生。我想知道这个岗位需要我做些什么？
+🎤 [STT] 转录结果: 你好，我是一个高级工的毕业生。我想知道这个岗位需要我做些什么？
+🖼️ 正在进行视觉分析...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+正在调用火山引擎: 你好，这个岗位主要负责屏下指纹...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿放松"]
+✅ 语音生成成功! 耗时: 5.63s
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿随意"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_93ba1cdabd63475d8a49da817fad3a4c.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_93ba1cdabd63475d8a49da817fad3a4c.webm ...
+识别结果: 那主要我在校期间，我需要学习哪些方面的知识？
+🎤 [STT] 转录结果: 那主要我在校期间，我需要学习哪些方面的知识？
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+🖼️ 正在进行视觉分析...
+正在调用火山引擎: 在校期间，你可以学习一些电子技...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+✅ 语音生成成功! 耗时: 5.39s
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "面带微笑", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+⏳ [后台任务] 开始为 Session 133 生成报告...
+🚀 开始生成面试报告 (含参考答案)...
+📊 正在进行整体打分...
+📝 正在分析 2 组问答数据 (生成点评+范例)...
+✅ [后台任务] Session 133 报告生成完毕！
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+⏳ [后台任务] 开始为 Session 130 生成报告...
+🚀 开始生成面试报告 (含参考答案)...
+📊 正在进行整体打分...
+🖼️ 正在进行视觉分析...
+📝 正在分析 2 组问答数据 (生成点评+范例)...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+✅ [后台任务] Session 130 报告生成完毕！
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "神情紧张", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在请求硅基流动模型: Qwen/Qwen2.5-72B-Instruct ...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+正在调用火山引擎: 好的，这个岗位主要涉及操作机台...
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+✅ 语音生成成功! 耗时: 8.86s
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神不看镜头", "表情放松", "坐姿随意"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神飘忽", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]
+🎤 [STT] 开始转录: /root/projects/interview/app/static/uploads/temp/transcribe_51_ebf0544efa3746c7a6d0335f5eccb4ee.webm
+正在进行语音识别: /root/projects/interview/app/static/uploads/temp/transcribe_51_ebf0544efa3746c7a6d0335f5eccb4ee.webm ...
+识别结果: 啊，我是一个毕业生，我跟老师做过一些项目，但是很多实际的东西我不会。
+🎤 [STT] 转录结果: 啊，我是一个毕业生，我跟老师做过一些项目，但是很多实际的东西我不会。
+🖼️ 正在进行视觉分析...
+👁️ 视觉分析结果: ["眼神坚定", "表情自然", "坐姿端正"]127.0.0.1 - - [03/Feb/2026 07:25:36] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:37] "POST /api/interview/134/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:41] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:46] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:51] "POST /api/interview/transcribe HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:51] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:56] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:25:57] "POST /api/interview/134/chat HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:01] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:06] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:11] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:16] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:21] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:26] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:31] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:36] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:26:41] "POST /api/interview/134/visual_feedback HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 07:56:43] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:44] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 07:56:46] "[32mPOST /login?next=/ HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 07:56:46] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:47] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:54] "[32mGET /interview/summary/133 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 07:56:55] "GET /login?next=/interview/summary/133 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:56] "[32mPOST /login?next=/interview/summary/133 HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 07:56:56] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:56] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:56:57] "GET /interview/summary/133 HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:57:04] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:57:04] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:57:07] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 07:57:08] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 18:41:36] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 18:41:36] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Feb/2026 18:41:37] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 18:41:37] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 22:42:08] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [03/Feb/2026 22:42:14] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Feb/2026 22:42:15] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [05/Feb/2026 10:00:08] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [05/Feb/2026 10:00:08] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [05/Feb/2026 10:00:09] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [05/Feb/2026 10:00:11] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [05/Feb/2026 13:29:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [05/Feb/2026 15:14:27] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [05/Feb/2026 15:14:30] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Feb/2026 00:59:32] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Feb/2026 00:59:32] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Feb/2026 00:59:33] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Feb/2026 09:00:21] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Feb/2026 09:00:28] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [07/Feb/2026 09:00:32] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [07/Feb/2026 14:19:28] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [07/Feb/2026 14:19:28] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [07/Feb/2026 14:19:29] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Feb/2026 14:19:29] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [08/Feb/2026 22:00:11] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [08/Feb/2026 22:00:12] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [09/Feb/2026 15:53:49] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [09/Feb/2026 15:53:49] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [09/Feb/2026 15:53:50] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [09/Feb/2026 15:53:51] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [10/Feb/2026 13:14:27] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [10/Feb/2026 13:14:29] "[33mPOST /sdk HTTP/1.0[0m" 404 -
+127.0.0.1 - - [10/Feb/2026 13:14:29] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [10/Feb/2026 13:14:29] "[33mGET /nmaplowercheck1770729269 HTTP/1.0[0m" 404 -
+127.0.0.1 - - [10/Feb/2026 13:14:29] "[33mGET /HNAP1 HTTP/1.0[0m" 404 -
+127.0.0.1 - - [10/Feb/2026 13:14:29] "[33mGET /evox/about HTTP/1.0[0m" 404 -
+127.0.0.1 - - [10/Feb/2026 13:14:39] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [10/Feb/2026 13:14:39] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [11/Feb/2026 23:14:02] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [11/Feb/2026 23:14:09] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [11/Feb/2026 23:14:10] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [12/Feb/2026 05:30:11] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [12/Feb/2026 05:30:11] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [12/Feb/2026 05:30:11] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [12/Feb/2026 05:30:12] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [12/Feb/2026 09:25:53] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [12/Feb/2026 09:25:54] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [14/Feb/2026 10:29:47] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [14/Feb/2026 10:29:47] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [14/Feb/2026 10:29:52] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [14/Feb/2026 10:29:52] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [15/Feb/2026 20:23:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [15/Feb/2026 20:23:44] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [16/Feb/2026 12:21:22] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [16/Feb/2026 12:21:23] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [16/Feb/2026 12:21:25] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [16/Feb/2026 12:21:26] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [16/Feb/2026 23:12:39] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [16/Feb/2026 23:12:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [16/Feb/2026 23:12:43] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [18/Feb/2026 15:13:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [18/Feb/2026 15:13:44] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [18/Feb/2026 18:39:00] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [18/Feb/2026 18:39:00] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [18/Feb/2026 18:39:02] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [18/Feb/2026 18:39:04] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [19/Feb/2026 20:20:16] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [19/Feb/2026 20:22:09] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [19/Feb/2026 20:22:12] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [19/Feb/2026 20:24:25] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [20/Feb/2026 21:45:42] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [20/Feb/2026 21:45:42] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [20/Feb/2026 21:45:48] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [20/Feb/2026 21:45:49] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [21/Feb/2026 10:32:28] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [21/Feb/2026 10:32:28] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [22/Feb/2026 23:16:03] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [22/Feb/2026 23:16:03] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [22/Feb/2026 23:16:05] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [22/Feb/2026 23:16:06] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [24/Feb/2026 04:40:25] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [24/Feb/2026 04:40:25] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [25/Feb/2026 06:48:07] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [26/Feb/2026 06:20:36] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [26/Feb/2026 06:20:54] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [26/Feb/2026 06:20:54] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 06:20:55] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 06:20:55] "[33mGET /sitemap.xml HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 06:20:56] "[33mGET /config.json HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 14:56:09] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [26/Feb/2026 14:56:11] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [26/Feb/2026 14:56:11] "[33mPOST /sdk HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 14:56:11] "[33mGET /nmaplowercheck1772117771 HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 14:56:11] "[33mGET /evox/about HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 14:56:11] "[33mGET /HNAP1 HTTP/1.0[0m" 404 -
+127.0.0.1 - - [26/Feb/2026 14:56:21] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [26/Feb/2026 14:56:21] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [27/Feb/2026 02:29:31] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [27/Feb/2026 02:29:32] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [27/Feb/2026 02:29:32] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [27/Feb/2026 07:09:45] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [27/Feb/2026 11:17:52] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [27/Feb/2026 11:17:54] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [28/Feb/2026 01:38:13] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [28/Feb/2026 01:40:14] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [28/Feb/2026 01:40:17] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [28/Feb/2026 01:42:41] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [01/Mar/2026 21:06:43] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Mar/2026 20:49:48] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [02/Mar/2026 20:49:49] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [03/Mar/2026 01:39:48] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [03/Mar/2026 01:39:48] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [05/Mar/2026 13:38:15] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [05/Mar/2026 13:38:16] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 03:40:31] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 03:42:16] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [06/Mar/2026 03:42:16] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 03:44:16] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [06/Mar/2026 05:54:02] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 05:54:02] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 05:54:09] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [06/Mar/2026 05:54:11] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 05:54:20] "[32mPOST /login?next=/ HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 05:54:20] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 05:54:21] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 05:55:41] "GET /radar HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 06:11:39] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 07:39:05] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 07:39:05] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 07:39:06] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [06/Mar/2026 07:39:07] "[32mPOST /login?next=/ HTTP/1.0[0m" 302 -
+127.0.0.1 - - [06/Mar/2026 07:39:07] "GET / HTTP/1.0" 200 -
+127.0.0.1 - - [06/Mar/2026 07:39:07] "GET /api/company/list HTTP/1.0" 200 -
+127.0.0.1 - - [07/Mar/2026 07:43:56] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [07/Mar/2026 07:44:16] "GET /login?next=/ HTTP/1.0" 200 -
+127.0.0.1 - - [07/Mar/2026 07:44:16] "[33mGET /favicon.ico HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Mar/2026 07:44:17] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Mar/2026 07:44:19] "[33mGET /sitemap.xml HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Mar/2026 07:44:20] "[33mGET /config.json HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Mar/2026 09:14:53] "[33mGET /robots.txt HTTP/1.0[0m" 404 -
+127.0.0.1 - - [07/Mar/2026 09:15:01] "[32mGET / HTTP/1.0[0m" 302 -
+127.0.0.1 - - [07/Mar/2026 09:15:02] "GET /login?next=/ HTTP/1.0" 200 -
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          [2026-02-02 01:49:01 +0000] [526852] [INFO] Shutting down: Master

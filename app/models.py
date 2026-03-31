@@ -22,6 +22,10 @@ class User(UserMixin, db.Model):
     # === 新增：简历技能标签 ===
     resume_tags = db.Column(db.String(255))  # 用逗号分隔的字符串存储
 
+    # 新增：个人基础信息（用于一键导入简历）
+    # 结构: {name, phone, email, location, job_target, self_evaluation, ...}
+    profile_info = db.Column(db.JSON)
+
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     # === 权限辅助方法 ===
@@ -44,6 +48,20 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+class Resume(db.Model):
+    """简历表"""
+    __tablename__ = 'resumes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    title = db.Column(db.String(100), default='我的简历')
+    template_id = db.Column(db.String(50), default='modern')
+    content = db.Column(db.JSON)  # 存储简历的结构化数据
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    user = db.relationship('User', backref='resumes')
+
+
 class InterviewSession(db.Model):
     """面试场次表"""
     __tablename__ = 'interview_sessions'
@@ -53,9 +71,13 @@ class InterviewSession(db.Model):
     # 为了方便统计查询，建立反向关系
     user = db.relationship('User', backref='sessions')
 
+    # 关联岗位 ID (允许为空，兼容旧数据)
+    position_id = db.Column(db.Integer, db.ForeignKey('positions.id'), nullable=True)
+
     target_role = db.Column(db.String(50))
     difficulty = db.Column(db.String(20))
     voice_type = db.Column(db.String(50), default='BV001_streaming')
+    use_resume = db.Column(db.Boolean, default=False)
 
     status = db.Column(db.String(20), default='ongoing')
     total_score = db.Column(db.Integer)
@@ -81,6 +103,9 @@ class ChatMessage(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now)
     reference_answer = db.Column(db.Text)  # 满分参考答案
 
+    # 新增：视觉分析上下文 (存储 JSON 或 文本标签)
+    visual_context = db.Column(db.Text)
+
 
 class Department(db.Model):
     """系部表"""
@@ -100,6 +125,31 @@ class SchoolClass(db.Model):
 
     # 联合唯一索引：同一个系部下班级名不能重复
     __table_args__ = (db.UniqueConstraint('department_id', 'name', name='_dept_class_uc'),)
+
+
+class Company(db.Model):
+    """公司表（一级分类）"""
+    __tablename__ = 'companies'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)  # Markdown 格式的公司介绍/提示词
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    # 关联岗位
+    positions = db.relationship('Position', backref='company', cascade='all, delete-orphan')
+
+
+class Position(db.Model):
+    """岗位表（二级分类）"""
+    __tablename__ = 'positions'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)  # Markdown 格式的岗位介绍/提示词
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    # 关联面试场次
+    sessions = db.relationship('InterviewSession', backref='position', lazy='dynamic')
 
 
 class LearningCategory(db.Model):
@@ -146,3 +196,31 @@ class UserLearningProgress(db.Model):
 
     # 联合唯一索引：防止重复记录
     __table_args__ = (db.UniqueConstraint('user_id', 'material_id', name='_user_material_uc'),)
+
+
+class SystemConfig(db.Model):
+    """系统全局配置表"""
+    __tablename__ = 'system_configs'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(50), unique=True, nullable=False)  # 配置键，如 'enable_tts'
+    value = db.Column(db.String(255))  # 配置值
+    description = db.Column(db.String(255))  # 描述
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @staticmethod
+    def get(key, default=None):
+        config = SystemConfig.query.filter_by(key=key).first()
+        return config.value if config else default
+
+    @staticmethod
+    def set(key, value, description=None):
+        config = SystemConfig.query.filter_by(key=key).first()
+        if config:
+            config.value = str(value)
+            if description:
+                config.description = description
+        else:
+            config = SystemConfig(key=key, value=str(value), description=description)
+            db.session.add(config)
+        db.session.commit()
+

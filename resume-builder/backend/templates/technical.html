@@ -1,0 +1,88 @@
+<div class="resume-template technical">
+  <style>
+    .resume-template.technical {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      color: #333;
+      line-height: 1.6;
+      padding: 0; margin: 0;
+      background: white;
+      box-sizing: border-box;
+    }
+    
+    .main-flow { padding: 40px; }
+
+    .technical .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; margin-bottom: 20px; }
+    
+    .technical .photo-square { 
+      width: 100px; height: 120px; background: #e8f5e9; margin: 0 auto 15px; border: 1px solid #c8e6c9; 
+      background-size: cover; background-position: center;
+    }
+    
+    .technical .name { font-size: 2rem; font-weight: 700; color: #1b5e20; margin-bottom: 5px; }
+    .technical .job-info { font-size: 1.1rem; font-weight: 500; color: #333; margin-bottom: 10px; }
+    .technical .contact-bar { display: flex; justify-content: center; gap: 20px; font-size: 0.95rem; color: #666; background: #f1f8e9; padding: 8px; border-radius: 4px; }
+    .technical .section-title { font-size: 1.25rem; font-weight: 700; color: #1b5e20; border-bottom: 2px solid #1b5e20; padding-bottom: 5px; margin: 25px 0 15px; }
+    .technical .skills-box { background: #f9fbe7; padding: 15px; border-radius: 4px; border: 1px solid #dcedc8; }
+    .tech-block { margin-bottom: 25px; }
+    .technical .item-head { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.05rem; }
+    .technical .item-sub { color: #2e7d32; font-weight: 600; margin-bottom: 5px; }
+    .technical ul { padding-left: 20px; margin: 5px 0; }
+  </style>
+
+  <div class="main-flow">
+    <div class="header">
+      <div class="photo-square" style="background-image: url('{{avatar}}');"></div>
+      <div class="name">{{name}}</div>
+      <div class="job-info">{{job_target}}</div>
+      <div class="contact-bar">
+        <span>📞 {{phone}}</span>
+        <span>✉️ {{email}}</span>
+        <span>📍 {{location}}</span>
+      </div>
+    </div>
+    <div class="tech-block">
+      <div class="section-title">专业技能与证书</div>
+      <div class="skills-box">
+        <p><strong>技能专长：</strong></p>
+        <ul>{{skills}}</ul>
+        <p style="margin-top:10px;"><strong>应用技能：</strong></p>
+        <ul>{{applied_skills}}</ul>
+        <p style="margin-top:10px;"><strong>资格证书：</strong></p>
+        <ul>{{certificates}}</ul>
+      </div>
+    </div>
+    <div class="tech-block">
+      <div class="section-title">实习实训经历</div>
+      <div class="item-head">
+        <span>{{company}}</span>
+        <span>{{internship_date}}</span>
+      </div>
+      <div class="item-sub">{{position}}</div>
+      <p>{{internship_description}}</p>
+    </div>
+    <div class="tech-block">
+      <div class="section-title">项目经验</div>
+      <div class="item-head">
+        <span>{{project_name}}</span>
+        <span>{{project_date}}</span>
+      </div>
+      <div class="item-sub">{{project_role}}</div>
+      <p>{{project_description}}</p>
+      <p><strong>成果：</strong>{{project_outcome}}</p>
+    </div>
+    <div class="tech-block">
+      <div class="section-title">教育背景</div>
+      <div class="item-head">
+        <span>{{school_name}}</span>
+        <span>{{enrollment_date}} - {{graduation_date}}</span>
+      </div>
+      <div class="item-sub">{{major}}</div>
+      <p><strong>主修课程：</strong></p>
+      <ul>{{main_courses}}</ul>
+    </div>
+    <div class="tech-block">
+      <div class="section-title">自我评价</div>
+      <p>{{self_evaluation}}</p>
+    </div>
+  </div>
+</div>

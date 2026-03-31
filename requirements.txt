@@ -2,3 +2,5 @@ flask
 flask-sqlalchemy
 openai
 python-dotenv
+pandas
+openpyxl

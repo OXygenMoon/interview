@@ -8,7 +8,7 @@ from collections import Counter
 from sqlalchemy import func
 from datetime import datetime
 from . import db  # 确保导入 db 实例，用于 db.session.add/commit
-from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress
+from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress, Company, Position, Resume, SystemConfig
 from .config import Config
 from .decorators import teacher_required, dept_head_required, admin_required
 
@@ -18,6 +18,62 @@ bp = Blueprint('routes', __name__)
 # ===============================================================
 #  学生端核心功能 (首页、历史、聊天、报告)
 # ===============================================================
+
+@bp.app_template_filter('time_ago')
+def time_ago(value):
+    """
+    将 datetime 转换为 'x 分钟前' 的格式
+    """
+    if not value: return ""
+    now = datetime.now()
+    diff = now - value
+    
+    seconds = diff.total_seconds()
+    
+    if seconds < 60:
+        return "刚刚"
+    elif seconds < 3600:
+        return f"{int(seconds // 60)} 分钟前"
+    elif seconds < 86400:
+        return f"{int(seconds // 3600)} 小时前"
+    elif seconds < 604800:
+        return f"{int(seconds // 86400)} 天前"
+    elif seconds < 2592000:
+        return f"{int(seconds // 604800)} 周前"
+    else:
+        return value.strftime('%Y-%m-%d')
+
+
+@bp.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_settings():
+    """系统全局设置"""
+    if request.method == 'POST':
+        # 处理开关设置
+        enable_tts = request.form.get('enable_tts') == 'on'
+        enable_video = request.form.get('enable_video') == 'on'
+        
+        # 保存设置
+        SystemConfig.set('enable_tts', 'true' if enable_tts else 'false', '是否启用面试官语音输出 (TTS)')
+        SystemConfig.set('enable_video', 'true' if enable_video else 'false', '是否启用视频面试 (摄像头与视觉分析)')
+        
+        flash('系统设置已更新', 'success')
+        return redirect(url_for('routes.admin_settings'))
+    
+    # 读取设置
+    enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
+    enable_video = SystemConfig.get('enable_video', 'true') == 'true'
+    
+    return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video)
+@bp.route('/admin/company')
+@login_required
+@admin_required
+def admin_company():
+    """公司/岗位管理页面"""
+    companies = Company.query.order_by(Company.created_at.desc()).all()
+    return render_template('admin_company.html', companies=companies)
+
 
 @bp.route('/')
 @login_required
@@ -60,13 +116,81 @@ def home():
             latest_score = scores[0]
             stats['latest_trend'] = round(latest_score - stats['avg_score'], 1)
 
+    # 获取用户的所有简历 (用于发起面试时选择)
+    my_resumes = Resume.query.filter_by(user_id=current_user.id).order_by(Resume.updated_at.desc()).all()
+
     return render_template(
         'index.html',
         current_user=current_user,
         sessions=history_sessions,  # 传给模板的是包含"生成中"的全量列表
         stats=stats,
-        voice_options=Config.VOLC_AVAILABLE_VOICES
+        voice_options=Config.VOLC_AVAILABLE_VOICES,
+        my_resumes=my_resumes
     )
+
+
+@bp.route('/leaderboard')
+@login_required
+def leaderboard():
+    """
+    学生端：班级排行榜
+    可以看到班级排名，包括：平均得分排名、最高分排名、面试次数排名
+    """
+    if current_user.role != 'student':
+        flash("只有学生可以查看班级排行榜", "warning")
+        return redirect(url_for('routes.dashboard'))
+    
+    # 1. 获取同班同学
+    classmates = User.query.filter_by(class_name=current_user.class_name, role='student').all()
+    
+    # 2. 准备数据容器
+    rank_data = []
+    
+    for student in classmates:
+        # 获取该生已完成的面试
+        sessions = InterviewSession.query.filter_by(user_id=student.id, status='completed').all()
+        count = len(sessions)
+        
+        avg_score = 0
+        max_score = 0
+        last_active = None
+        
+        if count > 0:
+            scores = [s.total_score for s in sessions if s.total_score is not None]
+            if scores:
+                avg_score = round(sum(scores) / len(scores), 1)
+                max_score = max(scores)
+            
+            # 计算最近活跃时间
+            last_active = max(s.start_time for s in sessions)
+        
+        rank_data.append({
+            'user': student,
+            'count': count,
+            'avg_score': avg_score,
+            'max_score': max_score,
+            'last_active': last_active
+        })
+    
+    # 3. 生成三个维度的排名列表
+    # A. 平均分排名 (降序)
+    avg_rank_list = sorted(rank_data, key=lambda x: x['avg_score'], reverse=True)
+    # 只取前 20 名展示，避免太长
+    avg_rank_list = avg_rank_list[:20]
+    
+    # B. 最高分排名 (降序)
+    max_rank_list = sorted(rank_data, key=lambda x: x['max_score'], reverse=True)
+    max_rank_list = max_rank_list[:20]
+    
+    # C. 勤奋度排名 (次数降序)
+    count_rank_list = sorted(rank_data, key=lambda x: x['count'], reverse=True)
+    count_rank_list = count_rank_list[:20]
+    
+    return render_template('leaderboard.html',
+                           current_user=current_user,
+                           avg_rank=avg_rank_list,
+                           max_rank=max_rank_list,
+                           count_rank=count_rank_list)
 
 
 @bp.route('/history')
@@ -158,13 +282,17 @@ def interview_room(session_id):
         is_read_only = True
 
     messages = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
+    
+    # 获取全局配置
+    enable_video = SystemConfig.get('enable_video', 'true') == 'true'
 
     return render_template('chat.html',
                            session=session,
                            messages=messages,
                            current_user=current_user,
                            base_template=base_template,
-                           is_read_only=is_read_only)
+                           is_read_only=is_read_only,
+                           enable_video=enable_video)
 
 
 # === 面试报告页 ===
@@ -215,11 +343,71 @@ def avatar_generator(name):
     return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + name
 
 
-@bp.route('/profile/resume')
+@bp.route('/profile/basic', methods=['GET', 'POST'])
 @login_required
-def profile_resume():
-    """我的简历页面"""
-    return render_template('profile_resume.html', current_user=current_user)
+def profile_basic():
+    """个人基础信息维护页面"""
+    if request.method == 'POST':
+        # 保存基础信息
+        info = {
+            'name': request.form.get('name'),
+            'job_target': request.form.get('job_target'),
+            'phone': request.form.get('phone'),
+            'email': request.form.get('email'),
+            'location': request.form.get('location'),
+            'self_evaluation': request.form.get('self_evaluation')
+        }
+        current_user.profile_info = info
+        db.session.commit()
+        flash('基础信息已保存', 'success')
+        return redirect(url_for('routes.profile_basic'))
+        
+    return render_template('profile_basic.html', user=current_user)
+
+
+@bp.route('/resume_dashboard', methods=['GET', 'POST'])
+@login_required
+def resume_dashboard():
+    """简历管理看板 (含个人基础信息)"""
+    
+    # 如果是 POST 请求，说明是在保存基础信息
+    if request.method == 'POST':
+        info = {
+            'name': request.form.get('name'),
+            'job_target': request.form.get('job_target'),
+            'phone': request.form.get('phone'),
+            'email': request.form.get('email'),
+            'location': request.form.get('location'),
+            'self_evaluation': request.form.get('self_evaluation')
+        }
+        current_user.profile_info = info
+        db.session.commit()
+        flash('基础信息已保存', 'success')
+        return redirect(url_for('routes.resume_dashboard'))
+
+    resumes = Resume.query.filter_by(user_id=current_user.id).order_by(Resume.updated_at.desc()).all()
+    return render_template('resume_dashboard.html', resumes=resumes, user=current_user)
+
+
+@bp.route('/resume/edit/<int:resume_id>')
+@login_required
+def resume_edit(resume_id):
+    """简历编辑器 (指定ID)"""
+    resume = Resume.query.get_or_404(resume_id)
+    if resume.user_id != current_user.id:
+        flash('无权访问此简历', 'error')
+        return redirect(url_for('routes.resume_dashboard'))
+    return render_template('resume_editor.html', resume=resume)
+
+
+@bp.route('/resume_builder')
+@login_required
+def resume_builder():
+    """
+    旧版入口重定向到仪表盘
+    """
+    return redirect(url_for('routes.resume_dashboard'))
+
 
 
 # ===============================================================
@@ -259,6 +447,208 @@ def dashboard():
                            total_interviews=total_interviews,
                            avg_score=avg_score,
                            top_students=top_students)
+
+
+@bp.route('/admin/capability_profile')
+@login_required
+@teacher_required
+def admin_capability_profile():
+    """能力画像分析 (支持全校/系部/班级三级视图)"""
+    
+    # === 1. 参数获取与权限控制 ===
+    scope = request.args.get('scope') # 'school', 'department', 'class'
+    selected_dept = request.args.get('dept_name')
+    selected_class = request.args.get('class_name')
+    
+    # 默认逻辑
+    if not scope:
+        if current_user.role == 'admin': 
+            scope = 'school'
+        elif current_user.role == 'dept_head': 
+            scope = 'department'
+            selected_dept = current_user.department
+        elif current_user.role == 'teacher': 
+            scope = 'class'
+            selected_class = current_user.class_name
+
+    # 强制权限收敛
+    if current_user.role == 'teacher':
+        scope = 'class'
+        selected_class = current_user.class_name
+    elif current_user.role == 'dept_head':
+        # 系主任只能看本系，不能看全校
+        if scope == 'school': 
+            scope = 'department'
+        selected_dept = current_user.department
+
+    # === 2. 构建学生查询 ===
+    query = User.query.filter_by(role='student')
+    display_title = "全校能力画像"
+    
+    if scope == 'school':
+        display_title = "全校能力画像"
+        # 此时 selected_dept 和 selected_class 应忽略或置空
+        pass
+        
+    elif scope == 'department':
+        if selected_dept:
+            query = query.filter_by(department=selected_dept)
+            display_title = f"{selected_dept} - 能力画像"
+        else:
+            # 如果没选系，不显示任何数据，等待用户选择
+            query = query.filter(False)
+            
+    elif scope == 'class':
+        if selected_class:
+            query = query.filter_by(class_name=selected_class)
+            display_title = f"{selected_class} - 能力画像"
+            # 如果同时选了系，也可以加校验，但 class_name 理论上唯一或足以定位
+            if selected_dept:
+                query = query.filter_by(department=selected_dept)
+        else:
+            # 如果没选班级，不显示数据
+            query = query.filter(False)
+
+    students = query.all()
+    student_ids = [s.id for s in students]
+    
+    # === 3. 获取下拉菜单数据 (用于前端筛选) ===
+    departments_list = []
+    classes_list = []
+    
+    if current_user.role == 'admin':
+        # 管理员可以看到所有系
+        departments_list = [d.name for d in Department.query.all()]
+        
+        # 如果当前选了系，则加载该系的班级
+        if selected_dept:
+            dept_obj = Department.query.filter_by(name=selected_dept).first()
+            if dept_obj:
+                classes_list = [c.name for c in dept_obj.classes]
+        
+    elif current_user.role == 'dept_head':
+        # 系主任只能看本系的班级
+        dept_obj = Department.query.filter_by(name=current_user.department).first()
+        if dept_obj:
+            classes_list = [c.name for c in dept_obj.classes]
+
+    # === 4. 核心数据计算 (复用原有逻辑，但基于动态 query) ===
+    if not student_ids:
+         return render_template('admin_class_profile.html', 
+                                has_data=False, 
+                                display_title=display_title,
+                                scope=scope,
+                                selected_dept=selected_dept,
+                                selected_class=selected_class,
+                                departments_list=departments_list,
+                                classes_list=classes_list)
+
+    # 获取有效面试
+    sessions = InterviewSession.query.filter(
+        InterviewSession.user_id.in_(student_ids),
+        InterviewSession.status == 'completed'
+    ).all()
+    
+    if not sessions:
+         return render_template('admin_class_profile.html', 
+                                has_data=False, 
+                                display_title=display_title,
+                                scope=scope,
+                                selected_dept=selected_dept,
+                                selected_class=selected_class,
+                                departments_list=departments_list,
+                                classes_list=classes_list)
+
+    # --- A. 整体五维雷达 ---
+    dimensions = ["专业技能", "逻辑思维", "语言表达", "抗压能力", "礼仪态度"]
+    dim_totals = {d: 0 for d in dimensions}
+    dim_counts = {d: 0 for d in dimensions}
+    
+    # --- B. 能力偏差 ---
+    weakness_alerts = [] 
+    
+    student_radars = {} 
+    
+    for s in sessions:
+        if not s.radar_data: continue
+        uid = s.user_id
+        if uid not in student_radars:
+            student_radars[uid] = {d: [] for d in dimensions}
+        for dim in dimensions:
+            score = s.radar_data.get(dim, 0)
+            dim_totals[dim] += score
+            dim_counts[dim] += 1
+            student_radars[uid][dim].append(score)
+            
+    # 计算整体平均 (Group Average)
+    group_avg_radar = {}
+    for dim in dimensions:
+        count = dim_counts[dim]
+        group_avg_radar[dim] = round(dim_totals[dim] / count, 1) if count > 0 else 0
+
+    # 计算学生偏差
+    student_info_map = {s.id: s for s in students}
+    for uid, radar_lists in student_radars.items():
+        user = student_info_map.get(uid)
+        if not user: continue
+        
+        user_avgs = {}
+        for dim in dimensions:
+            scores = radar_lists[dim]
+            if not scores: continue
+            u_avg = sum(scores) / len(scores)
+            user_avgs[dim] = u_avg
+            
+            # 偏差检测：低于平均分 15 分
+            g_avg = group_avg_radar.get(dim, 0)
+            if u_avg < (g_avg - 15):
+                weakness_alerts.append({
+                    'student': user.truename,
+                    'student_id': user.student_id,
+                    'class_name': user.class_name, # 多加一个班级显示，因为可能是全校视图
+                    'dim': dim,
+                    'score': round(u_avg, 1),
+                    'group_avg': g_avg,
+                    'diff': round(u_avg - g_avg, 1)
+                })
+
+    # --- C. 薄弱点 ---
+    sorted_dims = sorted(group_avg_radar.items(), key=lambda x: x[1])
+    weak_dims = sorted_dims[:2]
+
+    # --- D. 分布 ---
+    grade_dist = {'S': 0, 'A': 0, 'B': 0, 'C': 0, 'D': 0}
+    for uid, radar_lists in student_radars.items():
+        all_scores = []
+        for d in dimensions:
+            all_scores.extend(radar_lists[d])
+        if not all_scores: continue
+        final_avg = sum(all_scores) / len(all_scores)
+        
+        if final_avg >= 90: grade_dist['S'] += 1
+        elif final_avg >= 80: grade_dist['A'] += 1
+        elif final_avg >= 70: grade_dist['B'] += 1
+        elif final_avg >= 60: grade_dist['C'] += 1
+        else: grade_dist['D'] += 1
+
+    return render_template(
+        'admin_class_profile.html',
+        has_data=True,
+        display_title=display_title,
+        scope=scope,
+        selected_dept=selected_dept,
+        selected_class=selected_class,
+        departments_list=departments_list,
+        classes_list=classes_list,
+        
+        dimensions=dimensions,
+        class_avg_data=[group_avg_radar[d] for d in dimensions], # 变量名保持兼容，实际是 group avg
+        weak_dims=weak_dims,
+        weakness_alerts=weakness_alerts,
+        grade_dist=grade_dist,
+        total_students=len(students),
+        active_students=len(student_radars)
+    )
 
 
 @bp.route('/teacher/students')
@@ -388,6 +778,12 @@ def add_department():
 def delete_department(dept_id):
     """API: 删除系部"""
     dept = Department.query.get_or_404(dept_id)
+
+    # 1. 检查该系部下是否有学生
+    student_count = User.query.filter_by(department=dept.name, role='student').count()
+    if student_count > 0:
+        return jsonify({'error': f'无法删除：该系部下仍有 {student_count} 名学生，请先移除学生'}), 400
+
     db.session.delete(dept)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -426,8 +822,31 @@ def add_class():
 @bp.route('/api/admin/class/delete/<int:class_id>', methods=['POST'])
 @login_required
 def delete_class(class_id):
-    """API: 删除班级"""
+    """API: 删除班级 (级联删除学生和面试记录)"""
     cls = SchoolClass.query.get_or_404(class_id)
+    dept = Department.query.get(cls.department_id)
+    
+    # 1. 查找该班级下的所有学生
+    # 注意：User 表中 department 和 class_name 是字符串字段
+    students = User.query.filter_by(
+        department=dept.name, 
+        class_name=cls.name, 
+        role='student'
+    ).all()
+
+    for student in students:
+        # 2. 删除学生的所有面试记录
+        sessions = InterviewSession.query.filter_by(user_id=student.id).all()
+        for session in sessions:
+            # 删除聊天记录
+            ChatMessage.query.filter_by(session_id=session.id).delete()
+            # 删除 Session
+            db.session.delete(session)
+        
+        # 3. 删除学生账号
+        db.session.delete(student)
+
+    # 4. 删除班级
     db.session.delete(cls)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -521,6 +940,37 @@ def import_students():
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/api/admin/student/delete/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_student_api(user_id):
+    """API: 删除单个学生 (级联删除面试记录)"""
+    student = User.query.get_or_404(user_id)
+    
+    if student.role != 'student':
+        return jsonify({'error': '只能删除学生账号'}), 400
+
+    try:
+        # 1. 删除学生的所有面试记录
+        sessions = InterviewSession.query.filter_by(user_id=student.id).all()
+        for session in sessions:
+            # 删除聊天记录
+            ChatMessage.query.filter_by(session_id=session.id).delete()
+            # 删除 Session
+            db.session.delete(session)
+        
+        # 2. 删除学习进度
+        UserLearningProgress.query.filter_by(user_id=student.id).delete()
+
+        # 3. 删除学生账号
+        db.session.delete(student)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 @bp.route('/radar')
 @login_required
 def ability_radar():
@@ -538,7 +988,7 @@ def ability_radar():
         .all()
 
     if not my_sessions:
-        return render_template('radar.html', has_data=False)
+        return render_template('radar.html', has_data=False, stats={'total': 0, 'max': 0, 'avg': 0})
 
     # 2. 数据聚合：我的各项能力总分
     # 维度顺序固定，方便前端绘图
@@ -663,6 +1113,104 @@ def analyze_radar_ai():
 
     except Exception as e:
         print(f"AI Analysis Failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+from datetime import datetime, timedelta
+
+@bp.route('/admin/interviews')
+@login_required
+@teacher_required
+def admin_interviews():
+    """面试记录流水页面"""
+    
+    # 1. 清理过期的 ongoing 记录 (超过24小时未结束)
+    try:
+        cutoff_time = datetime.now() - timedelta(hours=24)
+        stale_sessions = InterviewSession.query.filter(
+            InterviewSession.status == 'ongoing',
+            InterviewSession.start_time < cutoff_time
+        ).all()
+        
+        if stale_sessions:
+            for s in stale_sessions:
+                # 删除关联的聊天记录
+                ChatMessage.query.filter_by(session_id=s.id).delete()
+                # 删除 Session
+                db.session.delete(s)
+            db.session.commit()
+    except Exception as e:
+        print(f"Cleanup failed: {e}")
+        db.session.rollback()
+
+    # 2. 获取所有有效面试记录 (只获取已完成)
+    # 按时间倒序
+    query = InterviewSession.query.join(User).filter(InterviewSession.status == 'completed').order_by(InterviewSession.start_time.desc())
+    
+    # 根据权限过滤
+    if current_user.role == 'teacher':
+        query = query.filter(User.class_name == current_user.class_name)
+    elif current_user.role == 'dept_head':
+        query = query.filter(User.department == current_user.department)
+        
+    sessions = query.all()
+    
+    # 3. 统计数据
+    now = datetime.now()
+    stats = {
+        '1h': 0,
+        '24h': 0,
+        '1week': 0,
+        '1month': 0,
+        '1year': 0,
+        'all': len(sessions)
+    }
+    
+    for s in sessions:
+        delta = now - s.start_time
+        if delta <= timedelta(hours=1):
+            stats['1h'] += 1
+        if delta <= timedelta(hours=24):
+            stats['24h'] += 1
+        if delta <= timedelta(days=7):
+            stats['1week'] += 1
+        if delta <= timedelta(days=30):
+            stats['1month'] += 1
+        if delta <= timedelta(days=365):
+            stats['1year'] += 1
+
+    return render_template('admin_interviews.html', sessions=sessions, stats=stats)
+
+
+@bp.route('/api/admin/interview/delete/<int:session_id>', methods=['POST'])
+@login_required
+@teacher_required
+def delete_interview_session(session_id):
+    """API: 删除单条面试记录"""
+    session = InterviewSession.query.get_or_404(session_id)
+    student = User.query.get(session.user_id)
+    
+    # 权限检查
+    has_permission = False
+    if current_user.role == 'admin':
+        has_permission = True
+    elif current_user.role == 'dept_head' and current_user.department == student.department:
+        has_permission = True
+    elif current_user.role == 'teacher' and current_user.class_name == student.class_name:
+        has_permission = True
+        
+    if not has_permission:
+        return jsonify({'error': '无权删除此记录'}), 403
+
+    try:
+        # 删除关联的聊天记录
+        ChatMessage.query.filter_by(session_id=session.id).delete()
+        # 删除 Session
+        db.session.delete(session)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 

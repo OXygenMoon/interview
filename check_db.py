@@ -1,14 +1,30 @@
-from app import create_app, db
-# 必须导入新定义的模型，这样 SQLAlchemy 才能识别到它们
-from app.models import LearningCategory, LearningMaterial, UserLearningProgress
 
-app = create_app()
+import sqlite3
+import os
 
-with app.app_context():
-    print("🔄 正在检查数据库结构...")
-    # create_all 只会创建不存在的表，不会影响已有数据
-    db.create_all()
-    print("✅ 数据库更新完成！")
-    print("   - 新增表: learning_categories")
-    print("   - 新增表: learning_materials")
-    print("   - 新增表: user_learning_progress")
+db_path = os.path.join(os.getcwd(), 'instance', 'app.db')
+if not os.path.exists(db_path):
+    # try root path
+    db_path = 'app.db'
+
+print(f"Checking DB at {db_path}")
+
+try:
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Check if column exists
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [row[1] for row in cursor.fetchall()]
+    
+    if 'profile_info' not in columns:
+        print("Adding profile_info column...")
+        cursor.execute("ALTER TABLE users ADD COLUMN profile_info JSON")
+        conn.commit()
+        print("Column added.")
+    else:
+        print("Column profile_info already exists.")
+        
+    conn.close()
+except Exception as e:
+    print(f"Error: {e}")

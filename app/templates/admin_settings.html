@@ -1,0 +1,65 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}系统设置{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">系统全局设置</h1>
+            <p class="text-sm text-slate-500 mt-1">管理系统的全局功能开关与参数</p>
+        </div>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="card bg-white shadow-sm border border-slate-100">
+        <div class="card-body">
+            <h2 class="card-title text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                AI 面试官配置
+            </h2>
+
+            <form method="POST" action="{{ url_for('routes.admin_settings') }}">
+                <!-- TTS Toggle -->
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" name="enable_tts" class="toggle toggle-primary" {{ 'checked' if enable_tts else '' }} />
+                        <div>
+                            <span class="label-text font-bold text-slate-700">启用语音输出 (TTS)</span>
+                            <div class="text-xs text-slate-400 mt-1">
+                                开启后，AI 面试官的回复将自动转换为语音播放。关闭此功能可节省 API 成本并加快响应速度。
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="divider"></div>
+
+                <!-- Video Toggle -->
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" name="enable_video" class="toggle toggle-primary" {{ 'checked' if enable_video else '' }} />
+                        <div>
+                            <span class="label-text font-bold text-slate-700">启用视频面试 (摄像头 & AI 视觉分析)</span>
+                            <div class="text-xs text-slate-400 mt-1">
+                                开启后，学生端将显示摄像头预览窗口，并且 AI 会实时通过视觉分析学生的体态和表情。
+                                <br>关闭后，学生端将隐藏视频相关界面。
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary text-white gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        保存设置
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

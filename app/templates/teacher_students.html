@@ -7,25 +7,22 @@
 {% set all_classes = students | map(attribute='info.class_name') | unique | list %}
 
 {% set avatar_styles = [
-    'bg-rose-100 text-rose-700 border border-rose-200',
-    'bg-orange-100 text-orange-700 border border-orange-200',
-    'bg-emerald-100 text-emerald-700 border border-emerald-200',
-    'bg-cyan-100 text-cyan-700 border border-cyan-200',
-    'bg-blue-100 text-blue-700 border border-blue-200',
-    'bg-violet-100 text-violet-700 border border-violet-200',
-    'bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200'
+    'bg-secondary/10 text-secondary border border-secondary/20',
+    'bg-accent/10 text-accent border border-accent/20',
+    'bg-primary/10 text-primary border border-primary/20',
+    'bg-neutral/10 text-neutral border border-neutral/20'
 ] %}
 
 <div class="space-y-6">
 
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
-            <h2 class="text-2xl font-bold text-slate-800">学生学情名册</h2>
-            <p class="text-slate-500 text-sm mt-1">共找到 <span id="visible-count" class="font-bold text-indigo-600">{{ students|length }}</span> 名学生</p>
+            <h2 class="text-2xl font-bold text-base-content">学生学情名册</h2>
+            <p class="text-base-content/60 text-sm mt-1">共找到 <span id="visible-count" class="font-bold text-primary">{{ students|length }}</span> 名学生</p>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-2 w-full lg:w-auto">
-            <select id="dept-filter" class="select select-bordered w-full md:w-40 text-sm" onchange="filterTable()">
+        <div class="flex flex-col md:flex-row gap-2 w-full lg:w-auto items-center flex-nowrap">
+            <select id="dept-filter" class="select select-bordered w-full md:w-40 text-sm" onchange="filterDept()">
                 <option value="">所有系部</option>
                 {% for dept in all_depts %}
                     <option value="{{ dept }}">{{ dept }}</option>
@@ -34,25 +31,26 @@
 
             <select id="class-filter" class="select select-bordered w-full md:w-40 text-sm" onchange="filterTable()">
                 <option value="">所有班级</option>
+                <!-- 班级选项由 JS 动态生成 -->
                 {% for cls in all_classes %}
-                    <option value="{{ cls }}">{{ cls }}</option>
+                    <option value="{{ cls }}" data-dept="unknown">{{ cls }}</option>
                 {% endfor %}
             </select>
 
-            <div class="input-group w-full md:w-64">
-                <input type="text" id="search-input" placeholder="搜索姓名或学号..." class="input input-bordered w-full" onkeyup="filterTable()" />
-                <button class="btn btn-square btn-ghost bg-slate-100 border-l border-slate-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <div class="join w-full md:w-64">
+                <input type="text" id="search-input" placeholder="搜索姓名或学号..." class="input input-bordered join-item w-full" onkeyup="filterTable()" />
+                <button class="btn btn-square join-item bg-base-200 border-l border-base-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="card bg-white shadow-sm border border-slate-200">
+    <div class="card bg-base-100 shadow-sm border border-base-200">
         <div class="card-body p-0">
             <div class="overflow-x-auto min-h-[500px]">
                 <table class="table w-full" id="student-table">
-                    <thead class="bg-slate-50 text-slate-500">
+                    <thead class="bg-base-200/50 text-base-content/60">
                         <tr>
                             <th>学生信息</th>
                             <th>班级/系部</th>
@@ -69,30 +67,30 @@
                                 <td>
                                     <div class="flex items-center space-x-3">
                                         <div class="avatar placeholder">
-                                            {% set style_class = avatar_styles[(item.info.id) % 7] %}
+                                            {% set style_class = avatar_styles[(item.info.id) % 4] %}
                                             <div class="{{ style_class }} mask mask-squircle w-10 h-10 flex items-center justify-center">
                                                 <span class="text-base font-bold">{{ item.info.truename[0] if item.info.truename else '无' }}</span>
                                             </div>
                                         </div>
                                         <div>
-                                            <div class="font-bold text-slate-700 js-name">{{ item.info.truename }}</div>
-                                            <div class="text-xs text-slate-400 js-id">{{ item.info.student_id or '' }}</div>
+                                            <div class="font-bold text-base-content js-name">{{ item.info.truename }}</div>
+                                            <div class="text-xs text-base-content/50 js-id">{{ item.info.student_id or '' }}</div>
                                         </div>
                                     </div>
                                 </td>
 
                                 <td>
-                                    <div class="font-medium text-slate-600 js-class">{{ item.info.class_name }}</div>
-                                    <div class="text-xs text-slate-400 js-dept">{{ item.info.department }}</div>
+                                    <div class="font-medium text-base-content/80 js-class">{{ item.info.class_name }}</div>
+                                    <div class="text-xs text-base-content/50 js-dept">{{ item.info.department }}</div>
                                 </td>
 
                                 <td>
                                     {% if item.count == 0 %}
-                                        <span class="badge badge-ghost text-xs text-slate-400">未开始</span>
+                                        <span class="badge badge-ghost badge-sm text-base-content/40">未开始</span>
                                     {% else %}
                                         <div class="flex items-center gap-2">
-                                            <span class="font-bold text-slate-700">{{ item.count }}</span>
-                                            <span class="text-xs text-slate-400">场</span>
+                                            <span class="font-bold text-base-content">{{ item.count }}</span>
+                                            <span class="text-xs text-base-content/50">场</span>
                                             {% if item.count >= 10 %}
                                                 <div class="tooltip" data-tip="勤奋之星">
                                                     <span class="badge badge-xs badge-warning cursor-help">🌟</span>
@@ -104,14 +102,14 @@
 
                                 <td>
                                     {% if item.count == 0 %}
-                                        <span class="text-slate-300">-</span>
+                                        <span class="text-base-content/30">-</span>
                                     {% else %}
                                         {% if item.avg_score >= 85 %}
-                                            <div class="text-green-600 font-bold">{{ item.avg_score }}</div>
+                                            <div class="text-success font-bold">{{ item.avg_score }}</div>
                                         {% elif item.avg_score >= 60 %}
-                                            <div class="text-amber-500 font-bold">{{ item.avg_score }}</div>
+                                            <div class="text-warning font-bold">{{ item.avg_score }}</div>
                                         {% else %}
-                                            <div class="text-red-500 font-bold flex items-center gap-1">
+                                            <div class="text-error font-bold flex items-center gap-1">
                                                 {{ item.avg_score }}
                                                 <span class="badge badge-xs badge-error animate-pulse">!</span>
                                             </div>
@@ -119,24 +117,31 @@
                                     {% endif %}
                                 </td>
 
-                                <td class="text-slate-500 text-sm">
+                                <td class="text-base-content/60 text-sm">
                                     {% if item.last_active %}
                                         {{ item.last_active.strftime('%m-%d %H:%M') }}
                                     {% else %}
-                                        <span class="text-slate-300 italic text-xs">从未登录</span>
+                                        <span class="text-base-content/30 italic text-xs">从未登录</span>
                                     {% endif %}
                                 </td>
 
                                 <td>
-                                    <a href="{{ url_for('routes.teacher_student_detail', user_id=item.info.id) }}" class="btn btn-ghost btn-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100">
-                                        查看详情
-                                    </a>
+                                    <div class="flex gap-2">
+                                        <a href="{{ url_for('routes.teacher_student_detail', user_id=item.info.id) }}" class="btn btn-ghost btn-xs text-primary hover:bg-primary/10">
+                                            查看详情
+                                        </a>
+                                        {% if current_user.role == 'admin' %}
+                                        <button onclick="deleteStudent({{ item.info.id }}, '{{ item.info.truename }}')" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                                            删除
+                                        </button>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="6" class="text-center py-16 text-slate-400 bg-slate-50/50">
+                                <td colspan="6" class="text-center py-16 text-base-content/40 bg-base-200/20">
                                     <div class="flex flex-col items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                                         暂无学生数据
@@ -147,7 +152,7 @@
                     </tbody>
                 </table>
 
-                <div id="no-result-msg" class="hidden text-center py-10 text-slate-400">
+                <div id="no-result-msg" class="hidden text-center py-10 text-base-content/40">
                     没有找到符合条件的学生
                 </div>
             </div>
@@ -156,6 +161,61 @@
 </div>
 
 <script>
+    // 预先解析所有学生数据，构建 系部 -> 班级 的映射关系
+    // 注意：这里利用了模板渲染时的 students 数据
+    const deptClassMap = {};
+    const rows = document.getElementsByClassName('student-row');
+    
+    // 初始化数据映射
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const dept = row.querySelector('.js-dept').textContent.trim();
+        const cls = row.querySelector('.js-class').textContent.trim();
+        
+        if (!deptClassMap[dept]) {
+            deptClassMap[dept] = new Set();
+        }
+        deptClassMap[dept].add(cls);
+        
+        // 给行加个 data 属性方便后续筛选
+        row.setAttribute('data-dept', dept);
+        row.setAttribute('data-class', cls);
+    }
+
+    // 联动筛选逻辑
+    function filterDept() {
+        const deptSelect = document.getElementById('dept-filter');
+        const classSelect = document.getElementById('class-filter');
+        const selectedDept = deptSelect.value;
+        
+        // 1. 重置班级选择
+        classSelect.innerHTML = '<option value="">所有班级</option>';
+        
+        // 2. 根据选中的系部，动态填充班级
+        if (selectedDept && deptClassMap[selectedDept]) {
+            const classes = Array.from(deptClassMap[selectedDept]).sort();
+            classes.forEach(clsName => {
+                const option = document.createElement('option');
+                option.value = clsName;
+                option.innerText = clsName;
+                classSelect.appendChild(option);
+            });
+        } else if (!selectedDept) {
+            // 如果选了"所有系部"，则显示所有班级（或者也可以清空，看需求，这里为了方便还是显示所有）
+            const allClasses = new Set();
+            Object.values(deptClassMap).forEach(set => set.forEach(c => allClasses.add(c)));
+            Array.from(allClasses).sort().forEach(clsName => {
+                const option = document.createElement('option');
+                option.value = clsName;
+                option.innerText = clsName;
+                classSelect.appendChild(option);
+            });
+        }
+        
+        // 3. 触发表格筛选
+        filterTable();
+    }
+
     function filterTable() {
         const searchInput = document.getElementById('search-input').value.toUpperCase().trim();
         const deptSelect = document.getElementById('dept-filter').value;
@@ -169,8 +229,8 @@
             const row = rows[i];
             const name = row.querySelector('.js-name').textContent || "";
             const id = row.querySelector('.js-id').textContent || "";
-            const dept = row.querySelector('.js-dept').textContent.trim();
-            const cls = row.querySelector('.js-class').textContent.trim();
+            const dept = row.getAttribute('data-dept'); // 使用预存的属性
+            const cls = row.getAttribute('data-class');
 
             const matchSearch = (name.toUpperCase().indexOf(searchInput) > -1) || (id.toUpperCase().indexOf(searchInput) > -1);
             const matchDept = (deptSelect === "") || (dept === deptSelect);
@@ -191,6 +251,31 @@
             noResultMsg.classList.remove('hidden');
         } else {
             noResultMsg.classList.add('hidden');
+        }
+    }
+
+    // 初始化：确保班级列表正确
+    window.addEventListener('DOMContentLoaded', () => {
+        filterDept(); // 初始化班级列表
+    });
+
+    async function deleteStudent(id, name) {
+        if (!confirm(`⚠️ 危险操作！\n\n确定删除学生【${name}】吗？\n\n该学生的所有面试记录将被一并删除且无法恢复！`)) return;
+
+        try {
+            const res = await fetch(`/api/admin/student/delete/${id}`, {
+                method: 'POST'
+            });
+            
+            if (res.ok) {
+                alert('删除成功');
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert('删除失败: ' + (data.error || '未知错误'));
+            }
+        } catch (e) {
+            alert('网络错误');
         }
     }
 </script>

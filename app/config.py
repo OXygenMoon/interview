@@ -18,6 +18,8 @@ class Config:
     # 或者 'Qwen/Qwen2.5-72B-Instruct' (阿里通义千问，也很强)
     LLM_MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct"
     LLM_REPORT = "deepseek-ai/DeepSeek-V3"
+    # 视觉模型 (VLM)
+    VLM_MODEL_NAME = "Qwen/Qwen2-VL-72B-Instruct"
 
     # === 火山引擎 TTS 配置 (豆包同款) ===
     # 请填入您在火山引擎控制台获取的信息

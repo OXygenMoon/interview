@@ -5,10 +5,10 @@
 {% block content %}
 <div class="space-y-6 h-[calc(100vh-8rem)]">
 
-    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
-            <h2 class="text-xl font-bold text-slate-800">🏫 组织架构与学生管理</h2>
-            <p class="text-sm text-slate-500">创建系部、班级，并批量导入学生名单</p>
+            <h2 class="text-xl font-bold text-base-content">🏫 组织架构与学生管理</h2>
+            <p class="text-sm text-base-content/60">创建系部、班级，并批量导入学生名单</p>
         </div>
         <div class="flex gap-2">
             <a href="/api/admin/student/template" class="btn btn-outline btn-sm gap-2">
@@ -24,20 +24,20 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
         
-        <div class="col-span-1 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <span class="font-bold text-slate-700">系部列表</span>
+        <div class="col-span-1 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                <span class="font-bold text-base-content">系部列表</span>
                 <button onclick="addDepartment()" class="btn btn-xs btn-ghost text-primary">+ 新增</button>
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1">
                 {% for dept in departments %}
                 <div onclick='selectDept({{ dept.id }}, "{{ dept.name }}", {{ dept.classes | tojson }})'
-                     class="dept-item flex justify-between items-center p-3 rounded-lg cursor-pointer hover:bg-indigo-50 transition-colors group"
+                     class="dept-item flex justify-between items-center p-3 rounded-lg cursor-pointer hover:bg-base-200 transition-colors group"
                      id="dept-{{ dept.id }}">
-                    <span class="font-medium text-slate-700">{{ dept.name }}</span>
+                    <span class="font-medium text-base-content">{{ dept.name }}</span>
                     <div class="flex items-center gap-2">
                         <span class="badge badge-sm badge-ghost">{{ dept.classes|length }}个班</span>
-                        <button onclick="event.stopPropagation(); deleteDept({{ dept.id }})" class="btn btn-square btn-xs btn-ghost text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                        <button onclick="event.stopPropagation(); deleteDept({{ dept.id }})" class="btn btn-square btn-xs btn-ghost text-base-content/30 hover:text-error opacity-0 group-hover:opacity-100">
                             ✕
                         </button>
                     </div>
@@ -46,18 +46,18 @@
             </div>
         </div>
 
-        <div class="col-span-2 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-100 relative">
+        <div class="col-span-2 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
             
-            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/40">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 <p>请点击左侧系部进行管理</p>
             </div>
 
             <div id="class-content" class="hidden flex-col h-full">
-                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
                     <div>
-                        <span class="text-xs text-slate-400">当前管理</span>
-                        <h3 class="font-bold text-lg text-indigo-700" id="current-dept-name">--</h3>
+                        <span class="text-xs text-base-content/50">当前管理</span>
+                        <h3 class="font-bold text-lg text-primary" id="current-dept-name">--</h3>
                     </div>
                     <button onclick="addClasses()" class="btn btn-sm btn-primary text-white">
                         + 批量创建班级
@@ -76,7 +76,7 @@
 <dialog id="import_modal" class="modal">
     <div class="modal-box">
         <h3 class="font-bold text-lg">批量导入学生</h3>
-        <p class="py-4 text-sm text-slate-500">请上传填写好的 Excel 模板。若班级不存在，系统将自动在该系部下创建。</p>
+        <p class="py-4 text-sm text-base-content/60">请上传填写好的 Excel 模板。若班级不存在，系统将自动在该系部下创建。</p>
         
         <input type="file" id="import-file" class="file-input file-input-bordered file-input-primary w-full" accept=".xlsx, .xls" />
         
@@ -102,9 +102,9 @@
         document.getElementById('current-dept-name').innerText = name;
         
         // 高亮左侧
-        document.querySelectorAll('.dept-item').forEach(el => el.classList.remove('bg-indigo-50', 'border-l-4', 'border-indigo-500'));
+        document.querySelectorAll('.dept-item').forEach(el => el.classList.remove('bg-base-200', 'border-l-4', 'border-primary'));
         const activeItem = document.getElementById(`dept-${id}`);
-        activeItem.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-500');
+        activeItem.classList.add('bg-base-200', 'border-l-4', 'border-primary');
 
         renderClasses(classes);
     }
@@ -115,16 +115,16 @@
         grid.innerHTML = '';
         
         if (classes.length === 0) {
-            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-10">该系部暂无班级</div>';
+            grid.innerHTML = '<div class="col-span-full text-center text-base-content/40 py-10">该系部暂无班级</div>';
             return;
         }
 
         classes.forEach(cls => {
             const div = document.createElement('div');
-            div.className = 'p-4 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition group relative bg-white';
+            div.className = 'p-4 rounded-lg border border-base-200 hover:border-error/50 hover:bg-error/10 transition group relative bg-base-100';
             div.innerHTML = `
-                <div class="font-bold text-slate-700 text-center">${cls.name}</div>
-                <button onclick="deleteClass(${cls.id})" class="absolute top-1 right-1 text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 p-1">
+                <div class="font-bold text-base-content text-center">${cls.name}</div>
+                <button onclick="deleteClass(${cls.id})" class="absolute top-1 right-1 text-error/50 opacity-0 group-hover:opacity-100 hover:text-error p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </button>
             `;
@@ -151,9 +151,15 @@
 
     // 3. 删除系部
     async function deleteDept(id) {
-        if (!confirm("确定删除该系部吗？其下所有班级也会被删除（学生数据保留但失去关联）。")) return;
+        if (!confirm("确定删除该系部吗？必须确保该系部下没有学生才能删除。")) return;
+        
         const res = await fetch(`/api/admin/department/delete/${id}`, {method: 'POST'});
-        if (res.ok) location.reload();
+        if (res.ok) {
+            location.reload();
+        } else {
+            const data = await res.json();
+            alert("删除失败: " + (data.error || "未知错误"));
+        }
     }
 
     // 4. 新增班级
@@ -177,9 +183,15 @@
 
     // 5. 删除班级
     async function deleteClass(id) {
-        if (!confirm("确定删除该班级吗？")) return;
+        if (!confirm("⚠️ 高风险操作警告！\n\n确定删除该班级吗？\n\n这将【永久删除】该班级下的所有学生及其面试记录，且不可恢复！\n\n请再次确认是否继续？")) return;
+        
         const res = await fetch(`/api/admin/class/delete/${id}`, {method: 'POST'});
-        if (res.ok) location.reload();
+        if (res.ok) {
+            location.reload();
+        } else {
+            const data = await res.json();
+            alert("删除失败: " + (data.error || "未知错误"));
+        }
     }
 
     // 6. 导入学生

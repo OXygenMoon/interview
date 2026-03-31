@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve interview
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/projects/interview
+Environment="PATH=/root/projects/interview/venv/bin"
+Environment="LD_LIBRARY_PATH=/nix/store/dj06r96j515npcqi9d8af1d1c60bx2vn-gcc-14.3.0-lib/lib"
+ExecStart=/root/projects/interview/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5001 run:app
+
+[Install]
+WantedBy=multi-user.target

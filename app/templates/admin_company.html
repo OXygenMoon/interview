@@ -1,0 +1,289 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}企业岗位管理{% endblock %}
+
+{% block content %}
+<div class="space-y-6 h-[calc(100vh-8rem)]">
+
+    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+        <div>
+            <h2 class="text-xl font-bold text-base-content">🏢 企业与岗位库管理</h2>
+            <p class="text-sm text-base-content/60">配置公司信息及其招聘岗位（含面试提示词）</p>
+        </div>
+        <button onclick="document.getElementById('company_modal').showModal(); resetCompanyForm();" class="btn btn-primary btn-sm text-white gap-2">
+            + 新增公司
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+        
+        <!-- 左侧：公司列表 -->
+        <div class="col-span-1 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                <span class="font-bold text-base-content">公司列表</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                {% for comp in companies %}
+                <div onclick='selectCompany({{ comp.id }}, { "name": "{{ comp.name }}" })'
+                     class="company-item flex justify-between items-center p-3 rounded-lg cursor-pointer hover:bg-base-200 transition-colors group"
+                     id="comp-{{ comp.id }}">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-base-content truncate">{{ comp.name }}</div>
+                        <div class="text-xs text-base-content/50 truncate">{{ comp.positions|length }}个岗位</div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                         <button onclick='event.stopPropagation(); editCompany({ "id": {{ comp.id }}, "name": "{{ comp.name }}", "description": {{ comp.description | tojson }} })' class="btn btn-square btn-xs btn-ghost text-base-content/50 hover:text-primary">
+                            ✎
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteCompany({{ comp.id }})" class="btn btn-square btn-xs btn-ghost text-base-content/30 hover:text-error opacity-0 group-hover:opacity-100">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 右侧：岗位管理 -->
+        <div class="col-span-2 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
+            
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/40">
+                <p>请点击左侧公司进行管理</p>
+            </div>
+
+            <div id="position-content" class="hidden flex-col h-full">
+                <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                    <div>
+                        <span class="text-xs text-base-content/50">当前管理</span>
+                        <h3 class="font-bold text-lg text-primary" id="current-comp-name">--</h3>
+                    </div>
+                    <button onclick="addPosition()" class="btn btn-sm btn-primary text-white">
+                        + 新增岗位
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-4" id="position-list">
+                    <!-- 岗位卡片将在这里动态渲染 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 公司 Modal -->
+<dialog id="company_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="company_modal_title">新增公司</h3>
+        <form id="company_form" class="space-y-4 py-4">
+            <input type="hidden" name="id" id="company_id">
+            <div class="form-control">
+                <label class="label">公司名称</label>
+                <input type="text" name="name" id="company_name" class="input input-bordered w-full" required />
+            </div>
+            <div class="form-control">
+                <label class="label">公司介绍 (Markdown)</label>
+                <textarea name="description" id="company_desc" class="textarea textarea-bordered h-32" placeholder="支持 Markdown 格式"></textarea>
+            </div>
+        </form>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn">取消</button></form>
+            <button onclick="submitCompany()" class="btn btn-primary text-white">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- 岗位 Modal -->
+<dialog id="position_modal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+        <h3 class="font-bold text-lg" id="position_modal_title">新增岗位</h3>
+        <form id="position_form" class="space-y-4 py-4">
+            <input type="hidden" name="id" id="position_id">
+            <div class="form-control">
+                <label class="label">岗位名称</label>
+                <input type="text" name="name" id="position_name" class="input input-bordered w-full" required />
+            </div>
+            <div class="form-control">
+                <label class="label">岗位要求与提示词 (Markdown)</label>
+                <textarea name="description" id="position_desc" class="textarea textarea-bordered h-64 font-mono text-sm" placeholder="此内容将作为 AI 面试官的背景资料"></textarea>
+                <div class="label"><span class="label-text-alt text-slate-400">此内容对学生可见，同时会注入到 AI Prompt 中。</span></div>
+            </div>
+        </form>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn">取消</button></form>
+            <button onclick="submitPosition()" class="btn btn-primary text-white">保存</button>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    let currentCompId = null;
+
+    // --- 公司管理 ---
+
+    function selectCompany(id, companyData) {
+        currentCompId = id;
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('position-content').classList.remove('hidden');
+        document.getElementById('position-content').classList.add('flex');
+        
+        document.getElementById('current-comp-name').textContent = companyData.name;
+        
+        // 更新左侧选中状态
+        document.querySelectorAll('.company-item').forEach(el => el.classList.remove('bg-indigo-50', 'ring-1', 'ring-indigo-200'));
+        document.getElementById(`comp-${id}`).classList.add('bg-indigo-50', 'ring-1', 'ring-indigo-200');
+
+        loadPositions(id);
+    }
+
+    function resetCompanyForm() {
+        document.getElementById('company_modal_title').innerText = "新增公司";
+        document.getElementById('company_id').value = "";
+        document.getElementById('company_name').value = "";
+        document.getElementById('company_desc').value = "";
+    }
+
+    function editCompany(data) {
+        document.getElementById('company_modal').showModal();
+        document.getElementById('company_modal_title').innerText = "编辑公司";
+        document.getElementById('company_id').value = data.id;
+        document.getElementById('company_name').value = data.name;
+        document.getElementById('company_desc').value = data.description || "";
+    }
+
+    async function submitCompany() {
+        const id = document.getElementById('company_id').value;
+        const name = document.getElementById('company_name').value;
+        const description = document.getElementById('company_desc').value;
+        
+        const url = id ? `/api/company/${id}` : '/api/company/create';
+        const method = id ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, description})
+            });
+            if(res.ok) {
+                location.reload();
+            } else {
+                alert("操作失败");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("网络错误");
+        }
+    }
+    
+    async function deleteCompany(id) {
+        if(!confirm("确定要删除该公司吗？旗下所有岗位也将被删除！")) return;
+        try {
+            const res = await fetch(`/api/company/${id}`, { method: 'DELETE' });
+            if(res.ok) location.reload();
+        } catch(e) { alert("网络错误"); }
+    }
+
+    // --- 岗位管理 ---
+
+    async function loadPositions(compId) {
+        const container = document.getElementById('position-list');
+        container.innerHTML = '<div class="flex justify-center p-10"><span class="loading loading-spinner"></span></div>';
+        
+        try {
+            const res = await fetch('/api/company/list');
+            const allData = await res.json();
+            const comp = allData.find(c => c.id === compId);
+            if(comp) {
+                renderPositions(comp.positions);
+            }
+        } catch(e) {
+            container.innerHTML = '加载失败';
+        }
+    }
+
+    function renderPositions(positions) {
+        const container = document.getElementById('position-list');
+        container.innerHTML = '';
+        
+        if(!positions || positions.length === 0) {
+            container.innerHTML = '<div class="text-center text-slate-400 py-10">暂无岗位，请点击右上角新增</div>';
+            return;
+        }
+        
+        positions.forEach(pos => {
+            const div = document.createElement('div');
+            div.className = "card bg-base-100 shadow-sm border border-slate-200";
+            // Escape the JSON for onclick
+            const posJson = JSON.stringify(pos).replace(/"/g, '&quot;');
+            
+            div.innerHTML = `
+                <div class="card-body p-5">
+                    <div class="flex justify-between items-start">
+                        <h4 class="card-title text-base">${pos.name}</h4>
+                        <div class="flex gap-2">
+                            <button onclick="editPosition(${posJson})" class="btn btn-xs btn-ghost text-blue-500">编辑</button>
+                            <button onclick="deletePosition(${pos.id})" class="btn btn-xs btn-ghost text-red-500">删除</button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 line-clamp-3 mt-2 bg-slate-50 p-2 rounded">
+                        ${pos.description ? pos.description.slice(0, 100) + '...' : '无描述'}
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function addPosition() {
+        document.getElementById('position_modal').showModal();
+        document.getElementById('position_modal_title').innerText = "新增岗位";
+        document.getElementById('position_id').value = "";
+        document.getElementById('position_name').value = "";
+        document.getElementById('position_desc').value = "";
+    }
+
+    function editPosition(pos) {
+        document.getElementById('position_modal').showModal();
+        document.getElementById('position_modal_title').innerText = "编辑岗位";
+        document.getElementById('position_id').value = pos.id;
+        document.getElementById('position_name').value = pos.name;
+        document.getElementById('position_desc').value = pos.description || "";
+    }
+
+    async function submitPosition() {
+        const id = document.getElementById('position_id').value;
+        const name = document.getElementById('position_name').value;
+        const description = document.getElementById('position_desc').value;
+        const compId = currentCompId;
+        
+        const url = id ? `/api/company/position/${id}` : `/api/company/${compId}/position`;
+        const method = id ? 'PUT' : 'POST';
+        
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, description})
+            });
+            if(res.ok) {
+                document.getElementById('position_modal').close();
+                loadPositions(compId); // Reload list
+            } else {
+                alert("操作失败");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("网络错误");
+        }
+    }
+
+    async function deletePosition(id) {
+        if(!confirm("确定要删除该岗位吗？")) return;
+        try {
+            const res = await fetch(`/api/company/position/${id}`, { method: 'DELETE' });
+            if(res.ok) loadPositions(currentCompId);
+        } catch(e) { alert("网络错误"); }
+    }
+
+</script>
+{% endblock %}

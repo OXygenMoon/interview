@@ -1,0 +1,288 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}{{ display_title }}{% endblock %}
+
+{% block content %}
+<!-- 引入 Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="space-y-6">
+
+    <!-- 顶部筛选栏 -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+        <div>
+            <h2 class="text-xl font-bold text-base-content">📊 {{ display_title }}</h2>
+            <p class="text-sm text-base-content/60">深度分析整体面试能力，识别薄弱环节与偏科学生</p>
+        </div>
+        
+        <form method="GET" action="{{ url_for('routes.admin_capability_profile') }}" class="flex flex-wrap items-center gap-2">
+            
+            <!-- 1. 视图范围选择 (仅管理员和系主任可见) -->
+            {% if current_user.role == 'admin' %}
+                <select name="scope" class="select select-bordered select-sm" onchange="this.form.submit()">
+                    <option value="school" {% if scope == 'school' %}selected{% endif %}>全校视图</option>
+                    <option value="department" {% if scope == 'department' %}selected{% endif %}>系部视图</option>
+                    <option value="class" {% if scope == 'class' %}selected{% endif %}>班级视图</option>
+                </select>
+            {% elif current_user.role == 'dept_head' %}
+                <select name="scope" class="select select-bordered select-sm" onchange="this.form.submit()">
+                    <option value="department" {% if scope == 'department' %}selected{% endif %}>系部视图</option>
+                    <option value="class" {% if scope == 'class' %}selected{% endif %}>班级视图</option>
+                </select>
+            {% endif %}
+
+            <!-- 2. 系部选择 (仅管理员且非全校视图时显示) -->
+            {% if current_user.role == 'admin' and scope != 'school' %}
+                <select name="dept_name" class="select select-bordered select-sm" onchange="this.form.submit()">
+                    <option value="" disabled {% if not selected_dept %}selected{% endif %}>-- 选择系部 --</option>
+                    {% for d in departments_list %}
+                        <option value="{{ d }}" {% if d == selected_dept %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+
+            <!-- 3. 班级选择 (当视图为班级时显示) -->
+            {% if scope == 'class' %}
+                {% if current_user.role == 'teacher' %}
+                    <!-- 教师只有这一个班，直接显示即可，无需下拉选择 -->
+                    <div class="badge badge-lg">{{ selected_class }}</div>
+                    <input type="hidden" name="class_name" value="{{ selected_class }}">
+                {% else %}
+                    <select name="class_name" class="select select-bordered select-sm" onchange="this.form.submit()">
+                        <option value="" disabled {% if not selected_class %}selected{% endif %}>-- 选择班级 --</option>
+                        {% for c in classes_list %}
+                            <option value="{{ c }}" {% if c == selected_class %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+            {% endif %}
+
+        </form>
+    </div>
+
+    {% if not has_data %}
+        <!-- 无数据状态 -->
+        <div class="hero min-h-[400px] bg-base-100 rounded-xl border border-base-200">
+            <div class="hero-content text-center">
+                <div class="max-w-md">
+                    <h1 class="text-5xl font-bold text-base-content/20">∅</h1>
+                    <p class="py-6 text-base-content/60">
+                        {% if scope == 'class' and not selected_class %}
+                            请先选择一个班级查看数据。
+                        {% elif scope == 'department' and not selected_dept %}
+                            请先选择一个系部查看数据。
+                        {% else %}
+                            该范围内暂无足够的面试数据生成画像。
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- 数据概览卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl">
+                <div class="stat-figure text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <div class="stat-title">学生总数</div>
+                <div class="stat-value">{{ total_students }}</div>
+                <div class="stat-desc">范围内在籍学生</div>
+            </div>
+            
+            <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl">
+                <div class="stat-figure text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="stat-title">活跃参与度</div>
+                <div class="stat-value text-secondary">{{ ((active_students / total_students) * 100) | int }}%</div>
+                <div class="stat-desc">{{ active_students }} 人已完成面试</div>
+            </div>
+
+            <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl">
+                <div class="stat-title">群体最强项</div>
+                <div class="stat-value text-accent text-2xl">
+                    {% set max_score = class_avg_data|max %}
+                    {% for score in class_avg_data %}
+                        {% if score == max_score %}
+                            {{ dimensions[loop.index0] }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="stat-desc text-accent font-bold">{{ max_score }} 分</div>
+            </div>
+
+            <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl">
+                <div class="stat-title">急需提升</div>
+                <div class="stat-value text-error text-2xl">
+                    {% if weak_dims %}
+                        {{ weak_dims[0][0] }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <div class="stat-desc text-error font-bold">
+                    {% if weak_dims %}
+                        {{ weak_dims[0][1] }} 分
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- 左侧：雷达图 -->
+            <div class="card bg-base-100 shadow-sm border border-base-200 col-span-1 lg:col-span-1">
+                <div class="card-body">
+                    <h3 class="card-title text-base font-bold">🎯 五维能力模型</h3>
+                    <div class="relative w-full aspect-square mt-4">
+                        <canvas id="classRadarChart"></canvas>
+                    </div>
+                    <div class="mt-4 space-y-2">
+                        <div class="text-xs font-bold text-base-content/50 uppercase tracking-wider">薄弱项分析</div>
+                        {% for dim, score in weak_dims %}
+                        <div class="flex justify-between items-center bg-error/10 p-2 rounded-lg border border-error/20">
+                            <span class="font-bold text-error">{{ dim }}</span>
+                            <span class="font-mono text-error font-bold">{{ score }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间：面试力分布 -->
+            <div class="card bg-base-100 shadow-sm border border-base-200 col-span-1 lg:col-span-1">
+                <div class="card-body">
+                    <h3 class="card-title text-base font-bold">📊 面试力分布</h3>
+                    <div class="flex items-end gap-2 h-48 mt-6 px-4">
+                        {% set max_count = grade_dist.values()|max %}
+                        {% for grade, count in grade_dist.items() %}
+                            <div class="flex-1 flex flex-col items-center gap-2 group">
+                                <div class="text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">{{ count }}人</div>
+                                <div class="w-full bg-primary/20 rounded-t-lg relative transition-all hover:bg-primary/40 flex items-end justify-center" 
+                                     style="height: {{ (count / max_count * 100) if max_count > 0 else 0 }}%;">
+                                     {% if count > 0 %}
+                                     <div class="mb-1 text-[10px] font-bold text-primary">{{ count }}</div>
+                                     {% endif %}
+                                </div>
+                                <div class="text-sm font-bold text-base-content/70">{{ grade }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="divider"></div>
+                    <div class="text-xs text-base-content/60 space-y-1">
+                        <p><span class="font-bold">S级 (90+):</span> 面试表现卓越</p>
+                        <p><span class="font-bold">A级 (80-89):</span> 表现良好</p>
+                        <p><span class="font-bold">B级 (70-79):</span> 表现一般</p>
+                        <p><span class="font-bold">C/D级 (<70):</span> 基础薄弱</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：偏科学生预警 -->
+            <div class="card bg-base-100 shadow-sm border border-base-200 col-span-1 lg:col-span-1">
+                <div class="card-body p-0">
+                    <div class="p-5 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
+                        <h3 class="card-title text-base font-bold flex items-center gap-2">
+                            <span class="text-warning">⚠️</span> 能力偏差预警
+                        </h3>
+                        <span class="badge badge-sm">{{ weakness_alerts|length }} 条</span>
+                    </div>
+                    
+                    <div class="overflow-y-auto max-h-[400px] p-2">
+                        {% if weakness_alerts %}
+                            {% for alert in weakness_alerts %}
+                            <div class="alert bg-base-100 border border-base-200 shadow-sm mb-2 p-3 items-start grid grid-cols-[auto_1fr_auto] gap-3">
+                                <div class="avatar placeholder">
+                                    <div class="bg-neutral-focus text-neutral-content rounded-full w-8">
+                                        <span class="text-xs">{{ alert.student[0] }}</span>
+                                    </div>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-sm">{{ alert.student }} <span class="text-xs font-normal opacity-50">{{ alert.student_id }}</span></div>
+                                    <!-- 新增：如果是全校视图，显示班级 -->
+                                    {% if scope != 'class' %}
+                                    <div class="text-[10px] text-base-content/50">{{ alert.class_name }}</div>
+                                    {% endif %}
+                                    <div class="text-xs mt-1">
+                                        <span class="font-bold text-base-content/70">{{ alert.dim }}</span> 
+                                        严重偏低 ({{ alert.score }}分)
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="badge badge-error badge-sm gap-1 text-white">
+                                        {{ alert.diff }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-10 text-base-content/40">
+                                <p>暂无严重偏科学生</p>
+                                <p class="text-xs mt-1">群体发展较为均衡</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    {% endif %}
+</div>
+
+{% if has_data %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('classRadarChart').getContext('2d');
+        
+        // 数据来自后端
+        const labels = {{ dimensions | tojson }};
+        const data = {{ class_avg_data | tojson }};
+
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '平均水平',
+                    data: data,
+                    fill: true,
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)', // Primary color with opacity
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: {
+                            font: { size: 12, weight: 'bold' },
+                            color: '#64748b'
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                        ticks: {
+                            stepSize: 20,
+                            backdropColor: 'transparent'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+
+{% endblock %}

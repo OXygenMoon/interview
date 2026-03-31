@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}班级风云榜{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-12">
+
+    <!-- 顶部标题区 -->
+    <div class="hero rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-green-600 text-white shadow-xl shadow-emerald-200 overflow-hidden relative group">
+        <!-- 装饰背景 -->
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
+        <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white/10 rounded-full"></div>
+        
+        <div class="hero-content flex-col md:flex-row justify-between w-full p-8 md:p-12 z-10">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight flex items-center gap-3">
+                    <span class="text-4xl">🏆</span> 班级风云榜
+                </h1>
+                <p class="mt-2 text-emerald-100 font-medium">
+                    {{ current_user.class_name }} · 谁是面试之王？
+                </p>
+            </div>
+            
+            <!-- 我的排名小卡片 -->
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 flex gap-6">
+                <div class="text-center">
+                    <div class="text-xs text-emerald-100 uppercase font-bold tracking-wider">我的平均分</div>
+                    {% set my_rank_item = avg_rank | selectattr("user.id", "equalto", current_user.id) | list | first %}
+                    <div class="text-xl font-black text-white">
+                        {% if my_rank_item %}
+                            {{ my_rank_item.avg_score }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="w-px bg-white/20"></div>
+                <div class="text-center">
+                    <div class="text-xs text-emerald-100 uppercase font-bold tracking-wider">我的排名</div>
+                    <div class="text-xl font-black text-warning">
+                        {% if my_rank_item %}
+                            #{{ loop.index if loop is defined else (avg_rank.index(my_rank_item) + 1) }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 切换 Tab -->
+    <div class="flex justify-center">
+        <div class="tabs tabs-boxed bg-base-100 p-1 rounded-xl shadow-sm border border-base-200">
+            <a class="tab tab-lg px-8 transition-all duration-300 tab-active font-bold" onclick="switchTab('avg')" id="tab-avg">
+                🥇 综合实力榜
+            </a>
+            <a class="tab tab-lg px-8 transition-all duration-300 font-bold" onclick="switchTab('max')" id="tab-max">
+                ⚡ 巅峰时刻榜
+            </a>
+            <a class="tab tab-lg px-8 transition-all duration-300 font-bold" onclick="switchTab('count')" id="tab-count">
+                🔥 勤奋之星榜
+            </a>
+        </div>
+    </div>
+
+    <!-- 列表容器 -->
+    <div class="card bg-base-100 shadow-lg border border-base-200 overflow-hidden min-h-[500px]">
+        
+        <!-- 1. 平均分榜 (默认显示) -->
+        <div id="content-avg" class="rank-content block">
+            <div class="p-6 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-xl text-primary flex items-center gap-2">
+                        综合实力排行榜
+                    </h3>
+                    <p class="text-sm text-base-content/60 mt-1">按学生所有已完成面试的平均分降序排列</p>
+                </div>
+                <div class="text-4xl opacity-10">🥇</div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr class="bg-base-200/50 text-base-content/60">
+                            <th class="w-20 text-center">排名</th>
+                            <th>学生信息</th>
+                            <th class="text-center">面试场次</th>
+                            <th class="text-center">历史最高分</th>
+                            <th class="text-right pr-8">平均得分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in avg_rank %}
+                        <tr class="hover group {{ 'bg-primary/5' if item.user.id == current_user.id else '' }}">
+                            <td class="text-center">
+                                {% if loop.index == 1 %}
+                                    <div class="text-3xl">🥇</div>
+                                {% elif loop.index == 2 %}
+                                    <div class="text-3xl">🥈</div>
+                                {% elif loop.index == 3 %}
+                                    <div class="text-3xl">🥉</div>
+                                {% else %}
+                                    <div class="font-bold text-base-content/40 text-lg">{{ loop.index }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex items-center space-x-3">
+                                    <div class="avatar placeholder">
+                                        <div class="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold ring-2 ring-base-100 shadow-sm flex items-center justify-center">
+                                            {{ item.user.truename[0] }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-base-content flex items-center gap-2">
+                                            {{ item.user.truename }}
+                                            {% if item.user.id == current_user.id %}
+                                                <span class="badge badge-sm badge-primary">我</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-base-content/50">{{ item.user.student_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center font-mono text-base-content/70">
+                                {{ item.count }}
+                            </td>
+                            <td class="text-center font-mono text-base-content/50">
+                                {{ item.max_score }}
+                            </td>
+                            <td class="text-right pr-8">
+                                <div class="font-black text-primary text-xl">{{ item.avg_score }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. 最高分榜 -->
+        <div id="content-max" class="rank-content hidden">
+            <div class="p-6 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-xl text-secondary flex items-center gap-2">
+                        巅峰时刻排行榜
+                    </h3>
+                    <p class="text-sm text-base-content/60 mt-1">按学生单场面试的最高分降序排列</p>
+                </div>
+                <div class="text-4xl opacity-10">⚡</div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr class="bg-base-200/50 text-base-content/60">
+                            <th class="w-20 text-center">排名</th>
+                            <th>学生信息</th>
+                            <th class="text-center">平均得分</th>
+                            <th class="text-right pr-8">历史最高分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in max_rank %}
+                        <tr class="hover group {{ 'bg-secondary/5' if item.user.id == current_user.id else '' }}">
+                            <td class="text-center">
+                                {% if loop.index <= 3 %}
+                                    <div class="font-black text-secondary text-2xl italic">TOP {{ loop.index }}</div>
+                                {% else %}
+                                    <div class="font-bold text-base-content/40 text-lg">{{ loop.index }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex items-center space-x-3">
+                                    <div class="avatar placeholder">
+                                        <div class="w-10 h-10 rounded-full bg-secondary/10 text-secondary font-bold ring-2 ring-base-100 shadow-sm flex items-center justify-center">
+                                            {{ item.user.truename[0] }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-base-content flex items-center gap-2">
+                                            {{ item.user.truename }}
+                                            {% if item.user.id == current_user.id %}
+                                                <span class="badge badge-sm badge-secondary">我</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-base-content/50">{{ item.user.student_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center font-mono text-base-content/50">
+                                {{ item.avg_score }}
+                            </td>
+                            <td class="text-right pr-8">
+                                <div class="font-black text-secondary text-xl">{{ item.max_score }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. 勤奋榜 -->
+        <div id="content-count" class="rank-content hidden">
+            <div class="p-6 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-xl text-accent flex items-center gap-2">
+                        勤奋之星排行榜
+                    </h3>
+                    <p class="text-sm text-base-content/60 mt-1">按学生完成的有效面试场次降序排列</p>
+                </div>
+                <div class="text-4xl opacity-10">🔥</div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr class="bg-base-200/50 text-base-content/60">
+                            <th class="w-20 text-center">排名</th>
+                            <th>学生信息</th>
+                            <th class="text-center">最近活跃</th>
+                            <th class="text-right pr-8">累计练题</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in count_rank %}
+                        <tr class="hover group {{ 'bg-accent/5' if item.user.id == current_user.id else '' }}">
+                            <td class="text-center">
+                                {% if loop.index <= 3 %}
+                                    <div class="text-2xl">🔥</div>
+                                {% else %}
+                                    <div class="font-bold text-base-content/40 text-lg">{{ loop.index }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex items-center space-x-3">
+                                    <div class="avatar placeholder">
+                                        <div class="w-10 h-10 rounded-full bg-accent/10 text-accent font-bold ring-2 ring-base-100 shadow-sm flex items-center justify-center">
+                                            {{ item.user.truename[0] }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-base-content flex items-center gap-2">
+                                            {{ item.user.truename }}
+                                            {% if item.user.id == current_user.id %}
+                                                <span class="badge badge-sm badge-accent">我</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-base-content/50">{{ item.user.student_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center text-xs text-base-content/50">
+                                {% if item.last_active %}
+                                    {{ item.last_active.strftime('%m-%d %H:%M') }}
+                                    <div class="text-[10px] opacity-70">{{ item.last_active | time_ago }}</div>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-right pr-8">
+                                <div class="font-black text-accent text-xl">{{ item.count }} <span class="text-sm font-normal text-base-content/60">场</span></div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function switchTab(type) {
+        // 1. 处理 Tab 样式
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('tab-active'));
+        document.getElementById('tab-' + type).classList.add('tab-active');
+
+        // 2. 处理内容显示
+        document.querySelectorAll('.rank-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.rank-content').forEach(el => el.classList.remove('block'));
+        
+        const content = document.getElementById('content-' + type);
+        content.classList.remove('hidden');
+        content.classList.add('block');
+        
+        // 添加简单的淡入动画
+        content.style.opacity = 0;
+        setTimeout(() => {
+            content.style.transition = 'opacity 0.3s ease';
+            content.style.opacity = 1;
+        }, 10);
+    }
+</script>
+{% endblock %}

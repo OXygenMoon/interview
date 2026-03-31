@@ -1,0 +1,196 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}面试记录流水{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- 顶部标题区 -->
+    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+        <div>
+            <h2 class="text-xl font-bold text-base-content">面试记录流水</h2>
+            <p class="text-sm text-base-content/60">实时监控所有面试活动，支持按时间段统计与管理</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="location.reload()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            刷新数据
+        </button>
+    </div>
+
+    <!-- 统计卡片区 -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">近 1 小时</div>
+            <div class="stat-value text-lg text-primary">{{ stats['1h'] }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">近 24 小时</div>
+            <div class="stat-value text-lg text-secondary">{{ stats['24h'] }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">近 1 周</div>
+            <div class="stat-value text-lg text-accent">{{ stats['1week'] }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">近 1 个月</div>
+            <div class="stat-value text-lg text-neutral">{{ stats['1month'] }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">近 1 年</div>
+            <div class="stat-value text-lg">{{ stats['1year'] }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow-sm border border-base-200 rounded-xl p-4">
+            <div class="stat-title text-xs">全部记录</div>
+            <div class="stat-value text-lg">{{ stats['all'] }}</div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table w-full" id="log-table">
+                    <thead class="bg-base-200/50 text-base-content/70">
+                        <tr>
+                            <th>ID</th>
+                            <th>学生信息</th>
+                            <th>面试岗位</th>
+                            <th>得分</th>
+                            <th>开始时间</th>
+                            <th>耗时</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                        <tr class="hover group">
+                            <td class="font-mono text-xs opacity-50">#{{ s.id }}</td>
+                            <td>
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-base-content">{{ s.user.truename }}</span>
+                                    <span class="text-xs text-base-content/50">{{ s.user.student_id }} | {{ s.user.class_name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="badge badge-ghost badge-sm">{{ s.target_role }}</div>
+                            </td>
+                            <td>
+                                {% if s.total_score %}
+                                    <span class="font-bold {{ 'text-success' if s.total_score >= 80 else 'text-warning' }}">{{ s.total_score }}</span>
+                                {% else %}
+                                    <span class="text-base-content/30">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">
+                                <div>{{ s.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
+                                <div class="text-xs text-base-content/40">{{ s.start_time | time_ago }}</div>
+                            </td>
+                            <td class="text-xs text-base-content/60">
+                                {% if s.end_time %}
+                                    {{ ((s.end_time - s.start_time).seconds / 60)|round(1) }} min
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.status == 'completed' %}
+                                    <div class="badge badge-primary badge-xs gap-1">完成</div>
+                                {% elif s.status == 'ongoing' %}
+                                    <div class="badge badge-info badge-xs gap-1">进行中</div>
+                                {% else %}
+                                    <div class="badge badge-ghost badge-xs">{{ s.status }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-ghost text-primary" target="_blank">查看</a>
+                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-10 text-base-content/40">暂无记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页控件容器 -->
+            <div id="pagination" class="p-4 border-t border-base-200 flex justify-end gap-2"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 简单的分页逻辑
+    document.addEventListener("DOMContentLoaded", function() {
+        const table = document.getElementById('log-table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const pagination = document.getElementById('pagination');
+        const rowsPerPage = 15;
+        
+        if (rows.length <= rowsPerPage) {
+            pagination.style.display = 'none';
+            return;
+        }
+
+        const pageCount = Math.ceil(rows.length / rowsPerPage);
+        let currentPage = 1;
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            
+            rows.forEach((row, index) => {
+                row.style.display = (index >= start && index < end) ? '' : 'none';
+            });
+            
+            renderPagination();
+        }
+
+        function renderPagination() {
+            pagination.innerHTML = '';
+            
+            const prev = document.createElement('button');
+            prev.className = `btn btn-sm ${currentPage === 1 ? 'btn-disabled' : 'btn-outline'}`;
+            prev.innerText = '上一页';
+            prev.onclick = () => showPage(currentPage - 1);
+            pagination.appendChild(prev);
+            
+            const info = document.createElement('span');
+            info.className = 'btn btn-sm btn-ghost no-animation cursor-default';
+            info.innerText = `第 ${currentPage} / ${pageCount} 页`;
+            pagination.appendChild(info);
+
+            const next = document.createElement('button');
+            next.className = `btn btn-sm ${currentPage === pageCount ? 'btn-disabled' : 'btn-outline'}`;
+            next.innerText = '下一页';
+            next.onclick = () => showPage(currentPage + 1);
+            pagination.appendChild(next);
+        }
+
+        showPage(1);
+    });
+
+    async function deleteSession(id) {
+        if (!confirm("确定删除这条面试记录吗？此操作不可恢复。")) return;
+        
+        try {
+            const res = await fetch(`/api/admin/interview/delete/${id}`, { method: 'POST' });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert("删除失败: " + (data.error || "未知错误"));
+            }
+        } catch (e) {
+            alert("网络错误");
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block title %}智能简历构建器{% endblock %}
+
+{% block content %}
+<!-- 引入 html2pdf -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<div class="h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-6">
+    
+    <!-- 左侧：编辑区 -->
+    <div class="w-full lg:w-1/2 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+        
+        <!-- 工具栏 -->
+        <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-lg">📝 编辑简历</span>
+                <span id="save-status" class="text-xs text-base-content/50 ml-2">已保存</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveResume()" class="btn btn-sm btn-primary text-white">
+                    保存
+                </button>
+            </div>
+        </div>
+
+        <!-- 表单滚动区 -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <!-- 1. 基本信息 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" checked="checked" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    👤 基本信息
+                </div>
+                <div class="collapse-content space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">姓名</span></label>
+                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'name', this.value)" id="input-name">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">求职意向</span></label>
+                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'job_target', this.value)" id="input-job_target">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">电话</span></label>
+                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'phone', this.value)" id="input-phone">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">邮箱</span></label>
+                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'email', this.value)" id="input-email">
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">所在城市</span></label>
+                        <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'location', this.value)" id="input-location">
+                    </div>
+                    <div class="form-control">
+                        <label class="label justify-between">
+                            <span class="label-text">自我评价</span>
+                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-basic-0-self_evaluation" onclick="optimizeField('basic', 0, 'self_evaluation')">
+                                ✨ 润色
+                            </button>
+                        </label>
+                        <textarea class="textarea textarea-bordered h-24" oninput="updateField('basic', 'self_evaluation', this.value)" id="input-self_evaluation"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 教育背景 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    🎓 教育背景
+                </div>
+                <div class="collapse-content">
+                    <div id="edu-list" class="space-y-4"></div>
+                    <button onclick="addItem('education')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加学历</button>
+                </div>
+            </div>
+
+            <!-- 3. 工作/实习经历 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    💼 实习/工作经历
+                </div>
+                <div class="collapse-content">
+                    <div id="exp-list" class="space-y-4"></div>
+                    <button onclick="addItem('experience')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加经历</button>
+                </div>
+            </div>
+
+            <!-- 4. 项目经验 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    🚀 项目经验
+                </div>
+                <div class="collapse-content">
+                    <div id="proj-list" class="space-y-4"></div>
+                    <button onclick="addItem('projects')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加项目</button>
+                </div>
+            </div>
+
+            <!-- 5. 技能与证书 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    🛠 技能与证书
+                </div>
+                <div class="collapse-content space-y-3">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">专业技能 (每行一个)</span></label>
+                        <textarea class="textarea textarea-bordered h-24" oninput="updateArrayField('skills', this.value)" id="input-skills" placeholder="Java&#10;Python&#10;SQL"></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 右侧：预览区 -->
+    <div class="w-full lg:w-1/2 flex flex-col bg-base-200/50 rounded-xl border border-base-200">
+        
+        <!-- 预览工具栏 -->
+        <div class="p-3 border-b border-base-200 flex justify-between items-center">
+            <select class="select select-sm select-bordered" onchange="changeTemplate(this.value)">
+                <option value="modern">现代简约 (Modern)</option>
+                <option value="classic">经典商务 (Classic)</option>
+            </select>
+            <button onclick="exportPDF()" class="btn btn-sm btn-secondary text-white gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                导出 PDF
+            </button>
+        </div>
+
+        <!-- 预览画布 -->
+        <div class="flex-1 overflow-y-auto p-4 flex justify-center bg-gray-100">
+            <div id="resume-preview" class="bg-white shadow-xl origin-top transition-transform" style="width: 210mm; min-height: 297mm; padding: 0;">
+                <!-- 简历内容将由 JS 渲染 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 样式 -->
+<style>
+    /* Print Styles - Global override for clean printing */
+    @media print {
+        body {
+            visibility: hidden;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #resume-preview {
+            visibility: visible;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            transform: none !important; /* Reset any scaling */
+            z-index: 9999;
+            background: white;
+        }
+
+        #resume-preview * {
+            visibility: visible;
+        }
+
+        /* Hide headers, footers, and page info */
+        @page {
+            margin: 0;
+            size: auto;
+        }
+    }
+
+    /* Modern Template Styles */
+    .resume-modern { font-family: 'Segoe UI', sans-serif; color: #333; line-height: 1.6; display: flex; min-height: 297mm; }
+    .resume-modern .sidebar { width: 30%; background: #f8f9fa; border-right: 1px solid #eee; padding: 30px 20px; }
+    .resume-modern .main { width: 70%; padding: 30px; }
+    .resume-modern .avatar { width: 100px; height: 100px; background: #ddd; border-radius: 50%; margin: 0 auto 20px; display: block; object-fit: cover; }
+    .resume-modern .name { font-size: 24px; font-weight: bold; text-align: center; color: #2c3e50; }
+    .resume-modern .target { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
+    .resume-modern .section-title { font-size: 16px; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin: 20px 0 15px; }
+    .resume-modern .contact-item { font-size: 13px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; color: #555; }
+    .resume-modern .skill-item { background: #e8f4fd; color: #2980b9; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 6px; display: inline-block; margin-right: 4px; }
+    
+    .resume-modern .item { margin-bottom: 20px; }
+    .resume-modern .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+    .resume-modern .item-title { font-weight: bold; font-size: 16px; color: #34495e; }
+    .resume-modern .item-subtitle { font-weight: 600; font-size: 14px; color: #7f8c8d; }
+    .resume-modern .item-date { font-size: 12px; color: #95a5a6; }
+    .resume-modern .item-desc { font-size: 13px; color: #555; white-space: pre-line; margin-top: 5px; }
+
+    /* Classic Template Styles */
+    .resume-classic { font-family: 'Times New Roman', serif; color: #000; padding: 40px; }
+    .resume-classic .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
+    .resume-classic .name { font-size: 28px; font-weight: bold; text-transform: uppercase; }
+    .resume-classic .contact { font-size: 14px; margin-top: 10px; }
+    .resume-classic .section-title { font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 20px 0 10px; border-bottom: 1px solid #ccc; }
+    .resume-classic .item { margin-bottom: 15px; }
+    .resume-classic .item-header { display: flex; justify-content: space-between; font-weight: bold; }
+    .resume-classic .item-desc { font-size: 14px; margin-top: 5px; }
+</style>
+
+<script>
+    // 初始数据 (从后端注入)
+    let resumeData = {{ resume.content | tojson }} || {};
+    const resumeId = {{ resume.id }};
+    let currentTemplate = "{{ resume.template_id }}" || 'modern';
+
+    // 数据结构标准化初始化
+    if (!resumeData.basic) resumeData.basic = {};
+    if (!resumeData.education) resumeData.education = [];
+    if (!resumeData.experience) resumeData.experience = [];
+    if (!resumeData.projects) resumeData.projects = [];
+    if (!resumeData.skills) resumeData.skills = [];
+
+    // 初始化页面
+    document.addEventListener('DOMContentLoaded', () => {
+        // 填充表单
+        fillForm();
+        // 渲染预览
+        renderPreview();
+        // 设置选择框
+        document.querySelector('select').value = currentTemplate;
+
+        // Auto-print check for dashboard "Download PDF"
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('print')) {
+            // Delay slightly to ensure rendering is complete
+            setTimeout(exportPDF, 800);
+        }
+    });
+
+    // --- 表单逻辑 ---
+
+    function fillForm() {
+        // Basic
+        for (const key in resumeData.basic) {
+            const el = document.getElementById(`input-${key}`);
+            if (el) el.value = resumeData.basic[key];
+        }
+        // Skills
+        const skillsEl = document.getElementById('input-skills');
+        if (skillsEl) skillsEl.value = resumeData.skills.join('\n');
+
+        // Lists
+        renderListEditors('education');
+        renderListEditors('experience');
+        renderListEditors('projects');
+    }
+
+    function updateField(section, key, value) {
+        if (section === 'basic') {
+            resumeData.basic[key] = value;
+        }
+        renderPreview();
+        showUnsaved();
+    }
+
+    function updateArrayField(key, value) {
+        resumeData[key] = value.split('\n').filter(i => i.trim());
+        renderPreview();
+        showUnsaved();
+    }
+
+    // 列表编辑器渲染器
+    function renderListEditors(type) {
+        const container = document.getElementById(type === 'education' ? 'edu-list' : (type === 'experience' ? 'exp-list' : 'proj-list'));
+        container.innerHTML = '';
+        
+        resumeData[type].forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'card bg-base-200 p-3 relative group';
+            
+            let fields = '';
+            if (type === 'education') {
+                fields = `
+                    <input class="input input-sm w-full mb-2" placeholder="学校名称" value="${item.school || ''}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
+                    <div class="flex gap-2">
+                        <input class="input input-sm w-1/2" placeholder="专业" value="${item.major || ''}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间 (如 2020-2024)" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                    </div>
+                `;
+            } else if (type === 'experience') {
+                fields = `
+                    <input class="input input-sm w-full mb-2" placeholder="公司名称" value="${item.company || ''}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
+                    <div class="flex gap-2 mb-2">
+                        <input class="input input-sm w-1/2" placeholder="职位" value="${item.position || ''}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                    </div>
+                    <div class="relative">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs opacity-50">工作内容</span>
+                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-${type}-${index}-description" onclick="optimizeField('${type}', ${index}, 'description')">
+                                ✨ 润色
+                            </button>
+                        </div>
+                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="工作内容..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${item.description || ''}</textarea>
+                    </div>
+                `;
+            } else if (type === 'projects') {
+                fields = `
+                    <input class="input input-sm w-full mb-2" placeholder="项目名称" value="${item.name || ''}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <div class="flex gap-2 mb-2">
+                        <input class="input input-sm w-1/2" placeholder="角色" value="${item.role || ''}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                    </div>
+                    <div class="relative">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs opacity-50">项目描述</span>
+                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-${type}-${index}-description" onclick="optimizeField('${type}', ${index}, 'description')">
+                                ✨ 润色
+                            </button>
+                        </div>
+                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${item.description || ''}</textarea>
+                    </div>
+                `;
+            }
+
+            div.innerHTML = `
+                <button onclick="deleteItem('${type}', ${index})" class="btn btn-xs btn-circle btn-error absolute -top-2 -right-2 opacity-0 group-hover:opacity-100">✕</button>
+                ${fields}
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateListItem(type, index, key, value) {
+        resumeData[type][index][key] = value;
+        renderPreview();
+        showUnsaved();
+    }
+
+    function addItem(type) {
+        resumeData[type].push({});
+        renderListEditors(type);
+        renderPreview();
+        showUnsaved();
+    }
+
+    function deleteItem(type, index) {
+        resumeData[type].splice(index, 1);
+        renderListEditors(type);
+        renderPreview();
+        showUnsaved();
+    }
+
+    // --- 预览渲染逻辑 ---
+
+    function renderPreview() {
+        const container = document.getElementById('resume-preview');
+        const d = resumeData;
+        const b = d.basic || {};
+
+        if (currentTemplate === 'modern') {
+            container.innerHTML = `
+                <div class="resume-modern">
+                    <div class="sidebar">
+                        <div class="name" style="margin-bottom:20px; text-align:left;">${b.name || '姓名'}</div>
+                        
+                        <div class="section-title">联系方式</div>
+                        ${b.phone ? `<div class="contact-item">📞 ${b.phone}</div>` : ''}
+                        ${b.email ? `<div class="contact-item">✉️ ${b.email}</div>` : ''}
+                        ${b.location ? `<div class="contact-item">📍 ${b.location}</div>` : ''}
+                        
+                        <div class="section-title">求职意向</div>
+                        <div class="contact-item">${b.job_target || '未填写'}</div>
+
+                        <div class="section-title">技能专长</div>
+                        <div>
+                            ${d.skills.map(s => `<span class="skill-item">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="main">
+                        <div class="section-title" style="margin-top:0;">自我评价</div>
+                        <p class="item-desc">${b.self_evaluation || '暂无'}</p>
+
+                        ${d.experience.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
+                        ${d.experience.map(item => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <span class="item-title">${item.company || '公司'}</span>
+                                    <span class="item-date">${item.date || ''}</span>
+                                </div>
+                                <div class="item-subtitle">${item.position || '职位'}</div>
+                                <div class="item-desc">${item.description || ''}</div>
+                            </div>
+                        `).join('')}
+
+                        ${d.projects.length > 0 ? `<div class="section-title">项目经验</div>` : ''}
+                        ${d.projects.map(item => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <span class="item-title">${item.name || '项目'}</span>
+                                    <span class="item-date">${item.date || ''}</span>
+                                </div>
+                                <div class="item-subtitle">${item.role || '角色'}</div>
+                                <div class="item-desc">${item.description || ''}</div>
+                            </div>
+                        `).join('')}
+
+                        ${d.education.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
+                        ${d.education.map(item => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <span class="item-title">${item.school || '学校'}</span>
+                                    <span class="item-date">${item.date || ''}</span>
+                                </div>
+                                <div class="item-subtitle">${item.major || '专业'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Classic Template
+            container.innerHTML = `
+                <div class="resume-classic">
+                    <div class="header">
+                        <div class="name">${b.name || '姓名'}</div>
+                        <div class="contact">
+                            ${b.phone || ''} | ${b.email || ''} | ${b.location || ''}
+                        </div>
+                        <div class="contact">求职意向：${b.job_target || ''}</div>
+                    </div>
+
+                    <div class="section-title">自我评价</div>
+                    <p class="item-desc">${b.self_evaluation || ''}</p>
+
+                    <div class="section-title">教育背景</div>
+                    ${d.education.map(item => `
+                        <div class="item">
+                            <div class="item-header">
+                                <span>${item.school || ''} - ${item.major || ''}</span>
+                                <span>${item.date || ''}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+
+                    <div class="section-title">工作经历</div>
+                    ${d.experience.map(item => `
+                        <div class="item">
+                            <div class="item-header">
+                                <span>${item.company || ''} - ${item.position || ''}</span>
+                                <span>${item.date || ''}</span>
+                            </div>
+                            <div class="item-desc">${item.description || ''}</div>
+                        </div>
+                    `).join('')}
+
+                    <div class="section-title">项目经验</div>
+                    ${d.projects.map(item => `
+                        <div class="item">
+                            <div class="item-header">
+                                <span>${item.name || ''} - ${item.role || ''}</span>
+                                <span>${item.date || ''}</span>
+                            </div>
+                            <div class="item-desc">${item.description || ''}</div>
+                        </div>
+                    `).join('')}
+
+                    <div class="section-title">技能</div>
+                    <p class="item-desc">${d.skills.join(' / ')}</p>
+                </div>
+            `;
+        }
+    }
+
+    // --- 功能函数 ---
+
+    function changeTemplate(tpl) {
+        currentTemplate = tpl;
+        renderPreview();
+        showUnsaved();
+    }
+
+    async function saveResume() {
+        const btn = document.querySelector('button[onclick="saveResume()"]');
+        const originalText = btn.innerText;
+        btn.innerText = '保存中...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/resume/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id: resumeId,
+                    content: resumeData,
+                    template_id: currentTemplate,
+                    title: resumeData.basic.name + '的简历'
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('save-status').innerText = '已保存 ' + new Date().toLocaleTimeString();
+                document.getElementById('save-status').classList.remove('text-error');
+            } else {
+                alert('保存失败: ' + data.error);
+            }
+        } catch (e) {
+            alert('网络错误');
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function showUnsaved() {
+        document.getElementById('save-status').innerText = '未保存';
+        document.getElementById('save-status').classList.add('text-error');
+    }
+
+    // --- AI 优化相关 ---
+    
+    let currentOptimizingField = null; // { type, index, key }
+
+    async function optimizeField(type, index, key) {
+        // 获取当前内容
+        let content = '';
+        let fieldLabel = '';
+        
+        if (type === 'basic') {
+            content = resumeData.basic[key];
+            fieldLabel = '自我评价';
+        } else if (type === 'experience' || type === 'projects') {
+            content = resumeData[type][index][key];
+            fieldLabel = type === 'experience' ? '工作经历描述' : '项目描述';
+        }
+        
+        if (!content || content.length < 5) {
+            alert('内容太短，无法优化');
+            return;
+        }
+
+        // 显示 Loading 状态 (在按钮上)
+        const btnId = `btn-opt-${type}-${index}-${key}`;
+        const btn = document.getElementById(btnId);
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span>';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/resume/optimize', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    content: content,
+                    type: fieldLabel
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                showSuggestionPopup(type, index, key, data.suggestion);
+            } else {
+                alert('AI 优化失败: ' + (data.error || '未知错误'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('请求出错');
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+function showSuggestionPopup(type, index, key, suggestion) {
+        // 1. 移除旧的弹窗
+        const oldPopup = document.getElementById('ai-suggestion-popup');
+        if (oldPopup) oldPopup.remove();
+
+        // 2. 找到目标输入框
+        let targetInputId = '';
+        if (type === 'basic') {
+            targetInputId = `input-${key}`;
+        } else {
+            targetInputId = `input-${type}-${index}-${key}`;
+        }
+        
+        const targetInput = document.getElementById(targetInputId);
+        if (!targetInput) return;
+
+        // 3. 【核心修改】计算目标输入框在页面中的绝对位置
+        const rect = targetInput.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        // 4. 创建浮窗
+        const popup = document.createElement('div');
+        popup.id = 'ai-suggestion-popup';
+        
+        // 样式修改：
+        // - position: absolute (配合 body 使用)
+        // - z-index: 9999 (确保最高层级)
+        // - 保持橙色主题
+        popup.className = 'bg-orange-50 shadow-2xl border-2 border-orange-400 rounded-xl p-4 animate-in fade-in slide-in-from-top-2';
+        
+        // 【核心修改】直接设置内联样式来定位
+        popup.style.position = 'absolute';
+        popup.style.zIndex = '9999';
+        popup.style.width = rect.width + 'px'; // 宽度与输入框一致
+        popup.style.top = (rect.bottom + scrollTop + 6) + 'px'; // 位于输入框下方 + 6px 间距
+        popup.style.left = (rect.left + scrollLeft) + 'px'; // 左对齐
+
+        popup.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <div class="text-xs font-bold text-orange-600 flex items-center gap-1">
+                    ✨ AI 优化建议
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="applySuggestion('${type}', '${index}', '${key}')" class="btn btn-xs bg-orange-500 hover:bg-orange-600 text-white border-none" title="应用">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        应用
+                    </button>
+                    <button onclick="closeSuggestion()" class="btn btn-xs btn-ghost text-base-content/50" title="忽略">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="text-sm text-gray-700 p-1 rounded-lg max-h-40 overflow-y-auto whitespace-pre-wrap" id="suggestion-text">${suggestion}</div>
+        `;
+
+        // 5. 【核心修改】将弹窗追加到 body，而不是 input 的父级
+        document.body.appendChild(popup);
+        
+        // 监听一次点击外部关闭（可选优化体验）
+        setTimeout(() => {
+            const closeOnClickOutside = (e) => {
+                if (!popup.contains(e.target) && e.target !== targetInput) {
+                    closeSuggestion();
+                    document.removeEventListener('click', closeOnClickOutside);
+                }
+            };
+            document.addEventListener('click', closeOnClickOutside);
+        }, 100);
+    }
+    function applySuggestion(type, index, key) {
+        const text = document.getElementById('suggestion-text').innerText;
+        
+        if (type === 'basic') {
+            updateField('basic', key, text);
+            document.getElementById(`input-${key}`).value = text;
+        } else {
+            updateListItem(type, index, key, text);
+            // 重新渲染列表会丢失焦点，这里我们不需要手动更新 DOM value，因为 renderListEditors 会重绘
+        }
+        closeSuggestion();
+    }
+
+    function closeSuggestion() {
+        const popup = document.getElementById('ai-suggestion-popup');
+        if (popup) popup.remove();
+    }
+
+    // --- 导出功能 ---
+
+function exportPDF() {
+    // 1. 更改网页标题（因为浏览器打印默认用网页标题作为文件名）
+    const originalTitle = document.title;
+    const name = resumeData.basic.name || '简历';
+    document.title = `${name}_简历`;
+
+    // 2. 调用浏览器打印
+    window.print();
+
+    // 3. 恢复标题
+    //由于 print 是阻塞的（或在某些浏览器是非阻塞的），建议用 timeout 恢复
+    setTimeout(() => {
+        document.title = originalTitle;
+    }, 1000);
+}
+</script>
+{% endblock %}

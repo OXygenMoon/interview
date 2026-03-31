@@ -17,125 +17,219 @@
     /* 隐藏滚动条但保留功能 */
     #chat-container::-webkit-scrollbar { width: 6px; }
     #chat-container::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 3px; }
+
+    /* 摄像头预览窗口样式优化 */
+    #local-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1); /* 镜像翻转 */
+    }
 </style>
 
-<div class="flex flex-col h-[calc(100vh-8rem)]">
+<!-- 主布局容器：桌面端左右分栏，移动端上下堆叠 -->
+<div class="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-4">
 
-<div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-stone-100 mb-4">
-        <div>
-            <div class="flex items-center gap-3 flex-wrap">
-                <h2 class="font-bold text-lg text-stone-700">
-                    {% if is_read_only %}
-                        面试回顾: {{ session.target_role }}
-                    {% else %}
-                        正在面试: {{ session.target_role }}
+    <!-- 左侧：聊天主区域 -->
+    <div class="flex-1 flex flex-col h-full min-w-0">
+        
+        <!-- 顶部标题栏 -->
+        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-stone-100 mb-4 shrink-0">
+            <div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h2 class="font-bold text-lg text-stone-700">
+                        {% if is_read_only %}
+                            面试回顾: {{ session.target_role }}
+                        {% else %}
+                            正在面试: {{ session.target_role }}
+                        {% endif %}
+                    </h2>
+
+                    {% if not is_read_only %}
+                    <div class="badge badge-ghost gap-1 font-mono text-stone-500 text-xs" title="面试时长">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span id="interview-timer">00:00</span>
+                    </div>
                     {% endif %}
-                </h2>
 
-                {% if not is_read_only %}
-                <div class="badge badge-ghost gap-1 font-mono text-stone-500 text-xs" title="面试时长">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span id="interview-timer">00:00</span>
+                    <span class="badge badge-outline text-xs
+                        {% if session.difficulty == '新手模式' %}badge-success text-green-600
+                        {% elif session.difficulty == '压力模式' %}badge-error text-red-600
+                        {% else %}badge-info text-blue-600{% endif %}">
+                        {{ session.difficulty or '标准模式' }}
+                    </span>
                 </div>
-                {% endif %}
 
-                <span class="badge badge-outline text-xs
-                    {% if session.difficulty == '新手模式' %}badge-success text-green-600
-                    {% elif session.difficulty == '压力模式' %}badge-error text-red-600
-                    {% else %}badge-info text-blue-600{% endif %}">
-                    {{ session.difficulty or '标准模式' }}
-                </span>
+                <p class="text-xs text-stone-400 mt-1">
+                    {% if is_read_only %}
+                        {% if current_user.role != 'student' %}
+                            正在查看学生 <b>{{ session.user.truename }}</b> 的面试记录
+                        {% else %}
+                            面试已结束，您可以回顾聊天记录
+                        {% endif %}
+                    {% else %}
+                        请尽量使用语音回答，锻炼口语能力
+                    {% endif %}
+                </p>
             </div>
 
-            <p class="text-xs text-stone-400 mt-1">
-                {% if is_read_only %}
-                    {% if current_user.role != 'student' %}
-                        正在查看学生 <b>{{ session.user.truename }}</b> 的面试记录
-                    {% else %}
-                        面试已结束，您可以回顾聊天记录
-                    {% endif %}
+            {% if is_read_only %}
+                <a href="{{ url_for('routes.interview_summary', session_id=session.id) }}" class="btn btn-primary btn-sm text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    查看报告
+                </a>
+            {% else %}
+                <button onclick="finishInterview()" class="btn btn-error btn-sm text-white">结束面试</button>
+            {% endif %}
+        </div>
+
+
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50 rounded-xl border border-stone-100 mb-4">
+            {% for msg in messages %}
+                {% if msg.sender == 'ai' %}
+                <div class="chat chat-start">
+                    <div class="chat-image avatar">
+                        <div class="w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-2">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                        </div>
+                    </div>
+                    <div class="chat-header text-xs opacity-50 mb-1">AI 面试官</div>
+                    <div class="chat-bubble bg-white text-stone-700 shadow-sm border border-stone-100 cursor-pointer hover:bg-stone-100 transition group" onclick="playAudioResponse('{{ msg.audio_url }}')">
+                        {{ msg.content }}
+                        {% if msg.audio_url and msg.audio_url != 'None' %}
+                            <span class="inline-flex items-center justify-center w-5 h-5 ml-2 rounded-full bg-stone-100 text-primary group-hover:bg-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
                 {% else %}
-                    请尽量使用语音回答，锻炼口语能力
+                <div class="chat chat-end">
+                    <div class="chat-header text-xs opacity-50 mb-1">
+                        {% if current_user.role != 'student' %}学生{% else %}我{% endif %}
+                    </div>
+                    <div class="chat-bubble bg-primary text-white shadow-md">{{ msg.content }}</div>
+                </div>
                 {% endif %}
-            </p>
+            {% endfor %}
         </div>
 
         {% if is_read_only %}
-            <a href="{{ url_for('routes.interview_summary', session_id=session.id) }}" class="btn btn-primary btn-sm text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                查看报告
-            </a>
+            <div class="bg-stone-100 p-4 rounded-xl border border-stone-200 text-center text-stone-500 text-sm font-medium select-none flex justify-center items-center gap-2">
+                {% if current_user.role != 'student' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    仅供查阅模式，无法发送消息
+                {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    本场面试已结束
+                {% endif %}
+            </div>
         {% else %}
-            <button onclick="finishInterview()" class="btn btn-error btn-sm text-white">结束面试</button>
+            <div class="bg-white p-3 rounded-xl border border-stone-100 flex gap-2 items-center relative">
+
+                <button class="btn btn-circle btn-ghost btn-sm" onclick="toggleInputMode()" title="切换语音/文字">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                </button>
+
+                <div id="text-mode" class="flex-1 flex gap-2">
+                    <input type="text" id="msg-input" placeholder="请输入你的回答..." class="input input-bordered w-full focus:outline-none" onkeypress="handleKeyPress(event)" />
+                    <button onclick="sendMessage()" class="btn btn-primary px-6 text-white">发送</button>
+                </div>
+
+                <div id="voice-mode" class="flex-1 hidden flex justify-center">
+                    <button id="record-btn" class="btn btn-block btn-outline border-stone-300 text-stone-600 hover:bg-stone-100 hover:border-stone-400 no-animation">
+                        <span id="record-text">按住 说话</span>
+                    </button>
+                </div>
+
+                <div id="recording-overlay" class="hidden absolute inset-0 bg-primary/90 rounded-xl flex items-center justify-center gap-2 z-10 text-white font-bold select-none pointer-events-none">
+                    <span class="loading loading-bars loading-md"></span>
+                    正在录音... 松开发送
+                </div>
+            </div>
         {% endif %}
     </div>
 
+    <!-- 右侧：侧边栏 (视频预览 + 状态) -->
+    <div class="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+        <!-- 视频卡片 -->
+        <div class="bg-white p-1 rounded-xl shadow-sm border border-stone-100">
+            <div class="bg-black rounded-lg overflow-hidden aspect-[4/3] relative">
+                {% if not is_read_only %}
+                <video id="local-video" autoplay playsinline muted></video>
+                <canvas id="video-canvas" class="hidden"></canvas>
+                <div class="absolute bottom-2 left-2 text-white/80 text-xs bg-black/50 px-2 py-1 rounded">本地预览</div>
+                {% else %}
+                <div class="flex items-center justify-center h-full text-stone-500 text-sm">无预览信号</div>
+                {% endif %}
+            </div>
+        </div>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50 rounded-xl border border-stone-100 mb-4">
-        {% for msg in messages %}
-            {% if msg.sender == 'ai' %}
-            <div class="chat chat-start">
-                <div class="chat-image avatar">
-                    <div class="w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-2">
-                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                    </div>
-                </div>
-                <div class="chat-header text-xs opacity-50 mb-1">AI 面试官</div>
-                <div class="chat-bubble bg-white text-stone-700 shadow-sm border border-stone-100 cursor-pointer hover:bg-stone-100 transition group" onclick="playAudioResponse('{{ msg.audio_url }}')">
-                    {{ msg.content }}
-                    {% if msg.audio_url and msg.audio_url != 'None' %}
-                        <span class="inline-flex items-center justify-center w-5 h-5 ml-2 rounded-full bg-stone-100 text-primary group-hover:bg-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                        </span>
-                    {% endif %}
-                </div>
+        <!-- 实时 AI 视觉评价面板 -->
+        {% if not is_read_only %}
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex-none animate-pulse" id="visual-feedback-card" style="display: none;">
+            <h3 class="font-bold text-stone-700 mb-2 flex items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                AI 视觉观察
+            </h3>
+            <div id="visual-feedback-content" class="text-xs text-stone-600 space-y-1">
+                <!-- 动态内容 -->
             </div>
-            {% else %}
-            <div class="chat chat-end">
-                <div class="chat-header text-xs opacity-50 mb-1">
-                    {% if current_user.role != 'student' %}学生{% else %}我{% endif %}
-                </div>
-                <div class="chat-bubble bg-primary text-white shadow-md">{{ msg.content }}</div>
+        </div>
+        {% endif %}
+
+        <!-- 状态面板 (可选) -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex-1 hidden lg:block">
+            <h3 class="font-bold text-stone-700 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                面试小贴士
+            </h3>
+            <div class="text-sm text-stone-500 space-y-3">
+                <p>1. 请保持头部在画面中央。</p>
+                <p>2. 眼神注视摄像头，表现更自信。</p>
+                <p>3. AI 面试官会实时分析您的表情。</p>
             </div>
-            {% endif %}
-        {% endfor %}
+        </div>
     </div>
 
-    {% if is_read_only %}
-        <div class="bg-stone-100 p-4 rounded-xl border border-stone-200 text-center text-stone-500 text-sm font-medium select-none flex justify-center items-center gap-2">
-            {% if current_user.role != 'student' %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                仅供查阅模式，无法发送消息
-            {% else %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                本场面试已结束
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="bg-white p-3 rounded-xl border border-stone-100 flex gap-2 items-center relative">
-
-            <button class="btn btn-circle btn-ghost btn-sm" onclick="toggleInputMode()" title="切换语音/文字">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-            </button>
-
-            <div id="text-mode" class="flex-1 flex gap-2">
-                <input type="text" id="msg-input" placeholder="请输入你的回答..." class="input input-bordered w-full focus:outline-none" onkeypress="handleKeyPress(event)" />
-                <button onclick="sendMessage()" class="btn btn-primary px-6 text-white">发送</button>
-            </div>
-
-            <div id="voice-mode" class="flex-1 hidden flex justify-center">
-                <button id="record-btn" class="btn btn-block btn-outline border-stone-300 text-stone-600 hover:bg-stone-100 hover:border-stone-400 no-animation">
-                    <span id="record-text">按住 说话</span>
-                </button>
-            </div>
-
-            <div id="recording-overlay" class="hidden absolute inset-0 bg-primary/90 rounded-xl flex items-center justify-center gap-2 z-10 text-white font-bold select-none pointer-events-none">
-                <span class="loading loading-bars loading-md"></span>
-                正在录音... 松开发送
-            </div>
-        </div>
-    {% endif %}
 </div>
+
+<!-- 麦克风权限提示模态框 -->
+<dialog id="mic_permission_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-warning flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            无法访问麦克风
+        </h3>
+        <p class="py-4">由于浏览器安全策略，非 HTTPS 环境（如 IP 访问）默认禁止使用麦克风。</p>
+        
+        <div class="bg-base-200 p-3 rounded-lg text-sm mb-4">
+            <p class="font-bold mb-1">当前访问地址：</p>
+            <code id="current-origin" class="text-primary font-mono select-all"></code>
+        </div>
+
+        <p class="font-bold text-sm">解决方案（Chrome / Edge）：</p>
+        <ol class="list-decimal list-inside text-sm space-y-3 mt-2 text-stone-600">
+            <li>在地址栏输入并回车：
+                <div class="mockup-code bg-stone-800 text-white text-xs mt-1 p-2 min-w-0">
+                    <pre data-prefix="$"><code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></pre>
+                </div>
+            </li>
+            <li>将高亮选项设置为 <span class="badge badge-sm badge-success text-white">Enabled</span></li>
+            <li>在下方文本框输入上面的当前地址（IP+端口）</li>
+            <li>点击右下角的 <span class="btn btn-xs btn-outline">Relaunch</span> 重启浏览器</li>
+        </ol>
+        
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">我已了解</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 {% endblock %}
 
 {% block scripts %}
@@ -171,8 +265,117 @@
     let isRecording = false;
     let isProcessing = false;
 
+    // =========================================================
+    // 1.5 摄像头逻辑
+    // =========================================================
+    async function initCamera() {
+        if (document.getElementById('local-video')) {
+            try {
+                const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                const video = document.getElementById('local-video');
+                video.srcObject = videoStream;
+                console.log("摄像头已启动");
+            } catch (e) {
+                console.warn("无法访问摄像头:", e);
+                // 可以在这里提示用户开启摄像头权限
+            }
+        }
+    }
+
+    function captureFrame() {
+        const video = document.getElementById('local-video');
+        const canvas = document.getElementById('video-canvas');
+        if (!video || !video.srcObject) return null;
+
+        // 如果视频没在播放，无法截图
+        if (video.readyState < 2) return null;
+
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        
+        // 绘制当前帧
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 转为 Base64 (JPEG, 0.5 质量以减少体积)
+        return canvas.toDataURL('image/jpeg', 0.5);
+    }
+
+    // 页面加载后尝试启动摄像头
+    window.addEventListener('load', () => {
+        {% if enable_video %}
+        initCamera();
+        // 启动定时视觉分析任务 (每 8 秒一次，避免过于频繁)
+        {% if not is_read_only %}
+        setInterval(performVisualAnalysis, 5000);
+        {% endif %}
+        {% endif %}
+    });
+
     // 自动滚动
     scrollToBottom();
+
+    // =========================================================
+    // 1.8 异步视觉分析逻辑 (新增)
+    // =========================================================
+    async function performVisualAnalysis() {
+        const imageBase64 = captureFrame();
+        if (!imageBase64) return;
+
+        try {
+            const res = await fetch(`/api/interview/${sessionId}/visual_feedback`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ image: imageBase64 })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success' && data.feedback) {
+                updateVisualFeedbackUI(data.feedback);
+            }
+        } catch (e) {
+            console.warn("Visual analysis failed:", e);
+        }
+    }
+
+    function updateVisualFeedbackUI(feedback) {
+        const card = document.getElementById('visual-feedback-card');
+        const content = document.getElementById('visual-feedback-content');
+        if (!card || !content) return;
+
+        // 简单的解析逻辑：假设 feedback 是 "表情:紧张, 视线:躲闪" 这种格式
+        // 我们把它拆分成标签显示
+        // 如果后端返回的是 JSON 数组最好，如果是字符串则手动拆分
+        let tags = [];
+        if (Array.isArray(feedback)) {
+            tags = feedback;
+        } else {
+             // 尝试清理字符串中的括号和空格
+            tags = feedback.replace(/[\[\]]/g, '').split(/[,，]/).map(s => s.trim()).filter(s => s);
+        }
+
+        if (tags.length === 0) return;
+
+        let html = '';
+        tags.forEach(tag => {
+            // 根据关键词匹配颜色
+            let colorClass = "bg-stone-100 text-stone-600";
+            if (tag.includes("紧张") || tag.includes("僵硬") || tag.includes("躲闪")) colorClass = "bg-red-50 text-red-600 border-red-100";
+            else if (tag.includes("自信") || tag.includes("端正") || tag.includes("直视")) colorClass = "bg-green-50 text-green-600 border-green-100";
+            else if (tag.includes("微笑") || tag.includes("疑惑")) colorClass = "bg-blue-50 text-blue-600 border-blue-100";
+
+            html += `<span class="badge badge-sm border ${colorClass} mr-1 mb-1">${tag}</span>`;
+        });
+
+        content.innerHTML = html;
+        card.style.display = 'block';
+        
+        // 闪烁一下提示更新
+        card.classList.remove('animate-pulse');
+        void card.offsetWidth; // trigger reflow
+        card.classList.add('animate-pulse');
+        setTimeout(() => card.classList.remove('animate-pulse'), 2000);
+    }
 
     // =========================================================
     // 2. UI 辅助函数
@@ -278,11 +481,17 @@
         showTypingIndicator();
 
         try {
+            // 4.5 捕获当前视频帧
+            const imageBase64 = captureFrame();
+
             // 5. 请求 AI 回复 (复用旧接口)
             const res = await fetch(`/api/interview/${sessionId}/chat`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: text})
+                body: JSON.stringify({
+                    message: text,
+                    image: imageBase64 // 发送图片
+                })
             });
             const data = await res.json();
 
@@ -315,6 +524,14 @@
     async function startRecording() {
         if (isProcessing) return;
         if (isRecording) return;
+
+        // 检查环境是否支持麦克风
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+             document.getElementById('current-origin').innerText = window.location.origin;
+             document.getElementById('mic_permission_modal').showModal();
+             return;
+        }
+
         try {
             audioChunks = [];
             const constraints = { audio: true };
@@ -338,7 +555,9 @@
 
         } catch (err) {
             console.error(err);
-            alert("麦克风启动失败，请检查浏览器权限。");
+            // 权限拒绝或环境不安全
+            document.getElementById('current-origin').innerText = window.location.origin;
+            document.getElementById('mic_permission_modal').showModal();
             stopRecording();
         }
     }

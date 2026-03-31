@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}个人基础信息维护{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">个人基础信息维护</h1>
+            <p class="text-sm text-slate-500 mt-1">维护您的通用信息，在创建新简历时可一键导入</p>
+        </div>
+    </div>
+
+    <div class="card bg-white shadow-sm border border-slate-100">
+        <div class="card-body">
+            <form method="POST">
+                {% set info = user.profile_info or {} %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">姓名</span></label>
+                        <input type="text" name="name" class="input input-bordered" value="{{ info.get('name') or user.truename or '' }}" required>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">求职意向</span></label>
+                        <input type="text" name="job_target" class="input input-bordered" value="{{ info.get('job_target', '') }}" placeholder="例如：产品经理">
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">电话</span></label>
+                        <input type="text" name="phone" class="input input-bordered" value="{{ info.get('phone', '') }}">
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">邮箱</span></label>
+                        <input type="email" name="email" class="input input-bordered" value="{{ info.get('email') or (user.username ~ '@example.com') }}">
+                    </div>
+                    
+                    <div class="form-control md:col-span-2">
+                        <label class="label"><span class="label-text font-bold">所在城市</span></label>
+                        <input type="text" name="location" class="input input-bordered" value="{{ info.get('location', '') }}">
+                    </div>
+                    
+                    <div class="form-control md:col-span-2">
+                        <label class="label"><span class="label-text font-bold">自我评价</span></label>
+                        <textarea name="self_evaluation" class="textarea textarea-bordered h-32" placeholder="简要介绍您的核心优势...">{{ info.get('self_evaluation', '') }}</textarea>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary text-white">保存信息</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

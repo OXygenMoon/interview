@@ -10,14 +10,44 @@ from threading import Thread
 
 # 使用相对导入，引用上一级 app 目录下的 db 和 models
 from .. import db
-from ..models import InterviewSession, ChatMessage, User
+from ..models import InterviewSession, ChatMessage, User, SystemConfig
 
 # 引入 AI 服务
-from ..services.ai_agent import get_ai_response, generate_interview_report, transcribe_audio
+from ..services.ai_agent import get_ai_response, generate_interview_report, transcribe_audio, analyze_image
 # 引入 TTS 服务
 from ..services.tts_service import text_to_speech
 # 引入文件解析服务 (解析简历用)
 from ..utils.file_parser import extract_text_from_file
+
+def resume_json_to_text(data):
+    """将结构化简历转换为文本"""
+    if not data:
+        return ""
+    
+    lines = []
+    basic = data.get('basic', {})
+    lines.append(f"姓名: {basic.get('name', '')}")
+    lines.append(f"求职意向: {basic.get('job_target', '')}")
+    lines.append(f"自我评价: {basic.get('self_evaluation', '')}")
+    
+    lines.append("\n教育背景:")
+    for edu in data.get('education', []):
+        lines.append(f"- {edu.get('school', '')} | {edu.get('major', '')} | {edu.get('date', '')}")
+        
+    lines.append("\n工作经历:")
+    for exp in data.get('experience', []):
+        lines.append(f"- {exp.get('company', '')} | {exp.get('position', '')} | {exp.get('date', '')}")
+        lines.append(f"  描述: {exp.get('description', '')}")
+        
+    lines.append("\n项目经历:")
+    for proj in data.get('projects', []):
+        lines.append(f"- {proj.get('name', '')} | {proj.get('role', '')} | {proj.get('date', '')}")
+        lines.append(f"  描述: {proj.get('description', '')}")
+        
+    lines.append("\n技能:")
+    lines.append(", ".join(data.get('skills', [])))
+    
+    return "\n".join(lines)
 
 api_bp = Blueprint('interview_api', __name__)
 
@@ -34,9 +64,24 @@ def create_session():
         # 如果前端没传音色，默认用配置里的默认值，或者这里写死一个兜底
         voice_type = request.form.get('voice_type', 'zh_male_dayi_saturn_bigtts')
         difficulty = request.form.get('difficulty', '标准模式')
-
-        # 2. 处理简历文件上传 (可选)
+        position_id = request.form.get('position_id', type=int)
+        
+        # 处理简历选择
+        resume_id = request.form.get('resume_id', type=int)
+        use_resume = False
         resume_text = ""
+        
+        # 情况 A: 选择了已有的在线简历
+        if resume_id:
+            from ..models import Resume
+            resume_obj = Resume.query.get(resume_id)
+            if resume_obj and resume_obj.user_id == current_user.id:
+                resume_text = resume_json_to_text(resume_obj.content)
+                current_user.resume_text = resume_text
+                db.session.commit()
+                use_resume = True
+
+        # 情况 B: 处理简历文件上传 (可选，优先级高于在线简历)
         if 'resume' in request.files:
             file = request.files['resume']
             if file.filename != '':
@@ -50,22 +95,24 @@ def create_session():
                 file.save(filepath)
 
                 # 解析文本
-                resume_text = extract_text_from_file(filepath)
-
-                # 3. 将解析出的简历更新到【当前登录用户】的资料中
-                if resume_text:
+                uploaded_text = extract_text_from_file(filepath)
+                if uploaded_text:
+                    resume_text = uploaded_text
                     current_user.resume_text = resume_text
-                    db.session.commit()  # 保存简历更新
+                    db.session.commit()
+                    use_resume = True
 
         # 4. 创建面试会话
         # === 关键点：使用 current_user.id 而不是写死 1 ===
         session = InterviewSession(
             user_id=current_user.id,
             target_role=target_role,
+            position_id=position_id if position_id else None,
             voice_type=voice_type,
             difficulty=difficulty,
             status="ongoing",
-            start_time=datetime.now()
+            start_time=datetime.now(),
+            use_resume=use_resume
         )
         db.session.add(session)
         db.session.commit()
@@ -76,7 +123,7 @@ def create_session():
 
         first_msg_content = f"你好，我是今天的面试官。我看你申请的是【{target_role}】岗位。"
 
-        if user_resume:
+        if use_resume and (user_resume or current_user.resume_text):
             first_msg_content += " 我已经阅读了你的简历，对你的经历很感兴趣。请先做一个简单的自我介绍。"
         else:
             first_msg_content += " 请先做一个简单的自我介绍。"
@@ -101,45 +148,84 @@ def create_session():
 
 @api_bp.route('/<int:session_id>/chat', methods=['POST'])
 def chat(session_id):
-    """处理纯文本聊天消息"""
+    """处理纯文本聊天消息 (支持视觉)"""
     try:
         data = request.json
         user_text = data.get('message')
+        user_image = data.get('image')  # 新增：接收图片 Base64
+
         if not user_text:
             return jsonify({'error': 'Message is empty'}), 400
 
-        # 1. 保存用户消息
-        user_msg = ChatMessage(session_id=session_id, sender="user", content=user_text, timestamp=datetime.now())
+        # 1. 视觉分析 (如果有图片)
+        visual_context_str = ""
+        if user_image:
+            # 异步调用还是同步？为了对话连贯性，这里暂时同步调用
+            # Qwen-VL 响应通常较快
+            visual_context_str = analyze_image(user_image)
+
+        # 2. 保存用户消息
+        user_msg = ChatMessage(
+            session_id=session_id,
+            sender="user",
+            content=user_text,
+            timestamp=datetime.now(),
+            visual_context=visual_context_str  # 保存视觉标签
+        )
         db.session.add(user_msg)
         db.session.commit()
 
-        # 2. 获取上下文和 Session 信息
+        # 3. 获取上下文和 Session 信息
         history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
         # 使用 get_or_404 防止 ID 不存在报错
         session = InterviewSession.query.get_or_404(session_id)
 
-        # 3. 调用 AI 大脑
+        # 4. 调用 AI 大脑
         role = getattr(session, 'target_role', 'Python工程师')
 
         # === ✅ 修改点 1：获取当前面试的难度模式 ===
         difficulty = getattr(session, 'difficulty', '标准模式')
 
-        # === ✅ 修改点 2：将 difficulty 传给 AI 服务 ===
-        # 注意：请确保 app/services/ai_agent.py 里的 get_ai_response 函数定义也已经增加了 difficulty 参数
-        ai_text = get_ai_response(history, target_role=role, difficulty=difficulty)
+        # === 构建上下文信息 ===
+        context_info = ""
+        if session.position_id:
+            from ..models import Position
+            pos = Position.query.get(session.position_id)
+            if pos:
+                if pos.company:
+                     context_info += f"### 公司介绍：{pos.company.name}\n{pos.company.description}\n\n"
+                context_info += f"### 岗位介绍：{pos.name}\n{pos.description}"
 
-        # 4. 生成语音 (TTS)
+        # 5. 如果启用了简历，将简历拼接到 context_info
+        if getattr(session, 'use_resume', False) and session.user.resume_text:
+            context_info += f"\n\n### 求职者简历\n{session.user.resume_text}"
+
+        # === ✅ 修改点 2：将 difficulty 和 visual_context 传给 AI 服务 ===
+        ai_text = get_ai_response(
+            history,
+            target_role=role,
+            difficulty=difficulty,
+            context_info=context_info,
+            visual_context_str=visual_context_str
+        )
+
+        # 6. 生成语音 (TTS)
         audio_url = None
-        try:
-            audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
-            # 传入 session 中保存的 voice_type
-            audio_filename = text_to_speech(ai_text, audio_dir, specific_voice=session.voice_type)
+        
+        # 检查系统配置：是否启用了 TTS
+        enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
+        
+        if enable_tts:
+            try:
+                audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
+                # 传入 session 中保存的 voice_type
+                audio_filename = text_to_speech(ai_text, audio_dir, specific_voice=session.voice_type)
 
-            if audio_filename:
-                audio_url = url_for('static', filename=f'uploads/audio/{audio_filename}')
-        except Exception as tts_error:
-            print(f"TTS Generation Failed: {tts_error}")
-            # TTS 失败不应阻断流程，继续返回文字
+                if audio_filename:
+                    audio_url = url_for('static', filename=f'uploads/audio/{audio_filename}')
+            except Exception as tts_error:
+                print(f"TTS Generation Failed: {tts_error}")
+                # TTS 失败不应阻断流程，继续返回文字
 
         # 5. 保存 AI 消息
         ai_msg = ChatMessage(
@@ -162,6 +248,39 @@ def chat(session_id):
         print(f"Chat Error: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+
+@api_bp.route('/<int:session_id>/visual_feedback', methods=['POST'])
+def visual_feedback(session_id):
+    """
+    处理纯视觉分析请求 (不产生对话)
+    """
+    try:
+        data = request.json
+        image_base64 = data.get('image')
+
+        if not image_base64:
+            return jsonify({'status': 'ignored'})
+
+        # 调用 VLM 分析
+        # 注意：这里我们希望得到更具体的反馈，而不仅仅是标签
+        # 但为了复用 analyze_image，我们暂且使用它
+        feedback_str = analyze_image(image_base64)
+
+        if not feedback_str:
+            return jsonify({'status': 'ignored'})
+
+        # 可选：将分析结果异步保存到最新的 ChatMessage 中？
+        # 或者仅仅返回给前端显示？这里选择仅仅返回给前端
+        
+        return jsonify({
+            'status': 'success',
+            'feedback': feedback_str
+        })
+
+    except Exception as e:
+        print(f"Visual Feedback Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 def background_report_task(app, session_id):

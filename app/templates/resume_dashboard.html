@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}智能简历中心{% endblock %}
+
+{% block content %}
+<div class="space-y-8 pb-10">
+    
+    <!-- Hero Header -->
+    <div class="hero rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-xl shadow-indigo-200 overflow-hidden relative group">
+        <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
+        <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white/10 rounded-full"></div>
+
+        <div class="hero-content flex-col md:flex-row justify-between w-full p-8 md:p-12 z-10">
+            <!-- Left: Info -->
+            <div class="flex items-center gap-6">
+                {% set info = user.profile_info or {} %}
+                <div class="avatar placeholder">
+                    <div class="bg-white/20 text-white rounded-full w-24 h-24 shadow-inner backdrop-blur-sm border-2 border-white/20">
+                        <span class="text-4xl font-bold">{{ (info.get('name') or user.truename or user.username or 'Me')[0] | upper }}</span>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight mb-2 drop-shadow-sm flex items-center gap-3">
+                        {{ info.get('name') or user.truename or '未设置姓名' }}
+                        {% if info.get('job_target') %}
+                        <span class="badge badge-lg bg-white/20 border-none text-white backdrop-blur-sm">{{ info.get('job_target') }}</span>
+                        {% endif %}
+                    </h1>
+                    <div class="flex flex-wrap gap-4 text-sm font-medium opacity-90">
+                        <span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>{{ info.get('phone') or '未填写' }}</span>
+                        <span class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>{{ info.get('email') or (user.username ~ '@example.com') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex flex-col md:flex-row gap-3 mt-6 md:mt-0">
+                <button onclick="document.getElementById('profile_modal').showModal()" class="btn btn-lg bg-white/20 hover:bg-white/30 border-none text-white backdrop-blur-md shadow-lg gap-2 group-hover:scale-105 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    维护档案
+                </button>
+                <button onclick="openCreateModal()" class="btn btn-lg bg-white text-indigo-600 hover:bg-indigo-50 border-none shadow-xl gap-2 group-hover:scale-105 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    新建简历
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 简历列表 Section -->
+    <div>
+        <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2 mb-4 px-1">
+            <div class="w-2 h-6 bg-indigo-500 rounded-full"></div>
+            我的简历库
+            <span class="text-xs font-normal text-slate-400 ml-1">({{ resumes|length }}/5)</span>
+        </h3>
+
+        {% if not resumes %}
+        <div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 shadow-sm">
+            <div class="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-700">暂无简历</h3>
+            <p class="text-slate-500 mb-6 mt-2 max-w-md mx-auto">您的简历库空空如也。创建第一份简历，让 AI 面试官更好地了解您。</p>
+            <button onclick="openCreateModal()" class="btn btn-primary text-white shadow-lg shadow-indigo-200 px-8 rounded-full">立即创建</button>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for resume in resumes %}
+            <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] transition-all duration-300 border border-slate-100 group hover:-translate-y-1">
+                <div class="card-body p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 flex items-center justify-center font-bold text-xl shadow-inner">
+                            {{ resume.title[0] | upper }}
+                        </div>
+                        <div class="dropdown dropdown-end">
+                            <label tabindex="0" class="btn btn-sm btn-ghost btn-circle text-slate-400 hover:bg-slate-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                            </label>
+                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-2xl w-40 border border-slate-100 text-sm">
+                                <li><a href="{{ url_for('routes.resume_edit', resume_id=resume.id) }}?print=1" target="_blank" class="py-2">📄 下载 PDF</a></li>
+                                <li><a onclick="openRenameModal({{ resume.id }}, '{{ resume.title }}')" class="py-2">✏️ 重命名</a></li>
+                                <li><a onclick="deleteResume({{ resume.id }})" class="text-rose-500 hover:bg-rose-50 py-2">🗑️ 删除简历</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h2 class="font-bold text-slate-800 text-lg mb-1 truncate tracking-tight">{{ resume.title }}</h2>
+                    <p class="text-xs text-slate-400 mb-6 font-mono flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {{ resume.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                    
+                    <div class="card-actions mt-auto">
+                        <a href="{{ url_for('routes.resume_edit', resume_id=resume.id) }}" class="btn btn-primary w-full text-white shadow-md shadow-indigo-100 group-hover:shadow-indigo-200 border-none rounded-xl">
+                            进入编辑器
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Add New Card (Visual cue) -->
+            {% if resumes|length < 5 %}
+            <div onclick="openCreateModal()" class="card border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[240px] group rounded-3xl">
+                <div class="w-16 h-16 rounded-full bg-slate-50 group-hover:bg-indigo-100 text-slate-300 group-hover:text-indigo-500 flex items-center justify-center transition-all duration-300 mb-3 group-hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                </div>
+                <span class="text-sm font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">新建简历</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Profile Edit Modal -->
+<dialog id="profile_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white p-0 overflow-hidden max-w-2xl">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-lg text-slate-800">维护基础档案</h3>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-slate-600">✕</button>
+            </form>
+        </div>
+        
+        <form method="POST" class="p-6 space-y-4">
+            <div class="alert alert-info bg-indigo-50 text-indigo-700 border-none text-xs py-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>此处维护的信息可作为"母版"，在新建简历时一键导入。</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">姓名</span></label>
+                    <input type="text" name="name" class="input input-bordered bg-slate-50 focus:bg-white" value="{{ info.get('name') or user.truename or '' }}" required>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">意向岗位</span></label>
+                    <input type="text" name="job_target" class="input input-bordered bg-slate-50 focus:bg-white" value="{{ info.get('job_target', '') }}" placeholder="例如：产品经理">
+                </div>
+                
+                <div class="form-control">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">电话</span></label>
+                    <input type="text" name="phone" class="input input-bordered bg-slate-50 focus:bg-white" value="{{ info.get('phone', '') }}">
+                </div>
+                
+                <div class="form-control">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">邮箱</span></label>
+                    <input type="email" name="email" class="input input-bordered bg-slate-50 focus:bg-white" value="{{ info.get('email') or (user.username ~ '@example.com') }}">
+                </div>
+                
+                <div class="form-control md:col-span-2">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">所在城市</span></label>
+                    <input type="text" name="location" class="input input-bordered bg-slate-50 focus:bg-white" value="{{ info.get('location', '') }}">
+                </div>
+                
+                <div class="form-control md:col-span-2">
+                    <label class="label pt-0"><span class="label-text font-bold text-slate-600">自我评价</span></label>
+                    <textarea name="self_evaluation" class="textarea textarea-bordered h-24 bg-slate-50 focus:bg-white" placeholder="简要介绍您的核心优势...">{{ info.get('self_evaluation', '') }}</textarea>
+                </div>
+            </div>
+
+            <div class="modal-action mt-6">
+                <form method="dialog">
+                    <button class="btn btn-ghost">取消</button>
+                </form>
+                <button type="submit" class="btn btn-primary text-white px-8">保存档案</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Create Modal (Same as before but styled) -->
+<dialog id="create_resume_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white">
+        <h3 class="font-bold text-lg mb-4 text-slate-800">新建简历</h3>
+        <div class="form-control w-full mb-4">
+            <label class="label pt-0"><span class="label-text font-bold text-slate-600">简历名称</span></label>
+            <input type="text" id="new_resume_title" placeholder="例如：产品经理求职简历" class="input input-bordered w-full bg-slate-50 focus:bg-white" />
+        </div>
+        
+        <div class="form-control p-4 border border-indigo-100 bg-indigo-50/50 rounded-lg">
+            <label class="label cursor-pointer justify-start gap-3 p-0">
+                <input type="checkbox" id="import_basic_info" class="checkbox checkbox-primary checkbox-sm" checked />
+                <span class="label-text font-bold text-slate-700">一键导入基础档案</span>
+            </label>
+            <div class="text-xs text-slate-400 mt-2 pl-8">
+                将自动填充您在上方「基础档案」中维护的姓名、电话、邮箱等信息。
+            </div>
+        </div>
+
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="closeCreateModal()">取消</button>
+            <button class="btn btn-primary text-white px-6 shadow-md shadow-indigo-200" onclick="createResume()">立即创建</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Rename Modal -->
+<dialog id="rename_resume_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white">
+        <h3 class="font-bold text-lg mb-4 text-slate-800">重命名简历</h3>
+        <input type="hidden" id="rename_resume_id">
+        <div class="form-control w-full">
+            <input type="text" id="rename_resume_title" class="input input-bordered w-full bg-slate-50 focus:bg-white" />
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" onclick="document.getElementById('rename_resume_modal').close()">取消</button>
+            <button class="btn btn-primary text-white" onclick="submitRename()">保存</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('create_resume_modal').showModal();
+    }
+
+    function closeCreateModal() {
+        document.getElementById('create_resume_modal').close();
+    }
+
+    async function createResume() {
+        const title = document.getElementById('new_resume_title').value;
+        const importBasic = document.getElementById('import_basic_info').checked;
+        
+        const btn = document.querySelector('#create_resume_modal .btn-primary');
+        const originalText = btn.innerText;
+        btn.innerText = '创建中...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/resume/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    title: title,
+                    import_basic: importBasic
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                window.location.href = `/resume/edit/${data.id}`;
+            } else {
+                alert(data.error || '创建失败');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert('网络错误');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function openRenameModal(id, currentTitle) {
+        document.getElementById('rename_resume_id').value = id;
+        document.getElementById('rename_resume_title').value = currentTitle;
+        document.getElementById('rename_resume_modal').showModal();
+    }
+
+    async function submitRename() {
+        const id = document.getElementById('rename_resume_id').value;
+        const title = document.getElementById('rename_resume_title').value;
+        
+        if (!title.trim()) {
+            alert('请输入简历名称');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/resume/rename', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id, title: title })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || '重命名失败');
+            }
+        } catch (e) {
+            alert('网络错误');
+        }
+    }
+
+    async function deleteResume(id) {
+        if (!confirm('确定要删除这份简历吗？此操作无法撤销。')) return;
+        
+        try {
+            const res = await fetch(`/api/resume/delete/${id}`, {method: 'POST'});
+            const data = await res.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error);
+            }
+        } catch (e) {
+            alert('操作失败');
+        }
+    }
+</script>
+{% endblock %}

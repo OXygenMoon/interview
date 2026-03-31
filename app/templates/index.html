@@ -3,7 +3,6 @@
 {% block title %}面试大厅{% endblock %}
 
 {% block content %}
-<meta http-equiv="refresh" content="30">
 
 <div class="space-y-8 pb-10">
 
@@ -223,7 +222,7 @@
 </div>
 
 <dialog id="setup_modal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box bg-white p-0 overflow-hidden rounded-3xl">
+    <div class="modal-box w-11/12 max-w-5xl bg-white p-0 overflow-hidden rounded-3xl">
         <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 class="font-bold text-lg text-slate-800">创建新的面试</h3>
             <form method="dialog">
@@ -231,68 +230,239 @@
             </form>
         </div>
 
-        <form id="setup-form" class="p-6 space-y-5">
-            <div class="form-control">
-                <label class="label pt-0"><span class="label-text font-bold text-slate-600">目标岗位</span></label>
-                <input type="text" name="target_role" placeholder="例如：Python开发、新媒体运营..." class="input input-bordered w-full bg-slate-50 focus:bg-white transition-colors" required />
-            </div>
+        <div class="flex flex-col lg:flex-row h-[70vh]">
+            <!-- Left Side: Form -->
+            <div class="flex-1 overflow-y-auto p-6 border-r border-slate-100 custom-scrollbar">
+                <form id="setup-form" class="space-y-6">
+                    <div class="form-control">
+                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择公司</span></label>
+                        <select id="company-select" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors" required onchange="onCompanyChange()">
+                            <option disabled selected value="">请选择公司</option>
+                        </select>
+                    </div>
 
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold text-slate-600">选择面试官风格</span></label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {% for name, voice_id in voice_options.items() %}
-                    <label class="cursor-pointer label border border-slate-200 rounded-xl p-3 hover:border-orange-400 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50 has-[:checked]:ring-1 has-[:checked]:ring-orange-500 transition-all">
-                        <div class="flex items-center gap-3">
-                            <input type="radio" name="voice_type" value="{{ voice_id }}" class="radio radio-warning radio-sm" {% if loop.first %}checked{% endif %} />
-                            <div>
-                                <span class="label-text font-bold block text-slate-700">{{ name }}</span>
-                                <span class="text-xs text-slate-400">
-                                    {% if '男' in name %} 技术专家 / 严厉 {% else %} HRBP / 亲和 {% endif %}
-                                </span>
-                            </div>
+                    <div class="form-control">
+                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择岗位</span></label>
+                        <select id="position-select" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors" required onchange="onPositionChange()" disabled>
+                            <option disabled selected value="">请选择岗位</option>
+                        </select>
+                        <!-- Hidden inputs to store values for form submission -->
+                        <input type="hidden" id="target_role_input" name="target_role" required />
+                        <input type="hidden" id="position_id_input" name="position_id" required />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-600">选择面试官风格</span></label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {% for name, voice_id in voice_options.items() %}
+                            <label class="cursor-pointer label border border-slate-200 rounded-xl p-3 hover:border-orange-400 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50 has-[:checked]:ring-1 has-[:checked]:ring-orange-500 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="voice_type" value="{{ voice_id }}" class="radio radio-warning radio-sm" {% if loop.first %}checked{% endif %} />
+                                    <div>
+                                        <span class="label-text font-bold block text-slate-700">{{ name }}</span>
+                                        <span class="text-xs text-slate-400">
+                                            {% if '男' in name %} 技术专家 / 严厉 {% else %} HRBP / 亲和 {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
                         </div>
-                    </label>
-                    {% endfor %}
-                </div>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-600">面试难度</span></label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
+                                <input type="radio" name="difficulty" value="新手模式" class="hidden" />
+                                <div class="text-xl mb-1">🌱</div>
+                                <div class="text-xs font-bold">新手模式</div>
+                            </label>
+                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
+                                <input type="radio" name="difficulty" value="标准模式" class="hidden" checked />
+                                <div class="text-xl mb-1">👔</div>
+                                <div class="text-xs font-bold">标准模式</div>
+                            </label>
+                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
+                                <input type="radio" name="difficulty" value="压力模式" class="hidden" />
+                                <div class="text-xl mb-1">🔥</div>
+                                <div class="text-xs font-bold">压力模式</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-control mt-4">
+                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择递交的简历</span></label>
+                        {% if my_resumes %}
+                            <select name="resume_id" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors">
+                                <option value="" selected>不递交简历 (盲面)</option>
+                                {% for resume in my_resumes %}
+                                    <option value="{{ resume.id }}">{{ resume.title }} ({{ resume.updated_at.strftime('%m-%d %H:%M') }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="text-xs text-slate-400 mt-2 ml-1">
+                                面试官将根据您选择的简历内容进行提问。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning shadow-sm text-sm py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                <div>
+                                    暂无可用简历，<a href="{{ url_for('routes.resume_dashboard') }}" class="link underline font-bold">去创建简历</a>
+                                </div>
+                            </div>
+                            <input type="hidden" name="resume_id" value="">
+                        {% endif %}
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="button" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
+                    </div>
+                </form>
             </div>
 
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold text-slate-600">面试难度</span></label>
-                <div class="grid grid-cols-3 gap-2">
-                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
-                        <input type="radio" name="difficulty" value="新手模式" class="hidden" />
-                        <div class="text-xl mb-1">🌱</div>
-                        <div class="text-xs font-bold">新手模式</div>
-                    </label>
-                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
-                        <input type="radio" name="difficulty" value="标准模式" class="hidden" checked />
-                        <div class="text-xl mb-1">👔</div>
-                        <div class="text-xs font-bold">标准模式</div>
-                    </label>
-                    <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
-                        <input type="radio" name="difficulty" value="压力模式" class="hidden" />
-                        <div class="text-xl mb-1">🔥</div>
-                        <div class="text-xs font-bold">压力模式</div>
-                    </label>
-                </div>
+            <!-- Right Side: Description Panel -->
+            <div id="desc-panel" class="w-full lg:w-[450px] bg-slate-50 flex flex-col transition-all duration-300 border-l border-slate-100 hidden lg:flex">
+                 <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
+                     <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        岗位详情
+                     </h3>
+                     <button onclick="toggleDescContent()" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600" title="折叠/展开">
+                        <svg xmlns="http://www.w3.org/2000/svg" id="collapse-icon" class="h-4 w-4 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                     </button>
+                 </div>
+                 <div class="flex-1 overflow-y-auto p-5 custom-scrollbar" id="desc-content-wrapper">
+                    <div id="position-desc-content" class="prose prose-sm max-w-none text-slate-600">
+                        <div class="flex flex-col items-center justify-center h-40 text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <p class="text-sm">请先选择公司和岗位</p>
+                        </div>
+                    </div>
+                 </div>
             </div>
-
-            <div class="modal-action pt-4">
-                <button type="button" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
-            </div>
-        </form>
+        </div>
     </div>
 </dialog>
 
+<script>
+    function toggleDescContent() {
+        const wrapper = document.getElementById('desc-content-wrapper');
+        const icon = document.getElementById('collapse-icon');
+        
+        if (wrapper.style.display === 'none') {
+            wrapper.style.display = 'block';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            wrapper.style.display = 'none';
+            icon.style.transform = 'rotate(180deg)';
+        }
+    }
+</script>
+
 <style>
+    /* Custom Scrollbar for the modal panels */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent; 
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #e2e8f0; 
+        border-radius: 20px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #cbd5e1; 
+    }
+
     /* 简单的招手动画 */
     @keyframes wave { 0% { transform: rotate(0deg); } 20% { transform: rotate(14deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(14deg); } 80% { transform: rotate(-4deg); } 100% { transform: rotate(10deg); } }
     .animate-wave { animation: wave 2.5s infinite; }
 </style>
 
 <script>
+let allCompanies = [];
+
+async function loadCompanies() {
+    try {
+        const res = await fetch('/api/company/list');
+        allCompanies = await res.json();
+        const select = document.getElementById('company-select');
+        select.innerHTML = '<option disabled selected value="">请选择公司</option>';
+        
+        allCompanies.forEach(comp => {
+            const option = document.createElement('option');
+            option.value = comp.id;
+            option.textContent = comp.name;
+            select.appendChild(option);
+        });
+    } catch(e) {
+        console.error("Failed to load companies", e);
+        const select = document.getElementById('company-select');
+        select.innerHTML = '<option disabled selected value="">加载失败，请刷新重试</option>';
+    }
+}
+
+function onCompanyChange() {
+    const compId = parseInt(document.getElementById('company-select').value);
+    const company = allCompanies.find(c => c.id === compId);
+    const posSelect = document.getElementById('position-select');
+    
+    posSelect.innerHTML = '<option disabled selected value="">请选择岗位</option>';
+    document.getElementById('target_role_input').value = "";
+    document.getElementById('position_id_input').value = "";
+    
+    // Reset description panel
+    const contentDiv = document.getElementById('position-desc-content');
+    contentDiv.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-40 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <p class="text-sm">请先选择公司和岗位</p>
+        </div>
+    `;
+    
+    if (company && company.positions && company.positions.length > 0) {
+        company.positions.forEach(pos => {
+            const option = document.createElement('option');
+            option.value = pos.id;
+            option.textContent = pos.name;
+            posSelect.appendChild(option);
+        });
+        posSelect.disabled = false;
+    } else {
+        posSelect.innerHTML = '<option disabled selected value="">该公司暂无岗位</option>';
+        posSelect.disabled = true;
+    }
+}
+
+function onPositionChange() {
+    const compId = parseInt(document.getElementById('company-select').value);
+    const posId = parseInt(document.getElementById('position-select').value);
+    const company = allCompanies.find(c => c.id === compId);
+    const position = company ? company.positions.find(p => p.id === posId) : null;
+    
+    if (position) {
+        document.getElementById('target_role_input').value = position.name;
+        document.getElementById('position_id_input').value = position.id;
+        
+        // Combine Company Description and Position Description
+        let desc = "";
+        if (company.description) desc += `### ${company.name}简介\n\n${company.description}\n\n---\n\n`;
+        if (position.description) desc += `### ${position.name}岗位要求\n\n${position.description}`;
+        
+        const contentDiv = document.getElementById('position-desc-content');
+        if (desc.trim()) {
+            contentDiv.innerHTML = marked.parse(desc);
+        } else {
+            contentDiv.innerHTML = '<div class="text-center text-slate-400 py-10">暂无详细描述</div>';
+        }
+    }
+}
+
 // === 自动分页逻辑 (Client-side Pagination) ===
 document.addEventListener("DOMContentLoaded", function() {
+    loadCompanies(); // Load companies on start
+    
     const table = document.getElementById('recent-records-table');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));

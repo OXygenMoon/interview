@@ -1,0 +1,117 @@
+<div class="resume-template modern">
+  <style>
+    .resume-template.modern {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      color: #333;
+      line-height: 1.6;
+      background: white;
+      padding: 0;
+      margin: 0;
+      position: relative;
+    }
+    
+    .resume-template.modern::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 240px;
+      background: #f8f9fa;
+      border-right: 1px solid #eaeaea;
+      z-index: 0;
+    }
+
+    .sidebar-layer {
+      position: absolute;
+      left: 0; top: 0;
+      width: 240px;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+
+    /* 恢复 CSS 内边距 */
+    .main-flow {
+      margin-left: 240px; 
+      padding: 40px 30px; 
+      position: relative;
+      z-index: 1;
+    }
+
+    .modern .photo-circle { 
+      width: 140px; height: 140px; border-radius: 50%; 
+      background-color: #e3f2fd; border: 4px solid white; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+      margin: 0 auto 20px; 
+      background-size: cover; background-position: center; background-repeat: no-repeat;
+    }
+    .modern .name { font-size: 1.8rem; font-weight: 700; text-align: center; color: #0d47a1; margin-bottom: 5px; }
+    .modern .job-target { text-align: center; color: #666; font-size: 1rem; margin-bottom: 30px; font-weight: 500; }
+    .modern .contact-item { margin-bottom: 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; word-break: break-all; }
+    .modern .left-title { font-size: 1.1rem; color: #0d47a1; border-bottom: 2px solid #0d47a1; padding-bottom: 5px; margin: 30px 0 15px; font-weight: 700; }
+    .modern .section-block { margin-bottom: 25px; }
+    .modern .section-title { font-size: 1.4rem; color: #0d47a1; border-left: 5px solid #0d47a1; padding-left: 12px; margin: 0 0 15px; font-weight: 700; background: #f1f7fe; line-height: 1.4; }
+    .modern .item { margin-bottom: 20px; }
+    .modern .item-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .modern .item-title { font-weight: 700; font-size: 1.1rem; color: #333; }
+    .modern .item-date { color: #666; font-size: 0.9rem; }
+    .modern .item-sub { color: #0d47a1; font-weight: 600; margin-bottom: 8px; }
+    .modern ul { padding-left: 18px; margin: 5px 0; }
+  </style>
+
+  <div class="sidebar-layer">
+    <div class="photo-circle" style="background-image: url('{{avatar}}');"></div>
+    <div class="name">{{name}}</div>
+    <div class="job-target">{{job_target}}</div>
+    <div class="left-title">联系方式</div>
+    <div class="contact-item">📞 {{phone}}</div>
+    <div class="contact-item">✉️ {{email}}</div>
+    <div class="contact-item">📍 {{location}}</div>
+    <div class="left-title">专业技能</div>
+    <ul>{{skills}}</ul>
+    <div class="left-title">证书与奖项</div>
+    <ul>{{certificates}}</ul>
+    <ul>{{honors}}</ul>
+  </div>
+
+  <div class="main-flow">
+    <div class="section-block">
+      <div class="section-title">自我评价</div>
+      <p>{{self_evaluation}}</p>
+    </div>
+    <div class="section-block">
+      <div class="section-title">教育背景</div>
+      <div class="item">
+        <div class="item-head">
+          <span class="item-title">{{school_name}}</span>
+          <span class="item-date">{{enrollment_date}} - {{graduation_date}}</span>
+        </div>
+        <div class="item-sub">{{major}}</div>
+        <p><strong>主修课程：</strong></p>
+        <ul>{{main_courses}}</ul>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-title">实习经历</div>
+      <div class="item">
+        <div class="item-head">
+          <span class="item-title">{{company}}</span>
+          <span class="item-date">{{internship_date}}</span>
+        </div>
+        <div class="item-sub">{{position}}</div>
+        <p>{{internship_description}}</p>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-title">项目经验</div>
+      <div class="item">
+        <div class="item-head">
+          <span class="item-title">{{project_name}}</span>
+          <span class="item-date">{{project_date}}</span>
+        </div>
+        <div class="item-sub">角色：{{project_role}}</div>
+        <p>{{project_description}}</p>
+        <p><strong>成果：</strong>{{project_outcome}}</p>
+      </div>
+    </div>
+  </div>
+</div>

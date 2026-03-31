@@ -32,11 +32,13 @@ def parse_json_safely(text):
         return {}
 
 
-def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式"):
+def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str=""):
     """
     调用硅基流动大模型生成回复
     history_messages: 数据库 ChatMessage 列表
     target_role: 岗位名称
+    context_info: 公司和岗位介绍信息
+    visual_context_str: 当前的视觉分析结果 (如: "表情:紧张, 视线:躲闪")
     """
 
     difficulty_prompts = {
@@ -61,15 +63,20 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
     你现在是一位严厉但专业的面试官，正在面试【{target_role}】岗位。
     {mode_prompt}
 
+    {f"【背景资料】\n{context_info}\n" if context_info else ""}
+
+    {f"【视觉观察】\n当前求职者的视觉状态：{visual_context_str}\n请根据此状态适当调整你的语气（如发现紧张则安抚，发现自信则加强挑战）。" if visual_context_str else ""}
+
     你的行为准则：
     请根据求职者的上一句回答进行回复（提问下一个问题或追问）。
     回答要求：
-        1. 简短精炼，口语化，不要长篇大论。
-        2. 每次只问一个问题。
-        3. 如果求职者提到“谢谢”、“结束”或“再见”，请礼貌回复并说“面试结束”。
+    1. 简短精炼，口语化，不要长篇大论。
+    2. 每次只问一个问题。
+    3. 如果求职者提到“谢谢”、“结束”或“再见”，请礼貌回复并说“面试结束”。
 
     请用口语化的风格交流，不要像个机器人。
     """
+
 
     # 2. 构建消息历史
     # 硅基流动的 DeepSeek 模型支持 System Message
@@ -111,6 +118,7 @@ def generate_interview_report(history_messages, target_role):
 
     full_text = ""
     qa_pairs = []
+    visual_logs = []  # 收集视觉日志
 
     # === 核心逻辑：组装 Q & A 对 ===
     # 我们需要找到每一条 User 消息，并找到它“紧邻的前一条” AI 消息作为问题
@@ -120,6 +128,10 @@ def generate_interview_report(history_messages, target_role):
     for msg in history_messages:
         role = "面试官" if msg.sender == "ai" else "求职者"
         full_text += f"{role}: {msg.content}\n"
+
+        # 收集视觉信息 (仅 User 发送的)
+        if msg.sender == 'user' and msg.visual_context:
+             visual_logs.append(f"时刻{msg.timestamp.strftime('%H:%M:%S')}: {msg.visual_context}")
 
         if msg.sender == 'ai':
             temp_question = msg.content  # 记录当前问题
@@ -131,6 +143,10 @@ def generate_interview_report(history_messages, target_role):
                     "question": temp_question,
                     "answer": msg.content
                 })
+
+    # 将视觉日志合并到 full_text 中供整体评分使用
+    if visual_logs:
+        full_text += "\n\n【视觉/体态观察记录】\n" + "\n".join(visual_logs)
 
     # 任务 1: 宏观评分
     overall_data = _get_overall_score(full_text, target_role)
@@ -326,4 +342,63 @@ def anonymize_resume_pii(resume_text):
     except Exception as e:
         print(f"脱敏失败: {e}")
         return resume_text  # 失败则返回原位
+
+
+def analyze_image(image_base64):
+    """
+    功能：调用 VLM (如 Qwen-VL) 分析图片
+    image_base64: Base64 编码的图片字符串 (带前缀 data:image/jpeg;base64,...)
+    """
+    if not image_base64:
+        return ""
+
+    print("🖼️ 正在进行视觉分析...")
+
+    # System Prompt for Vision
+    # 注意：视觉模型通常直接理解 user message 中的图片
+    system_prompt = """
+    你是一位行为心理学家和面试官。请分析这张面试者的视频截图。
+    请判断他的状态，并给出简短的评价标签（3-4个）。
+
+    关注维度：
+    1. 眼神（如：眼神飘忽、眼神坚定、直视镜头）
+    2. 表情（如：表情自然、神情紧张、面带微笑）
+    3. 体态（如：坐姿端正、摇头晃脑、身体僵硬）
+
+    输出要求：
+    请直接返回一个 JSON 数组，包含 3-4 个具体的短语。
+    例如：["眼神飘忽", "神情紧张", "坐姿端正"]
+    不要包含 Markdown 标记，直接返回数组。
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model=Config.VLM_MODEL_NAME,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": system_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_base64
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature=0.5,
+            max_tokens=100
+        )
+        result = response.choices[0].message.content
+        # 尝试清理可能存在的 markdown 标记
+        cleaned_result = result.replace('```json', '').replace('```', '').strip()
+        print(f"👁️ 视觉分析结果: {cleaned_result}")
+        return cleaned_result
+
+    except Exception as e:
+        print(f"❌ 视觉分析失败: {e}")
+        return ""
+
 
