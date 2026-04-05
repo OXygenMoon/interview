@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模拟面试首页 - Editorial</title>
+  <style>
+    :root {
+      --paper: #f7f3ed;
+      --ink: #1c1a18;
+      --soft: #7f7468;
+      --accent: #c2410c;
+      --panel: #fffdf9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Fraunces", "Songti SC", serif;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 22px; }
+    .top {
+      display: flex; justify-content: space-between; align-items: baseline;
+      border-bottom: 2px solid #d6cdc2; padding-bottom: 12px;
+    }
+    .brand { font-size: 38px; font-weight: 700; letter-spacing: .4px; }
+    .date { color: var(--soft); font-size: 14px; }
+    .layout {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 16px;
+    }
+    .lead {
+      background: var(--panel); border: 1px solid #e5ddd2; padding: 22px;
+    }
+    .lead h1 { font-size: 48px; margin: 0 0 10px; line-height: 1.06; }
+    .lead p { color: var(--soft); margin: 0; line-height: 1.7; font-size: 17px; }
+    .cta { margin-top: 16px; display: flex; gap: 10px; }
+    .btn {
+      border: 1px solid var(--ink); background: transparent; padding: 10px 16px;
+      font-family: inherit; cursor: pointer;
+    }
+    .btn.main { background: var(--ink); color: #fff; }
+    .side {
+      border: 1px solid #e5ddd2; background: #fffdf9; padding: 20px;
+      display: grid; gap: 12px;
+    }
+    .big { font-size: 54px; font-weight: 700; line-height: .9; }
+    .label { color: var(--soft); font-size: 13px; text-transform: uppercase; letter-spacing: .8px; }
+    .news {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid #e5ddd2; padding: 16px;
+      min-height: 180px;
+    }
+    .card h3 { margin: 0 0 10px; font-size: 21px; }
+    .card p { margin: 0; color: var(--soft); line-height: 1.65; }
+    .record {
+      margin-top: 16px;
+      background: var(--panel); border: 1px solid #e5ddd2; padding: 16px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-top: 1px solid #efe9e0; padding: 10px 2px; text-align: left; }
+    th { color: var(--soft); font-size: 13px; font-weight: 600; }
+    @media (max-width: 980px) {
+      .layout, .news { grid-template-columns: 1fr; }
+      .lead h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">面试周刊 · 首页</div>
+      <div class="date">Tuesday, March 31, 2026</div>
+    </header>
+
+    <section class="layout">
+      <article class="lead">
+        <h1>让每次模拟，都像真实面试一样有压迫感。</h1>
+        <p>从自我介绍到项目追问，再到反问环节，系统按岗位画像动态生成问题。你不只是刷题，而是在构建稳定的表达肌肉。</p>
+        <div class="cta">
+          <button class="btn main">开始新面试</button>
+          <button class="btn">进入学习资料</button>
+        </div>
+      </article>
+      <aside class="side">
+        <div>
+          <div class="label">本周完成</div>
+          <div class="big">4/6</div>
+        </div>
+        <div>
+          <div class="label">平均分</div>
+          <div class="big">84</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="news">
+      <article class="card">
+        <h3>今日建议</h3>
+        <p>先做一场“压力模式”技术面，再做一场“新手模式”行为面，观察语速与停顿变化。</p>
+      </article>
+      <article class="card">
+        <h3>高频薄弱项</h3>
+        <p>“项目中最困难的问题”回答偏抽象，建议增加背景、动作、结果三段式描述。</p>
+      </article>
+      <article class="card">
+        <h3>岗位推荐</h3>
+        <p>你当前的得分曲线适合冲刺：Java 开发工程师、数据分析实习生。</p>
+      </article>
+    </section>
+
+    <section class="record">
+      <h3 style="margin:0 0 8px;">近期面试记录</h3>
+      <table>
+        <thead><tr><th>岗位</th><th>时间</th><th>模式</th><th>得分</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>Java 后端</td><td>03-30 19:20</td><td>标准</td><td>87</td><td>完成</td></tr>
+          <tr><td>产品经理</td><td>03-29 21:10</td><td>压力</td><td>80</td><td>完成</td></tr>
+          <tr><td>数据分析</td><td>03-29 10:05</td><td>新手</td><td>--</td><td>进行中</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

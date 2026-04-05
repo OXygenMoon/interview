@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模拟面试首页 - Terminal</title>
+  <style>
+    :root {
+      --bg: #0b1114;
+      --card: #101b20;
+      --line: #1f363f;
+      --text: #d2f8ea;
+      --muted: #77bca4;
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      color: var(--text);
+      background: repeating-linear-gradient(
+        180deg,
+        #0b1114,
+        #0b1114 32px,
+        #0a0f12 32px,
+        #0a0f12 64px
+      );
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 22px; }
+    .window { border: 1px solid var(--line); border-radius: 14px; background: rgba(16,27,32,.9); overflow: hidden; }
+    .bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+    .dots { display: flex; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .content { padding: 14px; display: grid; grid-template-columns: 290px 1fr; gap: 14px; }
+    .panel { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: rgba(8, 15, 18, .45); }
+    h1,h2,h3,p { margin: 0; }
+    h1 { font-size: 18px; color: #a7f3d0; }
+    h2 { font-size: 14px; margin-bottom: 12px; color: #8ee0bf; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .btn {
+      margin-top: 12px; width: 100%; padding: 10px; border: 1px solid var(--ok);
+      color: var(--ok); background: transparent; border-radius: 8px; cursor: pointer;
+      font-family: inherit;
+    }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+    .kpi { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+    .kpi b { font-size: 22px; color: #ecfdf5; }
+    .queue { margin-top: 8px; display: grid; gap: 10px; }
+    .job { border: 1px dashed #2a4c58; border-radius: 8px; padding: 10px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+    .ok { color: #042b1f; background: var(--ok); }
+    .warn { color: #2a1900; background: var(--warn); }
+    .danger { color: #2f0909; background: var(--danger); }
+    .log { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; font-size: 13px; color: #a7f3d0; line-height: 1.8; }
+    .line::before { content: "> "; color: #6ee7b7; }
+    @media (max-width: 920px) {
+      .content { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="window">
+      <div class="bar">
+        <div class="dots"><span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span></div>
+        <div class="muted">mock-interview://home</div>
+      </div>
+
+      <div class="content">
+        <aside class="panel">
+          <h1>INTERVIEW.CONSOLE</h1>
+          <p class="muted" style="margin-top:8px;">欢迎回来，候选人 #A1027</p>
+          <button class="btn">RUN NEW INTERVIEW</button>
+          <div class="queue">
+            <div class="job"><h2>待完成任务</h2><p class="muted">1) 系统设计速答</p><p class="muted">2) 压力追问练习</p></div>
+            <div class="job"><h2>语音风格</h2><p class="muted">[BV001] 严谨女面试官</p></div>
+          </div>
+        </aside>
+
+        <main class="panel">
+          <div class="stats">
+            <div class="kpi"><div class="muted">SESSION_COUNT</div><b>34</b></div>
+            <div class="kpi"><div class="muted">AVG_SCORE</div><b>81.2</b></div>
+            <div class="kpi"><div class="muted">TOP_SCORE</div><b>95</b></div>
+          </div>
+
+          <h2>最近执行记录</h2>
+          <div class="queue">
+            <div class="job"><span class="tag ok">COMPLETED</span> Java 后端 / 标准模式 / Score 88</div>
+            <div class="job"><span class="tag warn">PROCESSING</span> 产品运营 / 压力模式 / 分析中</div>
+            <div class="job"><span class="tag danger">INTERRUPTED</span> 测试开发 / 网络中断，建议重试</div>
+          </div>
+
+          <div class="log">
+            <div class="line">系统建议：优先复盘“项目亮点提炼”题目。</div>
+            <div class="line">检测到你的回答语速偏快，建议控制在 180 字/分钟内。</div>
+            <div class="line">输入 `resume --optimize` 可进入简历优化模块。</div>
+          </div>
+        </main>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

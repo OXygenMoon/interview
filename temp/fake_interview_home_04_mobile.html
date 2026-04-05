@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模拟面试首页 - Mobile First</title>
+  <style>
+    :root {
+      --bg: #f3f7fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --blue: #0ea5e9;
+      --green: #10b981;
+      --line: #dbe6f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Outfit", "PingFang SC", sans-serif;
+      background:
+        radial-gradient(circle at 100% 0%, #bfdbfe 0, transparent 35%),
+        var(--bg);
+      color: var(--text);
+      padding-bottom: 78px;
+    }
+    .phone {
+      width: min(420px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .04);
+    }
+    .hero {
+      background: linear-gradient(140deg, #0284c7, #38bdf8);
+      color: #fff;
+      border: 0;
+    }
+    h1,h2,h3,p { margin: 0; }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p { color: var(--muted); line-height: 1.6; }
+    .hero p { color: #e0f2fe; }
+    .btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 0;
+      background: #fff;
+      color: #0369a1;
+      font-weight: 700;
+    }
+    .stat {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stat .item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .item b { display: block; margin-top: 4px; font-size: 24px; }
+    .section { margin-top: 12px; }
+    .list { display: grid; gap: 10px; margin-top: 10px; }
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px;
+    }
+    .tag { font-size: 12px; border-radius: 999px; padding: 4px 8px; color: #064e3b; background: #d1fae5; }
+    .todo li { margin: 8px 0; color: #334155; }
+    .nav {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+      border-top: 1px solid #dbe6f0; padding: 8px 0;
+    }
+    .nav ul {
+      margin: 0 auto; padding: 0; list-style: none;
+      width: min(420px, 100%);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      text-align: center; font-size: 12px; color: #64748b;
+    }
+    .active { color: var(--blue); font-weight: 700; }
+    @media (min-width: 900px) {
+      .phone { width: min(840px, 100%); }
+      .stat { grid-template-columns: repeat(4, 1fr); }
+      .list { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <section class="card hero">
+      <h1>Hi，小李同学</h1>
+      <p>今天安排两场模拟：一场技术面，一场综合面，目标平均分提升到 85。</p>
+      <button class="btn">开始面试</button>
+    </section>
+
+    <section class="stat">
+      <article class="item"><small>累计面试</small><b>19</b></article>
+      <article class="item"><small>平均分</small><b>83</b></article>
+      <article class="item"><small>最高分</small><b>92</b></article>
+      <article class="item"><small>连续打卡</small><b>8天</b></article>
+    </section>
+
+    <section class="section card">
+      <h3>推荐岗位快速入口</h3>
+      <div class="list">
+        <div class="row"><span>前端开发</span><span class="tag">热门</span></div>
+        <div class="row"><span>测试开发</span><span class="tag">适配</span></div>
+      </div>
+    </section>
+
+    <section class="section card">
+      <h3>今日待办</h3>
+      <ul class="todo">
+        <li>完成 1 场压力模式</li>
+        <li>复盘上次“项目深挖”问题</li>
+        <li>阅读 10 道行为面题库</li>
+      </ul>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <ul>
+      <li class="active">首页</li>
+      <li>练习</li>
+      <li>记录</li>
+      <li>我的</li>
+    </ul>
+  </nav>
+</body>
+</html>

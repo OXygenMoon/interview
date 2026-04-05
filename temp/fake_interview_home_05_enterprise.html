@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模拟面试首页 - Enterprise</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --side: #0f172a;
+      --text: #0f172a;
+      --muted: #64748b;
+      --panel: #ffffff;
+      --line: #e2e8f0;
+      --brand: #2563eb;
+      --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Sora", "PingFang SC", sans-serif;
+      color: var(--text);
+    }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+    }
+    aside {
+      background: linear-gradient(180deg, #0f172a, #111827);
+      color: #cbd5e1;
+      padding: 20px 14px;
+    }
+    .logo { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 20px; }
+    .menu { display: grid; gap: 8px; }
+    .item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+    .item.active { background: rgba(37,99,235,.18); color: #bfdbfe; border-color: rgba(96,165,250,.35); }
+    main { padding: 20px; }
+    .top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .btn {
+      border: 0; background: var(--brand); color: #fff;
+      border-radius: 10px; padding: 10px 14px; font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .card h3 { margin: 0; font-size: 13px; color: var(--muted); }
+    .card strong { display: block; margin-top: 8px; font-size: 30px; }
+    .body {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left;
+      padding: 10px 4px;
+      border-bottom: 1px solid #edf2f7;
+      font-size: 14px;
+    }
+    th { color: var(--muted); font-size: 13px; }
+    .progress {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .bar { height: 100%; background: var(--ok); }
+    .mini { margin-top: 10px; display: grid; gap: 10px; }
+    .slot {
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: #334155;
+    }
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 1fr; }
+      aside { display: none; }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .body { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="logo">Campus Interview OS</div>
+      <nav class="menu">
+        <div class="item active">首页总览</div>
+        <div class="item">开始面试</div>
+        <div class="item">面试记录</div>
+        <div class="item">学习中心</div>
+        <div class="item">个人成长报告</div>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="top">
+        <div>
+          <h2 style="margin:0;">模拟面试首页</h2>
+          <p style="margin:4px 0 0;color:#64748b;">候选人：王同学 | 班级：软件 2302</p>
+        </div>
+        <button class="btn">+ 创建新面试</button>
+      </header>
+
+      <section class="grid">
+        <article class="card"><h3>本月面试数</h3><strong>11</strong></article>
+        <article class="card"><h3>平均得分</h3><strong>85.4</strong></article>
+        <article class="card"><h3>最高得分</h3><strong>96</strong></article>
+        <article class="card"><h3>通过率预测</h3><strong>78%</strong></article>
+      </section>
+
+      <section class="body">
+        <article class="card">
+          <h3 style="font-size:16px;color:#0f172a;">近期面试记录</h3>
+          <table>
+            <thead><tr><th>岗位</th><th>模式</th><th>得分</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>算法工程师</td><td>压力</td><td>82</td><td>已完成</td></tr>
+              <tr><td>前端开发</td><td>标准</td><td>89</td><td>已完成</td></tr>
+              <tr><td>产品助理</td><td>新手</td><td>--</td><td>进行中</td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <aside class="card">
+          <h3 style="font-size:16px;color:#0f172a;">当前冲刺目标</h3>
+          <p style="margin:8px 0 0; color:#64748b;">目标：连续 14 天训练</p>
+          <div class="progress"><div class="bar" style="width:64%;"></div></div>
+          <div class="mini">
+            <div class="slot">09:00 行为面速答（15 分钟）</div>
+            <div class="slot">20:30 技术追问（25 分钟）</div>
+            <div class="slot">22:00 当日复盘（10 分钟）</div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

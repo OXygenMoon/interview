@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>模拟面试首页 - Glass</title>
+  <style>
+    :root {
+      --bg: #fff8ef;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #f97316;
+      --brand2: #06b6d4;
+      --card: rgba(255, 255, 255, 0.72);
+      --line: rgba(255, 255, 255, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Manrope", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, #fed7aa 0%, transparent 40%),
+        radial-gradient(circle at 90% 100%, #a5f3fc 0%, transparent 45%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    .top {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+      backdrop-filter: blur(10px); padding: 14px 18px;
+    }
+    .logo { font-size: 20px; font-weight: 800; letter-spacing: .2px; }
+    .logo span { color: var(--brand); }
+    .actions { display: flex; gap: 10px; }
+    button {
+      border: 0; border-radius: 999px; padding: 10px 16px; cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-main { background: linear-gradient(135deg, var(--brand), #fb923c); color: #fff; }
+    .btn-sub { background: #fff; color: var(--text); border: 1px solid #e5e7eb; }
+    .hero {
+      margin-top: 18px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px;
+    }
+    .panel {
+      background: var(--card); border: 1px solid var(--line); border-radius: 24px;
+      padding: 24px; backdrop-filter: blur(10px);
+    }
+    h1 { margin: 0 0 12px; font-size: 34px; line-height: 1.2; }
+    p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .quick { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .chip { background: #fff; border: 1px solid #f1f5f9; border-radius: 999px; padding: 8px 12px; font-size: 13px; }
+    .ring {
+      width: 170px; aspect-ratio: 1; margin: 0 auto 14px; border-radius: 50%;
+      background: conic-gradient(var(--brand) 0 72%, #e5e7eb 72%);
+      display: grid; place-items: center;
+    }
+    .ring::after {
+      content: "72%";
+      width: 128px; height: 128px; border-radius: 50%; background: #fff;
+      display: grid; place-items: center; font-size: 30px; font-weight: 800;
+    }
+    .grid4 { margin-top: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .metric h3 { margin: 0; font-size: 13px; color: var(--muted); }
+    .metric strong { display: block; margin-top: 8px; font-size: 30px; }
+    .bottom { margin-top: 16px; display: grid; grid-template-columns: 1fr 1.1fr; gap: 14px; }
+    ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align: left; padding: 10px 6px; border-bottom: 1px dashed #e5e7eb; font-size: 14px; }
+    th { color: var(--muted); font-weight: 600; }
+    @media (max-width: 960px) {
+      .hero, .grid4, .bottom { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="logo">Mock<span>Interview</span> Hub</div>
+      <div class="actions">
+        <button class="btn-sub">学习中心</button>
+        <button class="btn-main">立即开始面试</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <article class="panel">
+        <h1>准备好下一场面试了吗？</h1>
+        <p>系统将根据岗位自动生成提问路径，支持新手模式、标准模式、压力模式，帮助你从“会答题”升级到“会表达”。</p>
+        <div class="quick">
+          <span class="chip">Java 后端</span>
+          <span class="chip">产品经理</span>
+          <span class="chip">运营管培生</span>
+          <span class="chip">AI 算法实习</span>
+        </div>
+      </article>
+      <aside class="panel" style="text-align:center;">
+        <div class="ring"></div>
+        <p>本周目标：5 场模拟面试（已完成 3 场）</p>
+      </aside>
+    </section>
+
+    <section class="grid4">
+      <article class="panel metric"><h3>累计实战</h3><strong>28 场</strong></article>
+      <article class="panel metric"><h3>平均得分</h3><strong>82.6</strong></article>
+      <article class="panel metric"><h3>历史最佳</h3><strong>94</strong></article>
+      <article class="panel metric"><h3>连续学习</h3><strong>12 天</strong></article>
+    </section>
+
+    <section class="bottom">
+      <article class="panel">
+        <h3>今日任务建议</h3>
+        <ul>
+          <li>完成 1 场“压力模式”面试</li>
+          <li>复盘最近一次低分题：项目冲突处理</li>
+          <li>学习题库：数据库索引与慢查询优化</li>
+        </ul>
+      </article>
+      <article class="panel">
+        <h3>近期面试记录</h3>
+        <table>
+          <thead><tr><th>岗位</th><th>模式</th><th>得分</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>前端工程师</td><td>标准</td><td>86</td><td>已完成</td></tr>
+            <tr><td>测试开发</td><td>压力</td><td>79</td><td>已完成</td></tr>
+            <tr><td>数据分析</td><td>新手</td><td>--</td><td>进行中</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+  </div>
+</body>
+</html>

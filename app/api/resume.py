@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app.models import db, Resume
 import json
@@ -142,107 +142,86 @@ def delete_resume(id):
 @login_required
 def optimize_resume():
     """
-    AI 简历优化接口 (修复版)
+    AI 简历优化接口 - 硅基流动 (纯净版，彻底解决配置读取问题)
     """
     data = request.json
     field_value = data.get('content', '')
     field_type = data.get('type', '自我评价')
     
     if not field_value:
-        return jsonify({'error': '内容为空'}), 400
+        return jsonify({'success': False, 'error': '内容为空'}), 400
 
-    # 建议将 Token 放入环境变量，不要硬编码在代码中
-    token = 'pat_9iOGYL7TROzEAbfjWPTDaqtkWipTrXVx6bZFi0b4CA9DjNmgrB2p9G7JdyVRGFm5'
-    bot_id = '7594734352358047782'
-    
-    url = 'https://api.coze.cn/v3/chat'
-    headers = {
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/json'
-    }
-    
     prompt = f"""
     你是一个专业的简历优化专家。
     请优化以下这段简历中的【{field_type}】内容。
     
     要求：
-    1. 语言风格职业、干练、有吸引力。
-    2. 突出核心优势和成果。
-    3. 仅返回优化后的文本内容，不要包含任何前言后语，不要使用 Markdown 代码块。
+    1. 语言风格职业、干练、有吸引力，符合行业标准。
+    2. 突出核心优势、量化成果，使用积极的动词。
+    3. 仅返回优化后的文本内容，不要包含任何前言、后语或解释。
+    4. 不要使用 Markdown 代码块符号。
     
     原始内容：
     {field_value}
     """
     
+    # 【核心修复】使用 current_app.config.get() 安全读取配置
+    # 前提：你的 app.py 中必须已经执行过 app.config.from_object(Config)
+    api_key = current_app.config.get('LLM_API_KEY')
+    base_url = current_app.config.get('LLM_BASE_URL')
+    model_name = current_app.config.get('LLM_MODEL_NAME')
+
+    # 防呆设计：如果配置没读到，明确告诉前端
+    if not api_key or not base_url:
+        print("❌ 后端配置错误：未能读取到 LLM_API_KEY 或 LLM_BASE_URL")
+        return jsonify({'success': False, 'error': '系统配置错误，未找到 AI 密钥'}), 500
+
+    url = f"{base_url.rstrip('/')}/chat/completions"
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
     payload = {
-        "bot_id": bot_id,
-        "user_id": f"user_{current_user.id}",
-        "stream": True,
-        "auto_save_history": False,
-        "additional_messages": [
-            {
-                "role": "user",
-                "content": prompt,
-                "content_type": "text"
-            }
-        ]
+        "model": model_name,
+        "messages": [
+            {"role": "system", "content": "你是一位专业的求职顾问和简历优化专家。"},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 1500
     }
     
     try:
-        # 1. 发起请求
-        resp = requests.post(url, json=payload, headers=headers, timeout=60, stream=True)
+        print(f"✅ 正在请求大模型: {model_name}")
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
         
-        # 2. 【关键】检查状态码。如果不是 200，说明请求本身就失败了（如 Token 错误、参数错误）
-        if resp.status_code != 200:
-            error_msg = resp.text # 获取非流式的错误响应体
-            print(f"API Error: Status {resp.status_code}, Body: {error_msg}")
-            return jsonify({'success': False, 'error': f'API 请求失败: {resp.status_code}'})
+        if response.status_code != 200:
+            print(f"❌ API 报错: {response.text}")
+            return jsonify({'success': False, 'error': f'API 请求失败 (状态码: {response.status_code})'})
+            
+        res_data = response.json()
         
-        full_content = ""
-        current_event = None # 用于记录当前行的事件类型
-
-        # 3. 解析 SSE 流
-        for line in resp.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8').strip()
-                
-                # 处理 event 行 (例如: event:conversation.message.delta)
-                if decoded_line.startswith('event:'):
-                    current_event = decoded_line[6:].strip()
-                
-                # 处理 data 行 (例如: data:{"content": "..."})
-                elif decoded_line.startswith('data:'):
-                    json_str = decoded_line[5:].strip()
-                    try:
-                        data_payload = json.loads(json_str)
-                        
-                        # 根据之前捕获的 event 类型处理数据
-                        if current_event == 'conversation.message.delta':
-                            # 在 delta 事件中，内容通常在 content 字段，类型在 type 字段
-                            if data_payload.get('type') == 'answer':
-                                content = data_payload.get('content', '')
-                                full_content += content
-                                # print(f"DEBUG: Chunk: {content}") # 调试用
-                                
-                        elif current_event == 'conversation.message.completed':
-                            # 如果是 completed 事件，且之前没拼接到内容（防止丢包），尝试获取
-                            if data_payload.get('type') == 'answer' and not full_content:
-                                full_content = data_payload.get('content', '')
-
-                    except Exception as e:
-                        print(f"JSON Parse Error: {e}")
-                        pass
+        if "choices" in res_data and len(res_data["choices"]) > 0:
+            full_content = res_data["choices"][0]["message"]["content"]
+        else:
+            return jsonify({'success': False, 'error': 'AI 返回的数据格式异常'})
         
-        if not full_content:
-             print("DEBUG: Full content is empty after parsing.")
-             return jsonify({'success': False, 'error': 'AI 未返回有效内容'})
-
-        # 4. 后处理：清洗 Markdown
+        # 清洗 Markdown
         clean_text = re.sub(r'```.*?```', '', full_content, flags=re.DOTALL).strip()
         clean_text = clean_text.replace('`', '')
         
-        return jsonify({'success': True, 'suggestion': clean_text})
+        if not clean_text:
+             return jsonify({'success': False, 'error': 'AI 未返回有效内容'})
+
+        return jsonify({
+            'success': True, 
+            'suggestion': clean_text
+        })
                  
+    except requests.exceptions.Timeout:
+        return jsonify({'success': False, 'error': 'AI服务响应超时，请稍后再试'})
     except Exception as e:
-        print(f"Server Error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)})
+        print(f"❌ 服务器内部报错: {str(e)}")
+        return jsonify({'success': False, 'error': f"后端代码出错: {str(e)}"})

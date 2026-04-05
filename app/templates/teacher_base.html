@@ -1,116 +1,290 @@
 <!DOCTYPE html>
-<html data-theme="cupcake">
+<html data-theme="cupcake" lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} - 教师管理后台</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* 复用全局样式，保持风格统一 */
+        :root {
+            --theme-primary: #0f766e;
+            --theme-primary-hover: #0d9488;
+            --theme-soft: #ecfeff;
+            --theme-border: rgba(15, 118, 110, 0.22);
+            --glass-surface: rgba(255, 255, 255, 0.62);
+            --glass-strong: rgba(255, 255, 255, 0.78);
+            --text-main: #1f2937;
+        }
+
+        html, body { min-height: 100%; }
+        body {
+            margin: 0;
+            color: var(--text-main);
+            font-family: 'Manrope', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e7ecef 1.4px, transparent 1.4px);
+            background-size: 24px 24px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 14% 9%, rgba(45, 212, 191, 0.17), transparent 35%),
+                radial-gradient(circle at 88% 18%, rgba(59, 130, 246, 0.12), transparent 30%),
+                linear-gradient(140deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0));
+        }
+
+        ::selection { background-color: var(--theme-primary); color: #fff; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.35); border-radius: 999px; }
+
         .sidebar-content::-webkit-scrollbar { width: 4px; }
         .sidebar-content::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-content::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
-        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 999px; }
+
+        .mobile-nav-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            padding: 0.65rem 0.75rem;
+        }
+
+        .mobile-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 1rem;
+            padding: 0.4rem 0.45rem;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            background: rgba(255, 255, 255, 0.48);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.35);
+        }
+
+        #sidebar-overlay {
+            z-index: 65;
+            background: rgba(15, 23, 42, 0.34);
+            backdrop-filter: blur(2px);
+        }
+
+        .sidebar-transition { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        #sidebar {
+            top: 0.75rem;
+            left: 0.75rem;
+            bottom: 0.75rem;
+            height: auto;
+            width: 16.5rem;
+            border-radius: 1.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            background: var(--glass-surface);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            box-shadow:
+                0 28px 50px -34px rgba(15, 23, 42, 0.42),
+                inset 0 1px 1px rgba(255, 255, 255, 0.9);
+            z-index: 70;
+        }
+
+        .menu-section-title {
+            font-size: 0.69rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            font-weight: 800;
+            padding: 1.25rem 0.8rem 0.45rem;
+        }
 
         .menu-item {
             position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 0.75rem;
-            margin-bottom: 4px;
-            font-weight: 500;
-            color: #57534e;
+            border-radius: 999px;
+            margin-bottom: 0.35rem;
+            font-weight: 700;
+            color: #334155;
             border: 1px solid transparent;
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .menu-item:hover {
-            background-color: #f3f4f6;
-            color: #65c3c8; /* Cupcake Teal */
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transform: translateY(-1px);
+            color: var(--theme-primary);
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 18px -16px rgba(15, 23, 42, 0.5);
         }
 
-        /* 激活状态 */
         .menu-item.active {
-            background-color: #efeff1 !important;
-            color: #65c3c8 !important;
-            font-weight: 700;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            border-color: #e5e7eb;
+            color: #fff !important;
+            border-color: var(--theme-border);
+            background: linear-gradient(130deg, var(--theme-primary), #14b8a6) !important;
+            box-shadow: 0 10px 24px -12px rgba(15, 118, 110, 0.65);
         }
 
         .menu-item.active::before {
             content: '';
             position: absolute;
-            left: 0.75rem;
+            left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
-            height: 6px;
-            width: 6px;
-            background-color: #65c3c8;
-            border-radius: 50%;
+            width: 0.32rem;
+            height: 0.32rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.9);
         }
 
-        .menu-section-title {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #9ca3af;
-            font-weight: 800;
-            padding: 1.5rem 1rem 0.5rem 1rem;
+        .main-content {
+            min-height: 100vh;
+            padding: 4.75rem 0.9rem 1rem;
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 0.25rem;
+        }
+
+        .card,
+        .stats,
+        .modal-box {
+            border: 1px solid rgba(226, 232, 240, 0.95) !important;
+            background: var(--glass-strong) !important;
+            backdrop-filter: blur(18px) saturate(145%);
+            -webkit-backdrop-filter: blur(18px) saturate(145%);
+            box-shadow:
+                0 18px 38px -28px rgba(15, 23, 42, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .card,
+        .modal-box { border-radius: 1.35rem !important; }
+
+        .hero {
+            border: 1px solid rgba(255, 255, 255, 0.56);
+            box-shadow: 0 26px 40px -32px rgba(15, 23, 42, 0.5);
+        }
+
+        .table :where(thead, tbody) tr { border-bottom-color: rgba(226, 232, 240, 0.9); }
+        .table tbody tr:hover { background: rgba(20, 184, 166, 0.08); }
+
+        .input,
+        .select,
+        .textarea {
+            border-color: #cbd5e1 !important;
+            border-radius: 0.9rem !important;
+            background: rgba(255, 255, 255, 0.94) !important;
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+
+        .input:focus,
+        .select:focus,
+        .textarea:focus {
+            border-color: rgba(15, 118, 110, 0.42) !important;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+            outline: none;
+            background: #fff !important;
+        }
+
+        .btn {
+            border-radius: 0.95rem;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px -14px rgba(15, 23, 42, 0.4);
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            color: #fff !important;
+            border-color: transparent !important;
+            background: linear-gradient(135deg, var(--theme-primary), #14b8a6) !important;
+            box-shadow: 0 14px 22px -16px rgba(13, 148, 136, 0.72);
+        }
+
+        .btn-primary:hover,
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, var(--theme-primary-hover), #2dd4bf) !important;
         }
 
         @media (min-width: 1024px) {
-            .main-content { margin-left: 16rem; }
+            #sidebar {
+                transform: translateX(0) !important;
+                left: 1rem;
+                top: 1rem;
+                bottom: 1rem;
+            }
+
+            .main-content {
+                margin-left: 18rem;
+                padding: 1rem 1.2rem;
+            }
         }
 
-        /* 教师端特有的背景色微调，Cupcake 风格 */
-        #sidebar { background-color: #ffffff; }
-        body { background-color: #faf7f5; }
+        @media (max-width: 1023.98px) {
+            #sidebar {
+                left: 0.6rem;
+                top: 0.6rem;
+                bottom: 0.6rem;
+                width: min(16.25rem, calc(100vw - 1.2rem));
+            }
+        }
     </style>
 </head>
-<body class="bg-base-200 text-base-content font-sans">
+<body class="antialiased">
 
-    <div class="lg:hidden navbar bg-base-100 shadow-md fixed top-0 w-full z-40">
-        <div class="navbar-start">
-            <button id="mobile-menu-btn" class="btn btn-ghost btn-circle">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+    <div class="mobile-nav-wrap lg:hidden">
+        <div class="mobile-nav">
+            <button id="mobile-menu-btn" class="btn btn-ghost btn-circle text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
+            <a class="text-base font-extrabold tracking-tight bg-gradient-to-r from-teal-700 to-cyan-500 bg-clip-text text-transparent">教师控制台</a>
+            <div class="w-10"></div>
         </div>
-        <div class="navbar-center">
-            <a class="text-xl font-bold text-slate-700">教师控制台</a>
-        </div>
-        <div class="navbar-end"></div>
     </div>
 
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-45 hidden lg:hidden transition-opacity"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 hidden lg:hidden transition-opacity"></div>
 
-    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 border-r border-base-300 shadow-xl z-50 sidebar-transition transform -translate-x-full lg:translate-x-0 flex flex-col bg-base-100">
+    <aside id="sidebar" class="fixed sidebar-transition transform -translate-x-full lg:translate-x-0 flex flex-col">
 
-        <div class="h-20 flex items-center px-6 border-b border-base-200">
+        <div class="h-20 flex items-center px-5 border-b border-slate-200/70">
             <a href="{{ url_for('routes.dashboard') }}" class="flex items-center gap-3 w-full group">
-                <div class="w-10 h-10 rounded-2xl bg-secondary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-secondary-content" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-teal-100 group-hover:rotate-3 transition-transform duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-base-content tracking-tight">教学管理</h1>
-                    <div class="flex items-center gap-1">
-                        <span class="badge badge-xs badge-secondary badge-outline text-[10px]">TEACHER</span>
+                    <h1 class="text-lg font-extrabold text-slate-700 tracking-tight">教学管理</h1>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+                        <p class="text-[10px] text-slate-400 font-semibold uppercase">Teacher</p>
                     </div>
                 </div>
             </a>
         </div>
 
-        <nav class="flex-1 overflow-y-auto sidebar-content px-4 py-2">
+        <nav class="flex-1 overflow-y-auto sidebar-content px-3 py-2.5">
 
             <div class="menu-section-title">教学概览</div>
             <ul class="space-y-1">
                 <li>
-                    <a href="{{ url_for('routes.dashboard') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.dashboard' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <a href="{{ url_for('routes.dashboard') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.dashboard' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                         <span>数据驾驶舱</span>
                     </a>
                 </li>
@@ -119,8 +293,8 @@
             <div class="menu-section-title">学生管理</div>
             <ul class="space-y-1">
                 <li>
-                    <a href="{{ url_for('routes.teacher_students') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.teacher_students' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <a href="{{ url_for('routes.teacher_students') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.teacher_students' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <span>
                             {% if current_user.role == 'dept_head' %}系部学生名册
                             {% elif current_user.role == 'admin' %}全校学生名册
@@ -130,8 +304,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.admin_interviews') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_interviews' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                    <a href="{{ url_for('routes.admin_interviews') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_interviews' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                         <span>面试记录流水</span>
                     </a>
                 </li>
@@ -140,84 +314,100 @@
             <div class="menu-section-title">统计分析</div>
             <ul class="space-y-1">
                 <li>
-                    <a href="{{ url_for('routes.admin_capability_profile') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_capability_profile' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+                    <a href="{{ url_for('routes.admin_capability_profile') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_capability_profile' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                         <span>班级能力画像</span>
                     </a>
                 </li>
             </ul>
 
             {% if current_user.role == 'admin' %}
+            <div class="menu-section-title">系统管理</div>
+            <ul class="space-y-1">
                 <li>
-                    <a href="{{ url_for('routes.admin_learning') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_learning' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    <a href="{{ url_for('routes.admin_learning') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_learning' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         <span>课程内容管理</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.admin_organization') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_organization' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    <a href="{{ url_for('routes.admin_organization') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_organization' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                         <span>组织与学生管理</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.admin_company') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_company' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    <a href="{{ url_for('routes.admin_company') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_company' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                         <span>企业与岗位管理</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('routes.admin_settings') }}" class="menu-item flex items-center gap-3 px-3 py-3 {{ 'active' if request.endpoint == 'routes.admin_settings' else '' }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <a href="{{ url_for('routes.admin_settings') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.admin_settings' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         <span>系统设置</span>
                     </a>
                 </li>
-                {% endif %}
+            </ul>
+            {% endif %}
 
         </nav>
 
-        <div class="p-4 border-t border-base-200 bg-base-100">
-            <div class="flex items-center gap-3 w-full p-3 bg-base-200/50 rounded-xl shadow-sm border border-base-200">
+        <div class="p-3.5 border-t border-slate-200/70">
+            <div class="flex items-center gap-3 w-full p-3 rounded-2xl border border-white/70 bg-white/55 backdrop-blur-xl">
                 <div class="avatar">
-                    <div class="w-9 h-9 rounded-full ring-2 ring-primary ring-offset-base-100 ring-offset-2">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ current_user.username }}&backgroundColor=b6e3f4" />
+                    <div class="w-10 h-10 rounded-full ring-2 ring-teal-300/70 ring-offset-2 ring-offset-white/60">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ current_user.username }}&backgroundColor=b6e3f4" alt="avatar" />
                     </div>
                 </div>
                 <div class="flex-1 min-w-0 text-left">
-                    <p class="text-sm font-bold text-base-content truncate">{{ current_user.truename }}</p>
-                    <p class="text-xs text-base-content/60 truncate uppercase">{{ current_user.role }}</p>
+                    <p class="text-sm font-extrabold text-slate-700 truncate">{{ current_user.truename }}</p>
+                    <p class="text-xs text-slate-400 truncate uppercase">{{ current_user.role }}</p>
                 </div>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-xs btn-square text-base-content/40 hover:text-error" title="退出登录">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-xs btn-square text-slate-400 hover:text-error" title="退出登录">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                 </a>
             </div>
         </div>
     </aside>
 
-    <main class="min-h-screen main-content pt-16 lg:pt-0 transition-all duration-300">
-        <div class="p-4 sm:p-6 lg:p-8">
+    <main class="main-content transition-all duration-300">
+        <div class="page-shell">
             {% block content %}{% endblock %}
         </div>
     </main>
 
     <script>
-        // 侧栏控制逻辑 (与 Student Base 相同)
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 
-        function toggleSidebar() {
+        function openSidebar() {
             if (!sidebar || !overlay) return;
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        }
+
+        function closeSidebar() {
+            if (!sidebar || !overlay) return;
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        function toggleSidebar() {
+            if (!sidebar) return;
             if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
+                openSidebar();
             } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
+                closeSidebar();
             }
         }
+
         mobileMenuBtn?.addEventListener('click', toggleSidebar);
-        overlay?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', closeSidebar);
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) closeSidebar();
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
