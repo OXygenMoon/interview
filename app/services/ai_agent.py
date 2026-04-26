@@ -110,6 +110,55 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
         return f"（面试官正在思考中... 错误信息: {str(e)}）"
 
 
+def evaluate_random_answer(question, answer):
+    """
+    单题问答评估：返回 score / evaluation / suggestion
+    """
+    system_prompt = """
+    你是一位严格但专业的面试官。
+    你将收到一道面试题与候选人的回答，请按以下 JSON 格式返回：
+    {
+      "score": 0-100的整数,
+      "evaluation": "120字以内，指出回答优劣与关键问题",
+      "suggestion": "120字以内，给出可执行的改进建议"
+    }
+    要求：
+    1. 评价必须针对题目与回答本身，不要空话。
+    2. 分数要能反映逻辑性、完整性、岗位匹配度与表达清晰度。
+    3. 仅返回 JSON，不要输出其他文本。
+    """
+
+    user_prompt = f"面试题：{question}\n候选人回答：{answer}"
+
+    try:
+        response = client.chat.completions.create(
+            model=Config.LLM_REPORT,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.4,
+            response_format={"type": "json_object"}
+        )
+
+        parsed = parse_json_safely(response.choices[0].message.content)
+        score = int(parsed.get('score', 0))
+        score = max(0, min(100, score))
+
+        return {
+            "score": score,
+            "evaluation": (parsed.get('evaluation') or "").strip(),
+            "suggestion": (parsed.get('suggestion') or "").strip()
+        }
+    except Exception as e:
+        print(f"❌ 单题评估失败: {e}")
+        return {
+            "score": 60,
+            "evaluation": "回答有一定基础，但论据和细节不足，结构还可以更清晰。",
+            "suggestion": "建议按“观点-依据-案例-结果”组织回答，并补充可量化成果。"
+        }
+
+
 def generate_interview_report(history_messages, target_role):
     """
     面试结束时调用：采用【双通道分析】策略
@@ -400,5 +449,4 @@ def analyze_image(image_base64):
     except Exception as e:
         print(f"❌ 视觉分析失败: {e}")
         return ""
-
 

@@ -14,6 +14,29 @@ from .decorators import teacher_required, dept_head_required, admin_required
 
 bp = Blueprint('routes', __name__)
 
+DEFAULT_RANDOM_INTERVIEW_QUESTIONS = [
+    "请你做一个 1 分钟的自我介绍，并突出与岗位相关的优势。",
+    "请分享一个你遇到困难并最终解决的问题，重点说说你的思考过程。",
+    "如果你和同事在方案上意见不一致，你会如何推进沟通并达成结果？",
+    "请举例说明你如何在压力下保证任务质量和交付时间。",
+    "你为什么想加入我们公司？你最看重的是什么？"
+]
+
+
+def get_random_interview_questions():
+    """读取随机问题题库，若未配置则返回默认题库"""
+    raw_value = SystemConfig.get('random_interview_questions', '[]')
+    questions = []
+
+    try:
+        parsed = json.loads(raw_value) if raw_value else []
+        if isinstance(parsed, list):
+            questions = [str(item).strip() for item in parsed if str(item).strip()]
+    except Exception:
+        questions = []
+
+    return questions if questions else DEFAULT_RANDOM_INTERVIEW_QUESTIONS
+
 
 # ===============================================================
 #  学生端核心功能 (首页、历史、聊天、报告)
@@ -66,6 +89,33 @@ def admin_settings():
     enable_video = SystemConfig.get('enable_video', 'true') == 'true'
     
     return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video)
+
+
+@bp.route('/admin/random_questions', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_random_questions():
+    """管理员：随机问题题库配置"""
+    if request.method == 'POST':
+        raw_text = request.form.get('questions_text', '')
+        lines = [line.strip() for line in raw_text.splitlines()]
+        questions = [line for line in lines if line]
+
+        if not questions:
+            questions = DEFAULT_RANDOM_INTERVIEW_QUESTIONS
+
+        SystemConfig.set(
+            'random_interview_questions',
+            json.dumps(questions, ensure_ascii=False),
+            '随机问题面试题库（JSON数组）'
+        )
+        flash(f'随机问题题库已更新，共 {len(questions)} 题', 'success')
+        return redirect(url_for('routes.admin_random_questions'))
+
+    questions = get_random_interview_questions()
+    return render_template('admin_random_questions.html', questions=questions)
+
+
 @bp.route('/admin/company')
 @login_required
 @admin_required
@@ -127,6 +177,17 @@ def home():
         voice_options=Config.VOLC_AVAILABLE_VOICES,
         my_resumes=my_resumes
     )
+
+
+@bp.route('/interview/random')
+@login_required
+def random_interview_page():
+    """随机问题面试页面（学生端）"""
+    if current_user.role != 'student':
+        flash("只有学生可以使用随机问题面试", "warning")
+        return redirect(url_for('routes.dashboard'))
+
+    return render_template('random_interview.html')
 
 
 @bp.route('/leaderboard')

@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, url_for, current_app
 from datetime import datetime
 import json
 import os
+import random
 import time
 import uuid
 from threading import Thread
@@ -11,9 +12,10 @@ from threading import Thread
 # 使用相对导入，引用上一级 app 目录下的 db 和 models
 from .. import db
 from ..models import InterviewSession, ChatMessage, User, SystemConfig
+from ..config import Config
 
 # 引入 AI 服务
-from ..services.ai_agent import get_ai_response, generate_interview_report, transcribe_audio, analyze_image
+from ..services.ai_agent import get_ai_response, generate_interview_report, transcribe_audio, analyze_image, evaluate_random_answer
 # 引入 TTS 服务
 from ..services.tts_service import text_to_speech
 # 引入文件解析服务 (解析简历用)
@@ -50,6 +52,29 @@ def resume_json_to_text(data):
     return "\n".join(lines)
 
 api_bp = Blueprint('interview_api', __name__)
+
+DEFAULT_RANDOM_INTERVIEW_QUESTIONS = [
+    "请你做一个 1 分钟的自我介绍，并突出与岗位相关的优势。",
+    "请分享一个你遇到困难并最终解决的问题，重点说说你的思考过程。",
+    "如果你和同事在方案上意见不一致，你会如何推进沟通并达成结果？",
+    "请举例说明你如何在压力下保证任务质量和交付时间。",
+    "你为什么想加入我们公司？你最看重的是什么？"
+]
+
+
+def get_random_interview_questions():
+    """读取随机问题题库，若为空则返回默认题库"""
+    raw_value = SystemConfig.get('random_interview_questions', '[]')
+    questions = []
+
+    try:
+        parsed = json.loads(raw_value) if raw_value else []
+        if isinstance(parsed, list):
+            questions = [str(item).strip() for item in parsed if str(item).strip()]
+    except Exception:
+        questions = []
+
+    return questions if questions else DEFAULT_RANDOM_INTERVIEW_QUESTIONS
 
 
 @api_bp.route('/create', methods=['POST'])
@@ -358,6 +383,77 @@ def finish_session(session_id):
         print(f"❌ Error: {e}")
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/random/question', methods=['GET'])
+@login_required
+def get_random_question():
+    """随机抽取一道单题面试题"""
+    if current_user.role != 'student':
+        return jsonify({'error': 'Only students are allowed'}), 403
+
+    questions = get_random_interview_questions()
+    question = random.choice(questions)
+    return jsonify({
+        'status': 'success',
+        'question': question,
+        'total_questions': len(questions)
+    })
+
+
+@api_bp.route('/random/evaluate', methods=['POST'])
+@login_required
+def evaluate_random_question():
+    """单题作答评分：返回分数、评价、建议与对应语音"""
+    if current_user.role != 'student':
+        return jsonify({'error': 'Only students are allowed'}), 403
+
+    data = request.json or {}
+    question = (data.get('question') or '').strip()
+    answer = (data.get('answer') or '').strip()
+
+    if not answer:
+        return jsonify({'error': 'answer is required'}), 400
+
+    if not question:
+        question = random.choice(get_random_interview_questions())
+
+    result = evaluate_random_answer(question, answer)
+    score = int(result.get('score', 0))
+    score = max(0, min(100, score))
+    evaluation = (result.get('evaluation') or '').strip() or "表达较完整，建议继续强化结构化表达。"
+    suggestion = (result.get('suggestion') or '').strip() or "建议使用 STAR 法则组织答案：情境-任务-行动-结果。"
+
+    evaluation_audio_url = None
+    suggestion_audio_url = None
+
+    audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
+    dayi_voice = Config.VOLC_AVAILABLE_VOICES.get('大壹老师', 'zh_male_dayi_saturn_bigtts')
+
+    try:
+        evaluation_audio = text_to_speech(evaluation, audio_dir, specific_voice=dayi_voice)
+        if evaluation_audio:
+            evaluation_audio_url = url_for('static', filename=f'uploads/audio/{evaluation_audio}')
+    except Exception as e:
+        print(f"⚠️ 评价语音生成失败: {e}")
+
+    try:
+        suggestion_audio = text_to_speech(suggestion, audio_dir, specific_voice=dayi_voice)
+        if suggestion_audio:
+            suggestion_audio_url = url_for('static', filename=f'uploads/audio/{suggestion_audio}')
+    except Exception as e:
+        print(f"⚠️ 建议语音生成失败: {e}")
+
+    return jsonify({
+        'status': 'success',
+        'question': question,
+        'answer': answer,
+        'score': score,
+        'evaluation': evaluation,
+        'suggestion': suggestion,
+        'evaluation_audio_url': evaluation_audio_url,
+        'suggestion_audio_url': suggestion_audio_url
+    })
 
 
 @api_bp.route('/<int:session_id>/delete', methods=['POST'])

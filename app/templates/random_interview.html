@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}随机问题面试{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto pb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-5 items-start">
+        <div class="space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-white rounded-2xl p-4 border border-stone-200">
+                <div>
+                    <h2 class="text-xl font-bold text-stone-700">随机问题面试</h2>
+                    <p class="text-sm text-stone-500">单题快练：语音作答后，AI 立即给出评分、评价与建议</p>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('routes.home') }}" class="btn btn-ghost btn-sm">返回大厅</a>
+                    <button id="next-question-btn" class="btn btn-outline btn-sm border-orange-300 text-orange-600 hover:bg-orange-50">
+                        换一题
+                    </button>
+                </div>
+            </div>
+
+            <div class="card bg-white border border-stone-200 shadow-sm">
+                <div class="card-body p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-bold text-stone-500">AI 面试官随机题</div>
+                        <div id="question-badge" class="badge badge-outline text-xs border-stone-300 text-stone-500">题库加载中...</div>
+                    </div>
+                    <div class="chat chat-start mt-3">
+                        <div class="chat-image avatar">
+                            <div class="w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-2">
+                                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                            </div>
+                        </div>
+                        <div class="chat-bubble bg-orange-50 text-stone-700 border border-orange-200 text-base leading-relaxed min-h-16" style="font-size:1.3rem" id="question-text">
+                            正在抽取题目...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white border border-stone-200 shadow-sm">
+                <div class="card-body p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-stone-700">我的回答（语音分段识别）</h3>
+                        <div id="recording-status" class="badge badge-ghost text-xs hidden">正在收听...</div>
+                    </div>
+
+                    <div id="answer-stream" class="min-h-40 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700 leading-7">
+                        点击下方「开始语音」后，识别文本会实时出现在这里。
+                    </div>
+
+                    <textarea id="answer-text" class="textarea textarea-bordered w-full h-24" placeholder="可在这里手动补充或修改识别文本"></textarea>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button id="record-btn" class="btn btn-primary text-white">
+                            开始语音
+                        </button>
+                        <button id="analyze-btn" class="btn btn-warning text-white">
+                            结束回答并分析
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="result-card" class="card bg-white border border-stone-200 shadow-sm hidden">
+                <div class="card-body p-5 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-bold text-stone-500">本题得分</span>
+                        <span id="score-text" class="text-3xl font-black text-orange-600">0</span>
+                        <span class="text-sm text-stone-400">/100</span>
+                    </div>
+
+                    <div class="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-stone-700">针对性评价</h4>
+                            <button id="play-evaluation-btn" class="btn btn-xs btn-outline border-stone-300 text-stone-600">播放评价</button>
+                        </div>
+                        <p id="evaluation-text" class="text-sm text-stone-700 leading-7"></p>
+                    </div>
+
+                    <div class="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-bold text-stone-700">改进建议</h4>
+                            <button id="play-suggestion-btn" class="btn btn-xs btn-outline border-stone-300 text-stone-600">播放建议</button>
+                        </div>
+                        <p id="suggestion-text" class="text-sm text-stone-700 leading-7"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="w-full">
+            <div class="card bg-white border border-stone-200 shadow-sm lg:sticky lg:top-4">
+                <div class="card-body p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-stone-700">摄像头捕捉</h3>
+                        <span id="camera-status" class="badge badge-ghost text-xs">初始化中</span>
+                    </div>
+                    <div class="rounded-xl overflow-hidden border border-stone-200 bg-black aspect-[4/3] relative mt-2">
+                        <video id="random-local-video" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
+                        <canvas id="random-video-canvas" class="hidden"></canvas>
+                        <div class="absolute bottom-2 left-2 text-white/80 text-xs bg-black/50 px-2 py-1 rounded">本地预览</div>
+                    </div>
+                    <p class="text-xs text-stone-500 mt-1">用于模拟真实面试场景的视频捕捉预览。</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const questionText = document.getElementById('question-text');
+    const questionBadge = document.getElementById('question-badge');
+    const answerStream = document.getElementById('answer-stream');
+    const answerText = document.getElementById('answer-text');
+    const recordBtn = document.getElementById('record-btn');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    const recordingStatus = document.getElementById('recording-status');
+    const resultCard = document.getElementById('result-card');
+    const scoreText = document.getElementById('score-text');
+    const evaluationText = document.getElementById('evaluation-text');
+    const suggestionText = document.getElementById('suggestion-text');
+    const playEvaluationBtn = document.getElementById('play-evaluation-btn');
+    const playSuggestionBtn = document.getElementById('play-suggestion-btn');
+    const localVideo = document.getElementById('random-local-video');
+    const cameraStatus = document.getElementById('camera-status');
+
+    let currentQuestion = '';
+    let isRecording = false;
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let cameraStream = null;
+    let chunkQueue = [];
+    let isProcessingChunk = false;
+    let evaluationAudioUrl = null;
+    let suggestionAudioUrl = null;
+    const CHUNK_MS = 4500;
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    function setRecordingUI(recording) {
+        isRecording = recording;
+        recordingStatus.classList.toggle('hidden', !recording);
+        recordBtn.classList.toggle('btn-error', recording);
+        recordBtn.classList.toggle('btn-primary', !recording);
+        recordBtn.innerText = recording ? '结束语音' : '开始语音';
+    }
+
+    function getCurrentAnswer() {
+        const manualValue = answerText.value.trim();
+        return manualValue;
+    }
+
+    function renderAnswerStream() {
+        const manualText = answerText.value.trim();
+        if (!manualText) {
+            answerStream.innerHTML = '点击下方「开始语音」后，识别文本会实时出现在这里。';
+            return;
+        }
+
+        const segments = manualText
+            .split(/\n+/)
+            .map(item => item.trim())
+            .filter(Boolean);
+
+        const html = segments
+            .map((item, idx) => `<div class="mb-2"><span class="text-stone-400 mr-2">${idx + 1}.</span>${escapeHtml(item)}</div>`)
+            .join('');
+        answerStream.innerHTML = html;
+    }
+
+    function appendRecognizedText(text) {
+        if (!text) return;
+        const trimmed = text.trim();
+        if (!trimmed) return;
+
+        const current = answerText.value.trim();
+        answerText.value = current ? `${current}\n${trimmed}` : trimmed;
+        renderAnswerStream();
+    }
+
+    function playAudio(url) {
+        if (!url) {
+            alert('当前没有可播放音频');
+            return;
+        }
+        new Audio(url).play().catch(() => {
+            alert('音频播放失败，请重试');
+        });
+    }
+
+    async function initCameraPreview() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !localVideo) {
+            if (cameraStatus) cameraStatus.innerText = '不可用';
+            return;
+        }
+
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            localVideo.srcObject = cameraStream;
+            if (cameraStatus) {
+                cameraStatus.innerText = '已开启';
+                cameraStatus.classList.remove('badge-ghost');
+                cameraStatus.classList.add('badge-success', 'text-white');
+            }
+        } catch (e) {
+            console.warn('camera init failed', e);
+            if (cameraStatus) {
+                cameraStatus.innerText = '未授权';
+                cameraStatus.classList.remove('badge-ghost');
+                cameraStatus.classList.add('badge-error', 'text-white');
+            }
+        }
+    }
+
+    function stopCameraPreview() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+    }
+
+    async function loadRandomQuestion() {
+        try {
+            questionText.innerText = '正在抽取题目...';
+            questionBadge.innerText = '题库加载中...';
+
+            const res = await fetch('/api/interview/random/question');
+            const data = await res.json();
+            if (data.status === 'success') {
+                currentQuestion = data.question;
+                questionText.innerText = currentQuestion;
+                questionBadge.innerText = `题库共 ${data.total_questions} 题`;
+            } else {
+                questionText.innerText = '题目加载失败，请稍后重试。';
+                questionBadge.innerText = '加载失败';
+            }
+        } catch (e) {
+            questionText.innerText = '题目加载失败，请检查网络后重试。';
+            questionBadge.innerText = '加载失败';
+        }
+    }
+
+    function resetAnswerAndResult() {
+        answerText.value = '';
+        chunkQueue = [];
+        isProcessingChunk = false;
+        renderAnswerStream();
+        resultCard.classList.add('hidden');
+        scoreText.innerText = '0';
+        evaluationText.innerText = '';
+        suggestionText.innerText = '';
+        evaluationAudioUrl = null;
+        suggestionAudioUrl = null;
+    }
+
+    async function transcribeChunk(blob) {
+        const formData = new FormData();
+        formData.append('audio', blob, 'chunk.webm');
+
+        const res = await fetch('/api/interview/transcribe', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.text) {
+            appendRecognizedText(data.text);
+        }
+    }
+
+    async function processChunkQueue() {
+        if (isProcessingChunk) return;
+        isProcessingChunk = true;
+        while (chunkQueue.length > 0) {
+            const blob = chunkQueue.shift();
+            try {
+                await transcribeChunk(blob);
+            } catch (e) {
+                console.warn('chunk transcribe failed', e);
+            }
+        }
+        isProcessingChunk = false;
+    }
+
+    async function initRecorder() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('getUserMedia not supported');
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        let options = { mimeType: 'audio/webm;codecs=opus' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = undefined;
+        mediaRecorder = new MediaRecorder(mediaStream, options);
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (!event.data || event.data.size < 1500 || !isRecording) return;
+            chunkQueue.push(event.data);
+            processChunkQueue();
+        };
+
+        mediaRecorder.onerror = (event) => {
+            console.warn('media recorder error:', event);
+        };
+    }
+
+    async function waitPendingChunkTasks(maxWaitMs = 30000) {
+        const start = Date.now();
+        while (isProcessingChunk || chunkQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 120));
+            if (Date.now() - start > maxWaitMs) {
+                console.warn('waitPendingChunkTasks timeout');
+                break;
+            }
+        }
+    }
+
+    async function startRecording() {
+        if (isRecording) return;
+        resultCard.classList.add('hidden');
+
+        try {
+            chunkQueue = [];
+            isProcessingChunk = false;
+            await initRecorder();
+            mediaRecorder.start(CHUNK_MS);
+            setRecordingUI(true);
+        } catch (e) {
+            console.error(e);
+            alert('启动语音失败，请检查麦克风权限后重试。');
+            setRecordingUI(false);
+        }
+    }
+
+    async function stopRecording() {
+        if (!isRecording) return;
+        setRecordingUI(false);
+
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            await new Promise(resolve => {
+                mediaRecorder.addEventListener('stop', resolve, { once: true });
+                mediaRecorder.stop();
+            });
+        }
+
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+        }
+
+        mediaRecorder = null;
+        await waitPendingChunkTasks();
+        renderAnswerStream();
+    }
+
+    async function toggleRecording() {
+        if (isRecording) {
+            await stopRecording();
+        } else {
+            await startRecording();
+        }
+    }
+
+    async function analyzeAnswer() {
+        if (isRecording) {
+            await stopRecording();
+        }
+        await waitPendingChunkTasks();
+
+        const answer = getCurrentAnswer();
+        if (!answer) {
+            alert('请先进行语音作答，或手动输入回答内容。');
+            return;
+        }
+
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> 分析中...';
+
+        try {
+            const res = await fetch('/api/interview/random/evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: currentQuestion,
+                    answer: answer
+                })
+            });
+            const data = await res.json();
+            if (data.status !== 'success') {
+                alert(data.error || '分析失败，请稍后重试');
+                return;
+            }
+
+            scoreText.innerText = data.score;
+            evaluationText.innerText = data.evaluation || '';
+            suggestionText.innerText = data.suggestion || '';
+            evaluationAudioUrl = data.evaluation_audio_url;
+            suggestionAudioUrl = data.suggestion_audio_url;
+            resultCard.classList.remove('hidden');
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+            console.error(e);
+            alert('网络异常，分析失败');
+        } finally {
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerText = '结束回答并分析';
+        }
+    }
+
+    recordBtn.addEventListener('click', toggleRecording);
+    analyzeBtn.addEventListener('click', analyzeAnswer);
+    nextQuestionBtn.addEventListener('click', async () => {
+        if (isRecording) await stopRecording();
+        resetAnswerAndResult();
+        await loadRandomQuestion();
+    });
+    playEvaluationBtn.addEventListener('click', () => playAudio(evaluationAudioUrl));
+    playSuggestionBtn.addEventListener('click', () => playAudio(suggestionAudioUrl));
+    answerText.addEventListener('input', renderAnswerStream);
+
+    window.addEventListener('beforeunload', () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch (_) {}
+        }
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+        }
+        stopCameraPreview();
+    });
+
+    loadRandomQuestion();
+    initCameraPreview();
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}随机问题题库{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-200 flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold text-base-content">随机问题题库配置</h2>
+            <p class="text-sm text-base-content/60">学生端“随机问题面试”将从这里随机抽题（每行一题）</p>
+        </div>
+        <div class="badge badge-primary text-white px-3 py-2">当前 {{ questions|length }} 题</div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+        <div class="card-body space-y-4">
+            <form method="POST" class="space-y-4">
+                <label class="form-control">
+                    <div class="label">
+                        <span class="label-text font-bold">题目列表（每行一个问题）</span>
+                    </div>
+                    <textarea
+                        id="questions-textarea"
+                        name="questions_text"
+                        class="textarea textarea-bordered h-96 font-mono text-sm leading-6"
+                        placeholder="每行输入一个面试问题">{{ questions|join('\n') }}</textarea>
+                </label>
+
+                <div class="flex items-center justify-between gap-3">
+                    <div class="text-xs text-base-content/50" id="question-count-text">共 {{ questions|length }} 题</div>
+                    <button class="btn btn-primary text-white" type="submit">保存题库配置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const textarea = document.getElementById('questions-textarea');
+    const countText = document.getElementById('question-count-text');
+
+    function updateCount() {
+        const count = textarea.value
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean)
+            .length;
+        countText.innerText = `共 ${count} 题`;
+    }
+
+    textarea.addEventListener('input', updateCount);
+    updateCount();
+</script>
+{% endblock %}
