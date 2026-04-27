@@ -26,7 +26,18 @@ def create_resume():
         "education": [],
         "experience": [],
         "projects": [],
-        "skills": []
+        "campus_experience": [{}],
+        "awards": [{}],
+        "skills": [],
+        "hiddenSections": {
+            "basic": False,
+            "education": False,
+            "experience": False,
+            "projects": False,
+            "campus_experience": False,
+            "awards": False,
+            "skills": False
+        }
     }
     
     # 3. 如果选择导入基础信息

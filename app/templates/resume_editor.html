@@ -31,7 +31,11 @@
             <div class="collapse collapse-arrow bg-base-100 border border-base-200">
                 <input type="radio" name="my-accordion-2" checked="checked" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    👤 基本信息
+                    <span>👤 基本信息</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-basic" onchange="updateHiddenSection('basic', this.checked)">
+                    </label>
                 </div>
                 <div class="collapse-content space-y-3">
                     <div class="grid grid-cols-2 gap-3">
@@ -74,7 +78,11 @@
             <div class="collapse collapse-arrow bg-base-100 border border-base-200">
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    🎓 教育背景
+                    <span>🎓 教育背景</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-education" onchange="updateHiddenSection('education', this.checked)">
+                    </label>
                 </div>
                 <div class="collapse-content">
                     <div id="edu-list" class="space-y-4"></div>
@@ -86,7 +94,11 @@
             <div class="collapse collapse-arrow bg-base-100 border border-base-200">
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    💼 实习/工作经历
+                    <span>💼 实习/工作经历</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-experience" onchange="updateHiddenSection('experience', this.checked)">
+                    </label>
                 </div>
                 <div class="collapse-content">
                     <div id="exp-list" class="space-y-4"></div>
@@ -98,7 +110,11 @@
             <div class="collapse collapse-arrow bg-base-100 border border-base-200">
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    🚀 项目经验
+                    <span>🚀 项目经验</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-projects" onchange="updateHiddenSection('projects', this.checked)">
+                    </label>
                 </div>
                 <div class="collapse-content">
                     <div id="proj-list" class="space-y-4"></div>
@@ -106,11 +122,47 @@
                 </div>
             </div>
 
-            <!-- 5. 技能与证书 -->
+            <!-- 5. 校园内经历 -->
             <div class="collapse collapse-arrow bg-base-100 border border-base-200">
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    🛠 技能与证书
+                    <span>🏫 校园内经历</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-campus_experience" onchange="updateHiddenSection('campus_experience', this.checked)">
+                    </label>
+                </div>
+                <div class="collapse-content">
+                    <div id="campus-list" class="space-y-4"></div>
+                    <button onclick="addItem('campus_experience')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加校园经历</button>
+                </div>
+            </div>
+
+            <!-- 6. 获奖 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    <span>🏆 获奖</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-awards" onchange="updateHiddenSection('awards', this.checked)">
+                    </label>
+                </div>
+                <div class="collapse-content">
+                    <div id="award-list" class="space-y-4"></div>
+                    <button onclick="addItem('awards')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加获奖记录</button>
+                </div>
+            </div>
+
+            <!-- 7. 技能与证书 -->
+            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="radio" name="my-accordion-2" /> 
+                <div class="collapse-title text-base font-bold flex items-center gap-2">
+                    <span>🛠 技能与证书</span>
+                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-skills" onchange="updateHiddenSection('skills', this.checked)">
+                    </label>
                 </div>
                 <div class="collapse-content space-y-3">
                     <div class="form-control">
@@ -224,7 +276,22 @@
     if (!resumeData.education) resumeData.education = [];
     if (!resumeData.experience) resumeData.experience = [];
     if (!resumeData.projects) resumeData.projects = [];
+    if (!resumeData.campus_experience || !Array.isArray(resumeData.campus_experience)) resumeData.campus_experience = [];
+    if (resumeData.campus_experience.length === 0) resumeData.campus_experience.push({});
+    if (!resumeData.awards || !Array.isArray(resumeData.awards)) resumeData.awards = [];
+    if (resumeData.awards.length === 0) resumeData.awards.push({});
     if (!resumeData.skills) resumeData.skills = [];
+    const defaultHiddenSections = {
+        basic: false,
+        education: false,
+        experience: false,
+        projects: false,
+        campus_experience: false,
+        awards: false,
+        skills: false
+    };
+    if (!resumeData.hiddenSections || typeof resumeData.hiddenSections !== 'object' || Array.isArray(resumeData.hiddenSections)) resumeData.hiddenSections = {};
+    resumeData.hiddenSections = { ...defaultHiddenSections, ...resumeData.hiddenSections };
 
     // 初始化页面
     document.addEventListener('DOMContentLoaded', () => {
@@ -259,6 +326,13 @@
         renderListEditors('education');
         renderListEditors('experience');
         renderListEditors('projects');
+        renderListEditors('campus_experience');
+        renderListEditors('awards');
+
+        Object.keys(defaultHiddenSections).forEach(section => {
+            const el = document.getElementById(`hide-${section}`);
+            if (el) el.checked = !!resumeData.hiddenSections[section];
+        });
     }
 
     function updateField(section, key, value) {
@@ -275,9 +349,23 @@
         showUnsaved();
     }
 
+    function updateHiddenSection(section, hidden) {
+        resumeData.hiddenSections[section] = hidden;
+        renderPreview();
+        showUnsaved();
+    }
+
     // 列表编辑器渲染器
     function renderListEditors(type) {
-        const container = document.getElementById(type === 'education' ? 'edu-list' : (type === 'experience' ? 'exp-list' : 'proj-list'));
+        const listContainers = {
+            education: 'edu-list',
+            experience: 'exp-list',
+            projects: 'proj-list',
+            campus_experience: 'campus-list',
+            awards: 'award-list'
+        };
+        const container = document.getElementById(listContainers[type]);
+        if (!container) return;
         container.innerHTML = '';
         
         resumeData[type].forEach((item, index) => {
@@ -327,6 +415,20 @@
                         <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${item.description || ''}</textarea>
                     </div>
                 `;
+            } else if (type === 'campus_experience') {
+                fields = `
+                    <input class="input input-sm w-full mb-2" placeholder="社团/组织名称" value="${item.organization || ''}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="担任岗位" value="${item.position || ''}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                    <textarea class="textarea textarea-sm w-full" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${item.achievements || ''}</textarea>
+                `;
+            } else if (type === 'awards') {
+                fields = `
+                    <input class="input input-sm w-full mb-2" placeholder="获奖名称" value="${item.name || ''}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <div class="flex gap-2">
+                        <input class="input input-sm w-1/2" placeholder="名次" value="${item.rank || ''}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="等级" value="${item.level || ''}" oninput="updateListItem('${type}', ${index}, 'level', this.value)">
+                    </div>
+                `;
             }
 
             div.innerHTML = `
@@ -363,32 +465,50 @@
         const container = document.getElementById('resume-preview');
         const d = resumeData;
         const b = d.basic || {};
+        const hidden = d.hiddenSections || {};
+        const sectionVisible = (section) => !hidden[section];
+        const hasText = (value) => String(value || '').trim().length > 0;
+        const filterItems = (items, keys) => (items || []).filter(item => item && keys.some(key => hasText(item[key])));
+        const educationItems = filterItems(d.education, ['school', 'major', 'date']);
+        const experienceItems = filterItems(d.experience, ['company', 'position', 'date', 'description']);
+        const projectItems = filterItems(d.projects, ['name', 'role', 'date', 'description']);
+        const campusItems = filterItems(d.campus_experience, ['organization', 'position', 'achievements']);
+        const awardItems = filterItems(d.awards, ['name', 'rank', 'level']);
+        const skillItems = (d.skills || []).filter(hasText);
+        const showBasic = sectionVisible('basic');
+        const showSkills = sectionVisible('skills') && skillItems.length > 0;
 
         if (currentTemplate === 'modern') {
             container.innerHTML = `
                 <div class="resume-modern">
                     <div class="sidebar">
-                        <div class="name" style="margin-bottom:20px; text-align:left;">${b.name || '姓名'}</div>
-                        
-                        <div class="section-title">联系方式</div>
-                        ${b.phone ? `<div class="contact-item">📞 ${b.phone}</div>` : ''}
-                        ${b.email ? `<div class="contact-item">✉️ ${b.email}</div>` : ''}
-                        ${b.location ? `<div class="contact-item">📍 ${b.location}</div>` : ''}
-                        
-                        <div class="section-title">求职意向</div>
-                        <div class="contact-item">${b.job_target || '未填写'}</div>
+                        ${showBasic ? `
+                            <div class="name" style="margin-bottom:20px; text-align:left;">${b.name || '姓名'}</div>
+                            
+                            <div class="section-title">联系方式</div>
+                            ${b.phone ? `<div class="contact-item">📞 ${b.phone}</div>` : ''}
+                            ${b.email ? `<div class="contact-item">✉️ ${b.email}</div>` : ''}
+                            ${b.location ? `<div class="contact-item">📍 ${b.location}</div>` : ''}
+                            
+                            <div class="section-title">求职意向</div>
+                            <div class="contact-item">${b.job_target || '未填写'}</div>
+                        ` : ''}
 
-                        <div class="section-title">技能专长</div>
-                        <div>
-                            ${d.skills.map(s => `<span class="skill-item">${s}</span>`).join('')}
-                        </div>
+                        ${showSkills ? `
+                            <div class="section-title">技能专长</div>
+                            <div>
+                                ${skillItems.map(s => `<span class="skill-item">${s}</span>`).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                     <div class="main">
-                        <div class="section-title" style="margin-top:0;">自我评价</div>
-                        <p class="item-desc">${b.self_evaluation || '暂无'}</p>
+                        ${showBasic ? `
+                            <div class="section-title" style="margin-top:0;">自我评价</div>
+                            <p class="item-desc">${b.self_evaluation || '暂无'}</p>
+                        ` : ''}
 
-                        ${d.experience.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
-                        ${d.experience.map(item => `
+                        ${sectionVisible('experience') && experienceItems.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
+                        ${sectionVisible('experience') ? experienceItems.map(item => `
                             <div class="item">
                                 <div class="item-header">
                                     <span class="item-title">${item.company || '公司'}</span>
@@ -397,10 +517,10 @@
                                 <div class="item-subtitle">${item.position || '职位'}</div>
                                 <div class="item-desc">${item.description || ''}</div>
                             </div>
-                        `).join('')}
+                        `).join('') : ''}
 
-                        ${d.projects.length > 0 ? `<div class="section-title">项目经验</div>` : ''}
-                        ${d.projects.map(item => `
+                        ${sectionVisible('projects') && projectItems.length > 0 ? `<div class="section-title">项目经验</div>` : ''}
+                        ${sectionVisible('projects') ? projectItems.map(item => `
                             <div class="item">
                                 <div class="item-header">
                                     <span class="item-title">${item.name || '项目'}</span>
@@ -409,10 +529,32 @@
                                 <div class="item-subtitle">${item.role || '角色'}</div>
                                 <div class="item-desc">${item.description || ''}</div>
                             </div>
-                        `).join('')}
+                        `).join('') : ''}
 
-                        ${d.education.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
-                        ${d.education.map(item => `
+                        ${sectionVisible('campus_experience') && campusItems.length > 0 ? `<div class="section-title">校园内经历</div>` : ''}
+                        ${sectionVisible('campus_experience') ? campusItems.map(item => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <span class="item-title">${item.organization || '社团/组织'}</span>
+                                </div>
+                                <div class="item-subtitle">${item.position || '担任岗位'}</div>
+                                <div class="item-desc">${item.achievements || ''}</div>
+                            </div>
+                        `).join('') : ''}
+
+                        ${sectionVisible('awards') && awardItems.length > 0 ? `<div class="section-title">获奖</div>` : ''}
+                        ${sectionVisible('awards') ? awardItems.map(item => `
+                            <div class="item">
+                                <div class="item-header">
+                                    <span class="item-title">${item.name || '获奖名称'}</span>
+                                    <span class="item-date">${item.rank || ''}</span>
+                                </div>
+                                <div class="item-subtitle">${item.level || ''}</div>
+                            </div>
+                        `).join('') : ''}
+
+                        ${sectionVisible('education') && educationItems.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
+                        ${sectionVisible('education') ? educationItems.map(item => `
                             <div class="item">
                                 <div class="item-header">
                                     <span class="item-title">${item.school || '学校'}</span>
@@ -420,7 +562,7 @@
                                 </div>
                                 <div class="item-subtitle">${item.major || '专业'}</div>
                             </div>
-                        `).join('')}
+                        `).join('') : ''}
                     </div>
                 </div>
             `;
@@ -428,29 +570,31 @@
             // Classic Template
             container.innerHTML = `
                 <div class="resume-classic">
-                    <div class="header">
-                        <div class="name">${b.name || '姓名'}</div>
-                        <div class="contact">
-                            ${b.phone || ''} | ${b.email || ''} | ${b.location || ''}
+                    ${showBasic ? `
+                        <div class="header">
+                            <div class="name">${b.name || '姓名'}</div>
+                            <div class="contact">
+                                ${b.phone || ''} | ${b.email || ''} | ${b.location || ''}
+                            </div>
+                            <div class="contact">求职意向：${b.job_target || ''}</div>
                         </div>
-                        <div class="contact">求职意向：${b.job_target || ''}</div>
-                    </div>
 
-                    <div class="section-title">自我评价</div>
-                    <p class="item-desc">${b.self_evaluation || ''}</p>
+                        <div class="section-title">自我评价</div>
+                        <p class="item-desc">${b.self_evaluation || ''}</p>
+                    ` : ''}
 
-                    <div class="section-title">教育背景</div>
-                    ${d.education.map(item => `
+                    ${sectionVisible('education') && educationItems.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
+                    ${sectionVisible('education') ? educationItems.map(item => `
                         <div class="item">
                             <div class="item-header">
                                 <span>${item.school || ''} - ${item.major || ''}</span>
                                 <span>${item.date || ''}</span>
                             </div>
                         </div>
-                    `).join('')}
+                    `).join('') : ''}
 
-                    <div class="section-title">工作经历</div>
-                    ${d.experience.map(item => `
+                    ${sectionVisible('experience') && experienceItems.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
+                    ${sectionVisible('experience') ? experienceItems.map(item => `
                         <div class="item">
                             <div class="item-header">
                                 <span>${item.company || ''} - ${item.position || ''}</span>
@@ -458,10 +602,10 @@
                             </div>
                             <div class="item-desc">${item.description || ''}</div>
                         </div>
-                    `).join('')}
+                    `).join('') : ''}
 
-                    <div class="section-title">项目经验</div>
-                    ${d.projects.map(item => `
+                    ${sectionVisible('projects') && projectItems.length > 0 ? `<div class="section-title">项目经验</div>` : ''}
+                    ${sectionVisible('projects') ? projectItems.map(item => `
                         <div class="item">
                             <div class="item-header">
                                 <span>${item.name || ''} - ${item.role || ''}</span>
@@ -469,10 +613,32 @@
                             </div>
                             <div class="item-desc">${item.description || ''}</div>
                         </div>
-                    `).join('')}
+                    `).join('') : ''}
 
-                    <div class="section-title">技能</div>
-                    <p class="item-desc">${d.skills.join(' / ')}</p>
+                    ${sectionVisible('campus_experience') && campusItems.length > 0 ? `<div class="section-title">校园内经历</div>` : ''}
+                    ${sectionVisible('campus_experience') ? campusItems.map(item => `
+                        <div class="item">
+                            <div class="item-header">
+                                <span>${item.organization || ''} - ${item.position || ''}</span>
+                            </div>
+                            <div class="item-desc">${item.achievements || ''}</div>
+                        </div>
+                    `).join('') : ''}
+
+                    ${sectionVisible('awards') && awardItems.length > 0 ? `<div class="section-title">获奖</div>` : ''}
+                    ${sectionVisible('awards') ? awardItems.map(item => `
+                        <div class="item">
+                            <div class="item-header">
+                                <span>${item.name || ''} - ${item.rank || ''}</span>
+                                <span>${item.level || ''}</span>
+                            </div>
+                        </div>
+                    `).join('') : ''}
+
+                    ${showSkills ? `
+                        <div class="section-title">技能</div>
+                        <p class="item-desc">${skillItems.join(' / ')}</p>
+                    ` : ''}
                 </div>
             `;
         }

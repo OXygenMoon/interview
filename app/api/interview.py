@@ -27,27 +27,81 @@ def resume_json_to_text(data):
         return ""
     
     lines = []
+    hidden = data.get('hiddenSections') or {}
+    if not isinstance(hidden, dict):
+        hidden = {}
+
+    def section_visible(section):
+        return not hidden.get(section)
+
+    def has_text(value):
+        return bool(str(value or '').strip())
+
     basic = data.get('basic', {})
-    lines.append(f"姓名: {basic.get('name', '')}")
-    lines.append(f"求职意向: {basic.get('job_target', '')}")
-    lines.append(f"自我评价: {basic.get('self_evaluation', '')}")
+
+    if section_visible('basic'):
+        lines.append(f"姓名: {basic.get('name', '')}")
+        lines.append(f"求职意向: {basic.get('job_target', '')}")
+        lines.append(f"自我评价: {basic.get('self_evaluation', '')}")
     
-    lines.append("\n教育背景:")
-    for edu in data.get('education', []):
-        lines.append(f"- {edu.get('school', '')} | {edu.get('major', '')} | {edu.get('date', '')}")
+    if section_visible('education'):
+        education = [
+            edu for edu in data.get('education', [])
+            if any(has_text(edu.get(key)) for key in ('school', 'major', 'date'))
+        ]
+        if education:
+            lines.append("\n教育背景:")
+            for edu in education:
+                lines.append(f"- {edu.get('school', '')} | {edu.get('major', '')} | {edu.get('date', '')}")
         
-    lines.append("\n工作经历:")
-    for exp in data.get('experience', []):
-        lines.append(f"- {exp.get('company', '')} | {exp.get('position', '')} | {exp.get('date', '')}")
-        lines.append(f"  描述: {exp.get('description', '')}")
+    if section_visible('experience'):
+        experience = [
+            exp for exp in data.get('experience', [])
+            if any(has_text(exp.get(key)) for key in ('company', 'position', 'date', 'description'))
+        ]
+        if experience:
+            lines.append("\n工作经历:")
+            for exp in experience:
+                lines.append(f"- {exp.get('company', '')} | {exp.get('position', '')} | {exp.get('date', '')}")
+                lines.append(f"  描述: {exp.get('description', '')}")
         
-    lines.append("\n项目经历:")
-    for proj in data.get('projects', []):
-        lines.append(f"- {proj.get('name', '')} | {proj.get('role', '')} | {proj.get('date', '')}")
-        lines.append(f"  描述: {proj.get('description', '')}")
+    if section_visible('projects'):
+        projects = [
+            proj for proj in data.get('projects', [])
+            if any(has_text(proj.get(key)) for key in ('name', 'role', 'date', 'description'))
+        ]
+        if projects:
+            lines.append("\n项目经历:")
+            for proj in projects:
+                lines.append(f"- {proj.get('name', '')} | {proj.get('role', '')} | {proj.get('date', '')}")
+                lines.append(f"  描述: {proj.get('description', '')}")
+
+    if section_visible('campus_experience'):
+        campus_experience = [
+            item for item in data.get('campus_experience', [])
+            if any(has_text(item.get(key)) for key in ('organization', 'position', 'achievements'))
+        ]
+        if campus_experience:
+            lines.append("\n校园内经历:")
+            for item in campus_experience:
+                lines.append(f"- {item.get('organization', '')} | {item.get('position', '')}")
+                lines.append(f"  主要事迹: {item.get('achievements', '')}")
+
+    if section_visible('awards'):
+        awards = [
+            award for award in data.get('awards', [])
+            if any(has_text(award.get(key)) for key in ('name', 'rank', 'level'))
+        ]
+        if awards:
+            lines.append("\n获奖:")
+            for award in awards:
+                lines.append(f"- {award.get('name', '')} | {award.get('rank', '')} | {award.get('level', '')}")
         
-    lines.append("\n技能:")
-    lines.append(", ".join(data.get('skills', [])))
+    if section_visible('skills'):
+        skills = [skill for skill in data.get('skills', []) if has_text(skill)]
+        if skills:
+            lines.append("\n技能:")
+            lines.append(", ".join(skills))
     
     return "\n".join(lines)
 
