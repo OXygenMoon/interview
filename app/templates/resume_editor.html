@@ -6,13 +6,18 @@
 <!-- 引入 html2pdf -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<div class="h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-6">
-    
+<div class="resume-view-switch">
+    <button type="button" id="workspace-editor-btn" class="btn btn-sm btn-primary" onclick="setWorkspaceView('editor')">编辑</button>
+    <button type="button" id="workspace-preview-btn" class="btn btn-sm btn-ghost" onclick="setWorkspaceView('preview')">预览</button>
+</div>
+
+<div class="resume-workspace" id="resume-workspace" data-active-view="editor">
+
     <!-- 左侧：编辑区 -->
-    <div class="w-full lg:w-1/2 flex flex-col bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-        
+    <div class="resume-editor-pane bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden" id="editor-pane">
+
         <!-- 工具栏 -->
-        <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+        <div class="resume-editor-toolbar p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
             <div class="flex items-center gap-2">
                 <span class="font-bold text-lg">📝 编辑简历</span>
                 <span id="save-status" class="text-xs text-base-content/50 ml-2">已保存</span>
@@ -24,159 +29,14 @@
             </div>
         </div>
 
-        <!-- 表单滚动区 -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-            
-            <!-- 1. 基本信息 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" checked="checked" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>👤 基本信息</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-basic" onchange="updateHiddenSection('basic', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">姓名</span></label>
-                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'name', this.value)" id="input-name">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">求职意向</span></label>
-                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'job_target', this.value)" id="input-job_target">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">电话</span></label>
-                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'phone', this.value)" id="input-phone">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">邮箱</span></label>
-                            <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'email', this.value)" id="input-email">
-                        </div>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">所在城市</span></label>
-                        <input type="text" class="input input-bordered input-sm" oninput="updateField('basic', 'location', this.value)" id="input-location">
-                    </div>
-                    <div class="form-control">
-                        <label class="label justify-between">
-                            <span class="label-text">自我评价</span>
-                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-basic-0-self_evaluation" onclick="optimizeField('basic', 0, 'self_evaluation')">
-                                ✨ 润色
-                            </button>
-                        </label>
-                        <textarea class="textarea textarea-bordered h-24" oninput="updateField('basic', 'self_evaluation', this.value)" id="input-self_evaluation"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. 教育背景 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>🎓 教育背景</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-education" onchange="updateHiddenSection('education', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content">
-                    <div id="edu-list" class="space-y-4"></div>
-                    <button onclick="addItem('education')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加学历</button>
-                </div>
-            </div>
-
-            <!-- 3. 工作/实习经历 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>💼 实习/工作经历</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-experience" onchange="updateHiddenSection('experience', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content">
-                    <div id="exp-list" class="space-y-4"></div>
-                    <button onclick="addItem('experience')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加经历</button>
-                </div>
-            </div>
-
-            <!-- 4. 项目经验 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>🚀 项目经验</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-projects" onchange="updateHiddenSection('projects', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content">
-                    <div id="proj-list" class="space-y-4"></div>
-                    <button onclick="addItem('projects')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加项目</button>
-                </div>
-            </div>
-
-            <!-- 5. 校园内经历 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>🏫 校园内经历</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-campus_experience" onchange="updateHiddenSection('campus_experience', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content">
-                    <div id="campus-list" class="space-y-4"></div>
-                    <button onclick="addItem('campus_experience')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加校园经历</button>
-                </div>
-            </div>
-
-            <!-- 6. 获奖 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>🏆 获奖</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-awards" onchange="updateHiddenSection('awards', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content">
-                    <div id="award-list" class="space-y-4"></div>
-                    <button onclick="addItem('awards')" class="btn btn-sm btn-ghost w-full mt-2">+ 添加获奖记录</button>
-                </div>
-            </div>
-
-            <!-- 7. 技能与证书 -->
-            <div class="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="radio" name="my-accordion-2" /> 
-                <div class="collapse-title text-base font-bold flex items-center gap-2">
-                    <span>🛠 技能与证书</span>
-                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
-                        <span class="label-text text-xs">隐藏</span>
-                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-skills" onchange="updateHiddenSection('skills', this.checked)">
-                    </label>
-                </div>
-                <div class="collapse-content space-y-3">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">专业技能 (每行一个)</span></label>
-                        <textarea class="textarea textarea-bordered h-24" oninput="updateArrayField('skills', this.value)" id="input-skills" placeholder="Java&#10;Python&#10;SQL"></textarea>
-                    </div>
-                </div>
-            </div>
-
+        <div class="resume-editor-body">
+            <aside class="resume-section-nav" id="section-nav"></aside>
+            <section class="resume-section-editor" id="section-editor"></section>
         </div>
     </div>
 
     <!-- 右侧：预览区 -->
-    <div class="w-full lg:w-1/2 flex flex-col bg-base-200/50 rounded-xl border border-base-200">
+    <div class="resume-preview-pane bg-base-200/50 rounded-xl border border-base-200" id="preview-pane">
         
         <!-- 预览工具栏 -->
         <div class="p-3 border-b border-base-200 flex justify-between items-center">
@@ -214,6 +74,23 @@
             margin: 0;
             padding: 0;
         }
+
+        .resume-workspace {
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+        }
+
+        .resume-view-switch,
+        .resume-editor-pane {
+            display: none !important;
+        }
+
+        .resume-preview-pane {
+            display: block !important;
+            background: white !important;
+            border: 0 !important;
+        }
         
         #resume-preview {
             visibility: visible;
@@ -239,6 +116,160 @@
             margin: 0;
             size: auto;
         }
+    }
+
+    .resume-view-switch {
+        display: none;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 6px;
+        width: fit-content;
+        background: hsl(var(--b1));
+        border: 1px solid hsl(var(--b2));
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgb(15 23 42 / 0.08);
+    }
+
+    .resume-workspace {
+        display: grid;
+        grid-template-columns: minmax(520px, 1fr) minmax(520px, 1fr);
+        gap: 24px;
+        height: calc(100vh - 6rem);
+        min-height: 620px;
+    }
+
+    .resume-editor-pane,
+    .resume-preview-pane {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .resume-editor-toolbar {
+        flex: 0 0 auto;
+    }
+
+    .resume-editor-body {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 14px;
+        min-height: 0;
+        flex: 1;
+        padding: 14px;
+        background: hsl(var(--b2) / 0.25);
+    }
+
+    .resume-section-nav {
+        min-height: 0;
+        overflow-y: auto;
+        padding-right: 2px;
+    }
+
+    .resume-section-editor {
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        background: hsl(var(--b1));
+        border: 1px solid hsl(var(--b2));
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    .section-nav-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        min-height: 48px;
+        margin-bottom: 8px;
+        padding: 6px;
+        border: 1px solid hsl(var(--b2));
+        border-radius: 10px;
+        background: hsl(var(--b1));
+        transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .section-nav-row.is-active {
+        border-color: hsl(var(--p));
+        background: hsl(var(--p) / 0.08);
+        box-shadow: 0 8px 18px hsl(var(--p) / 0.12);
+    }
+
+    .section-nav-row.is-hidden {
+        opacity: 0.62;
+    }
+
+    .section-nav-main {
+        min-width: 0;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .section-nav-icon {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: hsl(var(--b2));
+        flex: 0 0 auto;
+    }
+
+    .section-nav-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .section-hidden-badge {
+        display: block;
+        margin-top: 2px;
+        font-size: 11px;
+        font-weight: 400;
+        color: hsl(var(--bc) / 0.55);
+    }
+
+    .section-editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid hsl(var(--b2));
+    }
+
+    .section-editor-kicker {
+        font-size: 12px;
+        color: hsl(var(--bc) / 0.55);
+        margin-bottom: 2px;
+    }
+
+    .section-editor-title {
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .section-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .section-form-grid .span-full {
+        grid-column: 1 / -1;
+    }
+
+    .list-editor-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     #resume-preview {
@@ -298,6 +329,64 @@
     .resume-classic .item { margin-bottom: var(--resume-item-margin); }
     .resume-classic .item-header { display: flex; justify-content: space-between; font-weight: bold; }
     .resume-classic .item-desc { font-size: calc(14px * var(--resume-font-scale)); margin-top: var(--resume-desc-margin); }
+
+    @media (max-width: 1535px) {
+        .resume-view-switch {
+            display: flex;
+        }
+
+        .resume-workspace {
+            display: block;
+            height: calc(100vh - 9rem);
+            min-height: 560px;
+        }
+
+        .resume-workspace[data-active-view="editor"] .resume-preview-pane,
+        .resume-workspace[data-active-view="preview"] .resume-editor-pane {
+            display: none;
+        }
+
+        .resume-editor-pane,
+        .resume-preview-pane {
+            height: 100%;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .resume-workspace {
+            height: auto;
+            min-height: 0;
+        }
+
+        .resume-editor-body {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .resume-section-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0 0 4px;
+        }
+
+        .section-nav-row {
+            grid-template-columns: minmax(140px, 1fr) auto;
+            min-width: 210px;
+            margin-bottom: 0;
+        }
+
+        .resume-section-editor {
+            padding: 14px;
+            overflow: visible;
+        }
+
+        .section-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <script>
@@ -305,6 +394,17 @@
     let resumeData = {{ resume.content | tojson }} || {};
     const resumeId = {{ resume.id }};
     let currentTemplate = "{{ resume.template_id }}" || 'modern';
+    let activeSection = 'basic';
+    let activeWorkspaceView = 'editor';
+    const sectionMeta = [
+        { key: 'basic', icon: '👤', title: '基本信息' },
+        { key: 'education', icon: '🎓', title: '教育背景' },
+        { key: 'experience', icon: '💼', title: '实习/工作经历' },
+        { key: 'projects', icon: '🚀', title: '项目经验' },
+        { key: 'campus_experience', icon: '🏫', title: '校园内经历' },
+        { key: 'awards', icon: '🏆', title: '获奖' },
+        { key: 'skills', icon: '🛠', title: '技能与证书' }
+    ];
 
     // 数据结构标准化初始化
     if (!resumeData.basic) resumeData.basic = {};
@@ -347,6 +447,7 @@
         renderPreview();
         // 设置选择框
         document.querySelector('select').value = currentTemplate;
+        setWorkspaceView(activeWorkspaceView, false);
 
         // Auto-print check for dashboard "Download PDF"
         const urlParams = new URLSearchParams(window.location.search);
@@ -359,26 +460,163 @@
     // --- 表单逻辑 ---
 
     function fillForm() {
-        // Basic
-        for (const key in resumeData.basic) {
-            const el = document.getElementById(`input-${key}`);
-            if (el) el.value = resumeData.basic[key];
+        renderSectionNav();
+        renderSectionEditor(activeSection);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value);
+    }
+
+    function getSectionMeta(section) {
+        return sectionMeta.find(item => item.key === section) || sectionMeta[0];
+    }
+
+    function setWorkspaceView(view, updateButtons = true) {
+        activeWorkspaceView = view === 'preview' ? 'preview' : 'editor';
+        const workspace = document.getElementById('resume-workspace');
+        if (workspace) workspace.dataset.activeView = activeWorkspaceView;
+
+        if (updateButtons) {
+            const editorBtn = document.getElementById('workspace-editor-btn');
+            const previewBtn = document.getElementById('workspace-preview-btn');
+            if (editorBtn && previewBtn) {
+                editorBtn.className = activeWorkspaceView === 'editor' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+                previewBtn.className = activeWorkspaceView === 'preview' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+            }
         }
-        // Skills
-        const skillsEl = document.getElementById('input-skills');
-        if (skillsEl) skillsEl.value = resumeData.skills.join('\n');
+    }
 
-        // Lists
-        renderListEditors('education');
-        renderListEditors('experience');
-        renderListEditors('projects');
-        renderListEditors('campus_experience');
-        renderListEditors('awards');
+    function setActiveSection(section) {
+        activeSection = sectionMeta.some(item => item.key === section) ? section : 'basic';
+        renderSectionNav();
+        renderSectionEditor(activeSection);
+        setWorkspaceView('editor');
+    }
 
-        Object.keys(defaultHiddenSections).forEach(section => {
-            const el = document.getElementById(`hide-${section}`);
-            if (el) el.checked = !!resumeData.hiddenSections[section];
-        });
+    function renderSectionNav() {
+        const nav = document.getElementById('section-nav');
+        if (!nav) return;
+
+        nav.innerHTML = sectionMeta.map(section => {
+            const hidden = !!resumeData.hiddenSections[section.key];
+            const active = activeSection === section.key;
+
+            return `
+                <div class="section-nav-row ${active ? 'is-active' : ''} ${hidden ? 'is-hidden' : ''}">
+                    <button type="button" class="section-nav-main" onclick="setActiveSection('${section.key}')">
+                        <span class="section-nav-icon">${section.icon}</span>
+                        <span class="min-w-0">
+                            <span class="section-nav-title">${section.title}</span>
+                            ${hidden ? '<span class="section-hidden-badge">已隐藏</span>' : ''}
+                        </span>
+                    </button>
+                    <label class="section-hide-toggle label cursor-pointer gap-1 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" id="hide-${section.key}" ${hidden ? 'checked' : ''} onchange="updateHiddenSection('${section.key}', this.checked)">
+                    </label>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderSectionEditor(section) {
+        const editor = document.getElementById('section-editor');
+        if (!editor) return;
+
+        const meta = getSectionMeta(section);
+        editor.innerHTML = `
+            <div class="section-editor-header">
+                <div>
+                    <div class="section-editor-kicker">当前模块</div>
+                    <div class="section-editor-title">${meta.icon} ${meta.title}</div>
+                </div>
+            </div>
+            ${renderSectionEditorBody(section)}
+        `;
+
+        if (['education', 'experience', 'projects', 'campus_experience', 'awards'].includes(section)) {
+            renderListEditors(section);
+        }
+    }
+
+    function renderSectionEditorBody(section) {
+        const b = resumeData.basic || {};
+
+        if (section === 'basic') {
+            return `
+                <div class="section-form-grid">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">姓名</span></label>
+                        <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.name)}" oninput="updateField('basic', 'name', this.value)" id="input-name">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">求职意向</span></label>
+                        <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.job_target)}" oninput="updateField('basic', 'job_target', this.value)" id="input-job_target">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">电话</span></label>
+                        <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.phone)}" oninput="updateField('basic', 'phone', this.value)" id="input-phone">
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">邮箱</span></label>
+                        <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.email)}" oninput="updateField('basic', 'email', this.value)" id="input-email">
+                    </div>
+                    <div class="form-control span-full">
+                        <label class="label"><span class="label-text">所在城市</span></label>
+                        <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.location)}" oninput="updateField('basic', 'location', this.value)" id="input-location">
+                    </div>
+                    <div class="form-control span-full">
+                        <label class="label justify-between">
+                            <span class="label-text">自我评价</span>
+                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-basic-0-self_evaluation" onclick="optimizeField('basic', 0, 'self_evaluation')">
+                                ✨ 润色
+                            </button>
+                        </label>
+                        <textarea class="textarea textarea-bordered h-28" oninput="updateField('basic', 'self_evaluation', this.value)" id="input-self_evaluation">${escapeHtml(b.self_evaluation)}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (section === 'skills') {
+            return `
+                <div class="form-control">
+                    <label class="label"><span class="label-text">专业技能 (每行一个)</span></label>
+                    <textarea class="textarea textarea-bordered h-40" oninput="updateArrayField('skills', this.value)" id="input-skills" placeholder="Java&#10;Python&#10;SQL">${escapeHtml((resumeData.skills || []).join('\n'))}</textarea>
+                </div>
+            `;
+        }
+
+        const listIds = {
+            education: 'edu-list',
+            experience: 'exp-list',
+            projects: 'proj-list',
+            campus_experience: 'campus-list',
+            awards: 'award-list'
+        };
+        const addLabels = {
+            education: '+ 添加学历',
+            experience: '+ 添加经历',
+            projects: '+ 添加项目',
+            campus_experience: '+ 添加校园经历',
+            awards: '+ 添加获奖记录'
+        };
+
+        return `
+            <div id="${listIds[section]}" class="list-editor-stack"></div>
+            <button onclick="addItem('${section}')" class="btn btn-sm btn-ghost w-full mt-3">${addLabels[section]}</button>
+        `;
     }
 
     function updateField(section, key, value) {
@@ -397,6 +635,7 @@
 
     function updateHiddenSection(section, hidden) {
         resumeData.hiddenSections[section] = hidden;
+        renderSectionNav();
         renderPreview();
         showUnsaved();
     }
@@ -465,18 +704,18 @@
             let fields = '';
             if (type === 'education') {
                 fields = `
-                    <input class="input input-sm w-full mb-2" placeholder="学校名称" value="${item.school || ''}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="学校名称" value="${escapeAttr(item.school)}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
                     <div class="flex gap-2">
-                        <input class="input input-sm w-1/2" placeholder="专业" value="${item.major || ''}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间 (如 2020-2024)" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="专业" value="${escapeAttr(item.major)}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间 (如 2020-2024)" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
                     </div>
                 `;
             } else if (type === 'experience') {
                 fields = `
-                    <input class="input input-sm w-full mb-2" placeholder="公司名称" value="${item.company || ''}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="公司名称" value="${escapeAttr(item.company)}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
                     <div class="flex gap-2 mb-2">
-                        <input class="input input-sm w-1/2" placeholder="职位" value="${item.position || ''}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="职位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
                     </div>
                     <div class="relative">
                         <div class="flex justify-between items-center mb-1">
@@ -485,15 +724,15 @@
                                 ✨ 润色
                             </button>
                         </div>
-                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="工作内容..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${item.description || ''}</textarea>
+                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="工作内容..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
                     </div>
                 `;
             } else if (type === 'projects') {
                 fields = `
-                    <input class="input input-sm w-full mb-2" placeholder="项目名称" value="${item.name || ''}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="项目名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
                     <div class="flex gap-2 mb-2">
-                        <input class="input input-sm w-1/2" placeholder="角色" value="${item.role || ''}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间" value="${item.date || ''}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="角色" value="${escapeAttr(item.role)}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
                     </div>
                     <div class="relative">
                         <div class="flex justify-between items-center mb-1">
@@ -502,21 +741,21 @@
                                 ✨ 润色
                             </button>
                         </div>
-                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${item.description || ''}</textarea>
+                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
                     </div>
                 `;
             } else if (type === 'campus_experience') {
                 fields = `
-                    <input class="input input-sm w-full mb-2" placeholder="社团/组织名称" value="${item.organization || ''}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
-                    <input class="input input-sm w-full mb-2" placeholder="担任岗位" value="${item.position || ''}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
-                    <textarea class="textarea textarea-sm w-full" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${item.achievements || ''}</textarea>
+                    <input class="input input-sm w-full mb-2" placeholder="社团/组织名称" value="${escapeAttr(item.organization)}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="担任岗位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                    <textarea class="textarea textarea-sm w-full" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${escapeHtml(item.achievements)}</textarea>
                 `;
             } else if (type === 'awards') {
                 fields = `
-                    <input class="input input-sm w-full mb-2" placeholder="获奖名称" value="${item.name || ''}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <input class="input input-sm w-full mb-2" placeholder="获奖名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
                     <div class="flex gap-2">
-                        <input class="input input-sm w-1/2" placeholder="名次" value="${item.rank || ''}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="等级" value="${item.level || ''}" oninput="updateListItem('${type}', ${index}, 'level', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="名次" value="${escapeAttr(item.rank)}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
+                        <input class="input input-sm w-1/2" placeholder="等级" value="${escapeAttr(item.level)}" oninput="updateListItem('${type}', ${index}, 'level', this.value)">
                     </div>
                 `;
             }
@@ -537,14 +776,16 @@
 
     function addItem(type) {
         resumeData[type].push({});
-        renderListEditors(type);
+        renderSectionEditor(activeSection);
+        renderSectionNav();
         renderPreview();
         showUnsaved();
     }
 
     function deleteItem(type, index) {
         resumeData[type].splice(index, 1);
-        renderListEditors(type);
+        renderSectionEditor(activeSection);
+        renderSectionNav();
         renderPreview();
         showUnsaved();
     }
@@ -974,7 +1215,8 @@ function showSuggestionPopup(type, index, key, suggestion) {
             document.getElementById(`input-${key}`).value = text;
         } else {
             updateListItem(type, index, key, text);
-            // 重新渲染列表会丢失焦点，这里我们不需要手动更新 DOM value，因为 renderListEditors 会重绘
+            const el = document.getElementById(`input-${type}-${index}-${key}`);
+            if (el) el.value = text;
         }
         closeSuggestion();
     }
