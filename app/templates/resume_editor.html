@@ -32,7 +32,7 @@
                 <input type="radio" name="my-accordion-2" checked="checked" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>👤 基本信息</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-basic" onchange="updateHiddenSection('basic', this.checked)">
                     </label>
@@ -79,7 +79,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>🎓 教育背景</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-education" onchange="updateHiddenSection('education', this.checked)">
                     </label>
@@ -95,7 +95,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>💼 实习/工作经历</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-experience" onchange="updateHiddenSection('experience', this.checked)">
                     </label>
@@ -111,7 +111,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>🚀 项目经验</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-projects" onchange="updateHiddenSection('projects', this.checked)">
                     </label>
@@ -127,7 +127,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>🏫 校园内经历</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-campus_experience" onchange="updateHiddenSection('campus_experience', this.checked)">
                     </label>
@@ -143,7 +143,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>🏆 获奖</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-awards" onchange="updateHiddenSection('awards', this.checked)">
                     </label>
@@ -159,7 +159,7 @@
                 <input type="radio" name="my-accordion-2" /> 
                 <div class="collapse-title text-base font-bold flex items-center gap-2">
                     <span>🛠 技能与证书</span>
-                    <label class="label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onclick="event.stopPropagation()">
+                    <label class="section-hide-toggle label cursor-pointer gap-2 ml-auto mr-6 p-0 font-normal" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                         <span class="label-text text-xs">隐藏</span>
                         <input type="checkbox" class="checkbox checkbox-xs" id="hide-skills" onchange="updateHiddenSection('skills', this.checked)">
                     </label>
@@ -184,10 +184,15 @@
                 <option value="modern">现代简约 (Modern)</option>
                 <option value="classic">经典商务 (Classic)</option>
             </select>
-            <button onclick="exportPDF()" class="btn btn-sm btn-secondary text-white gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                导出 PDF
-            </button>
+            <div class="flex gap-2">
+                <button onclick="fitOnePage()" class="btn btn-sm btn-accent text-white gap-2" id="btn-fit-one-page">
+                    智能一页纸
+                </button>
+                <button onclick="exportPDF()" class="btn btn-sm btn-secondary text-white gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    导出 PDF
+                </button>
+            </div>
         </div>
 
         <!-- 预览画布 -->
@@ -236,33 +241,63 @@
         }
     }
 
+    #resume-preview {
+        --resume-font-scale: 1;
+        --resume-line-height: 1.6;
+        --resume-section-margin-top: 20px;
+        --resume-section-margin-bottom: 15px;
+        --resume-section-padding-bottom: 5px;
+        --resume-item-margin: 20px;
+        --resume-item-header-margin: 4px;
+        --resume-desc-margin: 5px;
+        --resume-modern-padding-y: 30px;
+        --resume-modern-main-padding-x: 30px;
+        --resume-modern-sidebar-padding-x: 20px;
+        --resume-classic-padding: 40px;
+        --resume-classic-header-padding: 20px;
+        --resume-classic-header-margin: 20px;
+        --resume-contact-margin: 10px;
+        --resume-skill-padding-y: 4px;
+        --resume-skill-padding-x: 8px;
+        --resume-skill-margin-bottom: 6px;
+    }
+
     /* Modern Template Styles */
-    .resume-modern { font-family: 'Segoe UI', sans-serif; color: #333; line-height: 1.6; display: flex; min-height: 297mm; }
-    .resume-modern .sidebar { width: 30%; background: #f8f9fa; border-right: 1px solid #eee; padding: 30px 20px; }
-    .resume-modern .main { width: 70%; padding: 30px; }
+    .section-hide-toggle {
+        position: relative;
+        z-index: 20;
+        pointer-events: auto;
+    }
+    .section-hide-toggle input {
+        pointer-events: auto;
+    }
+
+    .resume-modern { font-family: 'Segoe UI', sans-serif; color: #333; line-height: var(--resume-line-height); display: flex; min-height: 297mm; font-size: calc(14px * var(--resume-font-scale)); }
+    .resume-modern .sidebar { width: 30%; background: #f8f9fa; border-right: 1px solid #eee; padding: var(--resume-modern-padding-y) var(--resume-modern-sidebar-padding-x); }
+    .resume-modern .main { width: 70%; padding: var(--resume-modern-padding-y) var(--resume-modern-main-padding-x); }
     .resume-modern .avatar { width: 100px; height: 100px; background: #ddd; border-radius: 50%; margin: 0 auto 20px; display: block; object-fit: cover; }
-    .resume-modern .name { font-size: 24px; font-weight: bold; text-align: center; color: #2c3e50; }
-    .resume-modern .target { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
-    .resume-modern .section-title { font-size: 16px; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin: 20px 0 15px; }
-    .resume-modern .contact-item { font-size: 13px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; color: #555; }
-    .resume-modern .skill-item { background: #e8f4fd; color: #2980b9; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-bottom: 6px; display: inline-block; margin-right: 4px; }
+    .resume-modern .name { font-size: calc(24px * var(--resume-font-scale)); font-weight: bold; text-align: center; color: #2c3e50; }
+    .resume-modern .target { text-align: center; color: #7f8c8d; margin-bottom: calc(30px * var(--resume-font-scale)); font-size: calc(14px * var(--resume-font-scale)); }
+    .resume-modern .section-title { font-size: calc(16px * var(--resume-font-scale)); font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: var(--resume-section-padding-bottom); margin: var(--resume-section-margin-top) 0 var(--resume-section-margin-bottom); }
+    .resume-modern .contact-item { font-size: calc(13px * var(--resume-font-scale)); margin-bottom: calc(8px * var(--resume-font-scale)); display: flex; gap: 8px; align-items: center; color: #555; }
+    .resume-modern .skill-item { background: #e8f4fd; color: #2980b9; padding: var(--resume-skill-padding-y) var(--resume-skill-padding-x); border-radius: 4px; font-size: calc(12px * var(--resume-font-scale)); margin-bottom: var(--resume-skill-margin-bottom); display: inline-block; margin-right: 4px; }
     
-    .resume-modern .item { margin-bottom: 20px; }
-    .resume-modern .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-    .resume-modern .item-title { font-weight: bold; font-size: 16px; color: #34495e; }
-    .resume-modern .item-subtitle { font-weight: 600; font-size: 14px; color: #7f8c8d; }
-    .resume-modern .item-date { font-size: 12px; color: #95a5a6; }
-    .resume-modern .item-desc { font-size: 13px; color: #555; white-space: pre-line; margin-top: 5px; }
+    .resume-modern .item { margin-bottom: var(--resume-item-margin); }
+    .resume-modern .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--resume-item-header-margin); }
+    .resume-modern .item-title { font-weight: bold; font-size: calc(16px * var(--resume-font-scale)); color: #34495e; }
+    .resume-modern .item-subtitle { font-weight: 600; font-size: calc(14px * var(--resume-font-scale)); color: #7f8c8d; }
+    .resume-modern .item-date { font-size: calc(12px * var(--resume-font-scale)); color: #95a5a6; }
+    .resume-modern .item-desc { font-size: calc(13px * var(--resume-font-scale)); color: #555; white-space: pre-line; margin-top: var(--resume-desc-margin); }
 
     /* Classic Template Styles */
-    .resume-classic { font-family: 'Times New Roman', serif; color: #000; padding: 40px; }
-    .resume-classic .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
-    .resume-classic .name { font-size: 28px; font-weight: bold; text-transform: uppercase; }
-    .resume-classic .contact { font-size: 14px; margin-top: 10px; }
-    .resume-classic .section-title { font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 20px 0 10px; border-bottom: 1px solid #ccc; }
-    .resume-classic .item { margin-bottom: 15px; }
+    .resume-classic { font-family: 'Times New Roman', serif; color: #000; padding: var(--resume-classic-padding); line-height: var(--resume-line-height); font-size: calc(14px * var(--resume-font-scale)); }
+    .resume-classic .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: var(--resume-classic-header-padding); margin-bottom: var(--resume-classic-header-margin); }
+    .resume-classic .name { font-size: calc(28px * var(--resume-font-scale)); font-weight: bold; text-transform: uppercase; }
+    .resume-classic .contact { font-size: calc(14px * var(--resume-font-scale)); margin-top: var(--resume-contact-margin); }
+    .resume-classic .section-title { font-size: calc(16px * var(--resume-font-scale)); font-weight: bold; text-transform: uppercase; margin: var(--resume-section-margin-top) 0 var(--resume-section-margin-bottom); border-bottom: 1px solid #ccc; }
+    .resume-classic .item { margin-bottom: var(--resume-item-margin); }
     .resume-classic .item-header { display: flex; justify-content: space-between; font-weight: bold; }
-    .resume-classic .item-desc { font-size: 14px; margin-top: 5px; }
+    .resume-classic .item-desc { font-size: calc(14px * var(--resume-font-scale)); margin-top: var(--resume-desc-margin); }
 </style>
 
 <script>
@@ -292,6 +327,17 @@
     };
     if (!resumeData.hiddenSections || typeof resumeData.hiddenSections !== 'object' || Array.isArray(resumeData.hiddenSections)) resumeData.hiddenSections = {};
     resumeData.hiddenSections = { ...defaultHiddenSections, ...resumeData.hiddenSections };
+    const layoutPresets = [
+        { fontScale: 1, lineHeight: 1.6, sectionTop: 20, sectionBottom: 15, sectionPadding: 5, itemMargin: 20, itemHeaderMargin: 4, descMargin: 5, modernPaddingY: 30, modernMainPaddingX: 30, modernSidebarPaddingX: 20, classicPadding: 40, classicHeaderPadding: 20, classicHeaderMargin: 20, contactMargin: 10, skillPaddingY: 4, skillPaddingX: 8, skillMarginBottom: 6 },
+        { fontScale: 0.98, lineHeight: 1.5, sectionTop: 18, sectionBottom: 13, sectionPadding: 4, itemMargin: 17, itemHeaderMargin: 3, descMargin: 4, modernPaddingY: 28, modernMainPaddingX: 28, modernSidebarPaddingX: 18, classicPadding: 36, classicHeaderPadding: 18, classicHeaderMargin: 18, contactMargin: 8, skillPaddingY: 3, skillPaddingX: 7, skillMarginBottom: 5 },
+        { fontScale: 0.96, lineHeight: 1.42, sectionTop: 16, sectionBottom: 11, sectionPadding: 4, itemMargin: 14, itemHeaderMargin: 3, descMargin: 4, modernPaddingY: 26, modernMainPaddingX: 26, modernSidebarPaddingX: 17, classicPadding: 32, classicHeaderPadding: 16, classicHeaderMargin: 15, contactMargin: 7, skillPaddingY: 3, skillPaddingX: 7, skillMarginBottom: 4 },
+        { fontScale: 0.94, lineHeight: 1.36, sectionTop: 14, sectionBottom: 9, sectionPadding: 3, itemMargin: 12, itemHeaderMargin: 2, descMargin: 3, modernPaddingY: 24, modernMainPaddingX: 24, modernSidebarPaddingX: 16, classicPadding: 29, classicHeaderPadding: 14, classicHeaderMargin: 13, contactMargin: 6, skillPaddingY: 2, skillPaddingX: 6, skillMarginBottom: 4 },
+        { fontScale: 0.92, lineHeight: 1.32, sectionTop: 12, sectionBottom: 8, sectionPadding: 3, itemMargin: 10, itemHeaderMargin: 2, descMargin: 3, modernPaddingY: 22, modernMainPaddingX: 22, modernSidebarPaddingX: 15, classicPadding: 26, classicHeaderPadding: 12, classicHeaderMargin: 11, contactMargin: 5, skillPaddingY: 2, skillPaddingX: 6, skillMarginBottom: 3 },
+        { fontScale: 0.9, lineHeight: 1.28, sectionTop: 10, sectionBottom: 6, sectionPadding: 2, itemMargin: 8, itemHeaderMargin: 2, descMargin: 2, modernPaddingY: 20, modernMainPaddingX: 20, modernSidebarPaddingX: 14, classicPadding: 24, classicHeaderPadding: 10, classicHeaderMargin: 10, contactMargin: 4, skillPaddingY: 2, skillPaddingX: 5, skillMarginBottom: 3 },
+        { fontScale: 0.88, lineHeight: 1.22, sectionTop: 8, sectionBottom: 5, sectionPadding: 2, itemMargin: 6, itemHeaderMargin: 1, descMargin: 2, modernPaddingY: 18, modernMainPaddingX: 18, modernSidebarPaddingX: 12, classicPadding: 22, classicHeaderPadding: 8, classicHeaderMargin: 8, contactMargin: 3, skillPaddingY: 1, skillPaddingX: 5, skillMarginBottom: 2 }
+    ];
+    if (!resumeData.layout || typeof resumeData.layout !== 'object' || Array.isArray(resumeData.layout)) resumeData.layout = {};
+    resumeData.layout = { density: 0, ...resumeData.layout };
 
     // 初始化页面
     document.addEventListener('DOMContentLoaded', () => {
@@ -353,6 +399,50 @@
         resumeData.hiddenSections[section] = hidden;
         renderPreview();
         showUnsaved();
+    }
+
+    function getLayoutDensity() {
+        const density = Number(resumeData.layout?.density || 0);
+        if (!Number.isFinite(density)) return 0;
+        return Math.min(Math.max(Math.round(density), 0), layoutPresets.length - 1);
+    }
+
+    function applyLayoutDensity(density, shouldStore = true) {
+        const container = document.getElementById('resume-preview');
+        if (!container) return;
+
+        const safeDensity = Math.min(Math.max(Math.round(density), 0), layoutPresets.length - 1);
+        const preset = layoutPresets[safeDensity];
+        const cssVars = {
+            fontScale: '--resume-font-scale',
+            lineHeight: '--resume-line-height',
+            sectionTop: '--resume-section-margin-top',
+            sectionBottom: '--resume-section-margin-bottom',
+            sectionPadding: '--resume-section-padding-bottom',
+            itemMargin: '--resume-item-margin',
+            itemHeaderMargin: '--resume-item-header-margin',
+            descMargin: '--resume-desc-margin',
+            modernPaddingY: '--resume-modern-padding-y',
+            modernMainPaddingX: '--resume-modern-main-padding-x',
+            modernSidebarPaddingX: '--resume-modern-sidebar-padding-x',
+            classicPadding: '--resume-classic-padding',
+            classicHeaderPadding: '--resume-classic-header-padding',
+            classicHeaderMargin: '--resume-classic-header-margin',
+            contactMargin: '--resume-contact-margin',
+            skillPaddingY: '--resume-skill-padding-y',
+            skillPaddingX: '--resume-skill-padding-x',
+            skillMarginBottom: '--resume-skill-margin-bottom'
+        };
+
+        Object.entries(cssVars).forEach(([key, cssVar]) => {
+            const value = preset[key];
+            const cssValue = key === 'fontScale' || key === 'lineHeight' ? value : `${value}px`;
+            container.style.setProperty(cssVar, cssValue);
+        });
+
+        if (shouldStore) {
+            resumeData.layout.density = safeDensity;
+        }
     }
 
     // 列表编辑器渲染器
@@ -642,6 +732,8 @@
                 </div>
             `;
         }
+
+        applyLayoutDensity(getLayoutDensity(), false);
     }
 
     // --- 功能函数 ---
@@ -650,6 +742,67 @@
         currentTemplate = tpl;
         renderPreview();
         showUnsaved();
+    }
+
+    function nextPaint() {
+        return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+
+    function getA4HeightPx() {
+        const probe = document.createElement('div');
+        probe.style.position = 'absolute';
+        probe.style.visibility = 'hidden';
+        probe.style.pointerEvents = 'none';
+        probe.style.height = '297mm';
+        probe.style.width = '1px';
+        document.body.appendChild(probe);
+        const height = probe.getBoundingClientRect().height;
+        probe.remove();
+        return height;
+    }
+
+    function previewFitsOnePage() {
+        const container = document.getElementById('resume-preview');
+        if (!container) return true;
+        return container.scrollHeight <= getA4HeightPx() + 4;
+    }
+
+    async function fitOnePage() {
+        const btn = document.getElementById('btn-fit-one-page');
+        const originalText = btn.innerText;
+        btn.innerText = '调整中...';
+        btn.disabled = true;
+
+        try {
+            renderPreview();
+            let fittedDensity = layoutPresets.length - 1;
+
+            for (let density = 0; density < layoutPresets.length; density++) {
+                applyLayoutDensity(density);
+                await nextPaint();
+
+                if (previewFitsOnePage()) {
+                    fittedDensity = density;
+                    break;
+                }
+            }
+
+            applyLayoutDensity(fittedDensity);
+            await nextPaint();
+            showUnsaved();
+
+            const status = document.getElementById('save-status');
+            if (status) {
+                status.innerText = fittedDensity === 0 ? '未保存（一页纸：无需压缩）' : `未保存（一页纸：紧凑 ${fittedDensity}）`;
+            }
+
+            if (!previewFitsOnePage()) {
+                alert('已调整到最紧凑排版，但当前内容可能仍超过一页。可以尝试隐藏部分模块或精简内容。');
+            }
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     async function saveResume() {

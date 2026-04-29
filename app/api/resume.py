@@ -37,6 +37,9 @@ def create_resume():
             "campus_experience": False,
             "awards": False,
             "skills": False
+        },
+        "layout": {
+            "density": 0
         }
     }
     
