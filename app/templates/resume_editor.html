@@ -43,6 +43,12 @@
             <select class="select select-sm select-bordered" onchange="changeTemplate(this.value)">
                 <option value="modern">现代简约 (Modern)</option>
                 <option value="classic">经典商务 (Classic)</option>
+                <option value="ats">ATS专业 (ATS)</option>
+                <option value="campus">校园清新 (Campus)</option>
+                <option value="minimal">极简单栏 (Minimal)</option>
+                <option value="business">商务双栏 (Business)</option>
+                <option value="creative">创意彩色 (Creative)</option>
+                <option value="tech">深色科技 (Tech)</option>
             </select>
             <div class="flex gap-2">
                 <button onclick="fitOnePage()" class="btn btn-sm btn-accent text-white gap-2" id="btn-fit-one-page">
@@ -68,6 +74,17 @@
 <style>
     /* Print Styles - Global override for clean printing */
     @media print {
+        /*
+         * Keep backgrounds/gradients/shadows when printing or saving as PDF.
+         * Browsers often try to "economize" colors in print mode unless we opt in.
+         */
+        html, body {
+            -webkit-print-color-adjust: exact !important;
+            -moz-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
         body {
             visibility: hidden;
             background: white;
@@ -93,6 +110,10 @@
         }
         
         #resume-preview {
+            -webkit-print-color-adjust: exact !important;
+            -moz-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
             visibility: visible;
             position: absolute;
             left: 0;
@@ -109,6 +130,15 @@
 
         #resume-preview * {
             visibility: visible;
+        }
+
+        #resume-preview *,
+        #resume-preview *::before,
+        #resume-preview *::after {
+            -webkit-print-color-adjust: exact !important;
+            -moz-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
         /* Hide headers, footers, and page info */
@@ -314,11 +344,15 @@
     .resume-modern .skill-item { background: #e8f4fd; color: #2980b9; padding: var(--resume-skill-padding-y) var(--resume-skill-padding-x); border-radius: 4px; font-size: calc(12px * var(--resume-font-scale)); margin-bottom: var(--resume-skill-margin-bottom); display: inline-block; margin-right: 4px; }
     
     .resume-modern .item { margin-bottom: var(--resume-item-margin); }
-    .resume-modern .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--resume-item-header-margin); }
-    .resume-modern .item-title { font-weight: bold; font-size: calc(16px * var(--resume-font-scale)); color: #34495e; }
+    .resume-modern .item-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: var(--resume-item-header-margin); }
+    .resume-modern .item-title { min-width: 0; font-weight: bold; font-size: calc(16px * var(--resume-font-scale)); color: #34495e; overflow-wrap: anywhere; word-break: break-word; }
     .resume-modern .item-subtitle { font-weight: 600; font-size: calc(14px * var(--resume-font-scale)); color: #7f8c8d; }
-    .resume-modern .item-date { font-size: calc(12px * var(--resume-font-scale)); color: #95a5a6; }
+    .resume-modern .item-date { flex: 0 0 auto; max-width: 35%; text-align: right; font-size: calc(12px * var(--resume-font-scale)); color: #95a5a6; overflow-wrap: anywhere; }
     .resume-modern .item-desc { font-size: calc(13px * var(--resume-font-scale)); color: #555; white-space: pre-line; margin-top: var(--resume-desc-margin); }
+    .resume-modern .award-item { margin-bottom: calc(var(--resume-item-margin) * 0.75); }
+    .resume-modern .award-title { font-weight: bold; font-size: calc(15px * var(--resume-font-scale)); color: #34495e; line-height: 1.35; overflow-wrap: anywhere; word-break: break-word; }
+    .resume-modern .award-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .resume-modern .award-badge { display: inline-flex; align-items: center; max-width: 100%; padding: 2px 7px; border-radius: 999px; background: #eef6fb; color: #607d8b; font-size: calc(11px * var(--resume-font-scale)); line-height: 1.35; overflow-wrap: anywhere; }
 
     /* Classic Template Styles */
     .resume-classic { font-family: 'Times New Roman', serif; color: #000; padding: var(--resume-classic-padding); line-height: var(--resume-line-height); font-size: calc(14px * var(--resume-font-scale)); }
@@ -329,6 +363,88 @@
     .resume-classic .item { margin-bottom: var(--resume-item-margin); }
     .resume-classic .item-header { display: flex; justify-content: space-between; font-weight: bold; }
     .resume-classic .item-desc { font-size: calc(14px * var(--resume-font-scale)); margin-top: var(--resume-desc-margin); }
+
+    .resume-ats,
+    .resume-campus,
+    .resume-minimal,
+    .resume-business,
+    .resume-creative,
+    .resume-tech {
+        min-height: 297mm;
+        font-size: calc(13.5px * var(--resume-font-scale));
+        line-height: var(--resume-line-height);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .tpl-section { margin-top: var(--resume-section-margin-top); }
+    .tpl-section:first-child { margin-top: 0; }
+    .tpl-section-title { font-size: calc(15px * var(--resume-font-scale)); font-weight: 800; margin-bottom: var(--resume-section-margin-bottom); }
+    .tpl-item { margin-bottom: var(--resume-item-margin); }
+    .tpl-item-header { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: var(--resume-item-header-margin); }
+    .tpl-item-title { min-width: 0; font-weight: 800; font-size: calc(14px * var(--resume-font-scale)); }
+    .tpl-item-date { flex: 0 0 auto; max-width: 34%; text-align: right; color: #73808a; font-size: calc(11.5px * var(--resume-font-scale)); overflow-wrap: anywhere; }
+    .tpl-item-subtitle { color: #63707a; font-weight: 650; margin-bottom: 3px; }
+    .tpl-item-desc { white-space: pre-line; color: #4a5560; margin-top: var(--resume-desc-margin); }
+    .tpl-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tpl-chip { display: inline-flex; align-items: center; max-width: 100%; border-radius: 999px; padding: 2px 8px; font-size: calc(11px * var(--resume-font-scale)); line-height: 1.35; overflow-wrap: anywhere; }
+    .tpl-contact { display: flex; flex-wrap: wrap; gap: 8px 14px; color: #5e6872; }
+    .tpl-contact span { min-width: 0; overflow-wrap: anywhere; }
+    .tpl-award-title { font-weight: 760; color: inherit; }
+    .tpl-award-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+    .resume-ats { padding: 34px 42px; font-family: Arial, Helvetica, sans-serif; color: #202428; }
+    .resume-ats .ats-header { border-bottom: 2px solid #202428; padding-bottom: 13px; margin-bottom: 18px; }
+    .resume-ats .ats-name { font-size: calc(28px * var(--resume-font-scale)); font-weight: 800; letter-spacing: 0; }
+    .resume-ats .ats-target { margin-top: 4px; color: #4a4f55; font-weight: 700; }
+    .resume-ats .tpl-section-title { color: #202428; border-bottom: 1px solid #aeb6bf; padding-bottom: 4px; text-transform: uppercase; }
+    .resume-ats .tpl-chip { background: #f1f3f5; color: #30363d; border: 1px solid #d8dde3; }
+
+    .resume-minimal { padding: 42px 48px; font-family: 'Helvetica Neue', Arial, sans-serif; color: #24292f; }
+    .resume-minimal .minimal-header { margin-bottom: 24px; }
+    .resume-minimal .minimal-name { font-size: calc(30px * var(--resume-font-scale)); font-weight: 700; }
+    .resume-minimal .minimal-target { margin-top: 6px; color: #6b7280; }
+    .resume-minimal .tpl-section-title { color: #111827; border-left: 3px solid #111827; padding-left: 10px; }
+    .resume-minimal .tpl-item { padding-bottom: 8px; border-bottom: 1px solid #eef0f2; }
+    .resume-minimal .tpl-chip { background: #f7f7f8; color: #4b5563; }
+
+    .resume-campus { padding: 30px 34px; font-family: 'Segoe UI', Arial, sans-serif; color: #254155; background: linear-gradient(180deg, #f6fffb 0, #fff 90px); }
+    .resume-campus .campus-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 42%); gap: 16px; border-bottom: 3px solid #64c8b4; padding-bottom: 16px; margin-bottom: 18px; }
+    .resume-campus .campus-header > * { min-width: 0; }
+    .resume-campus .campus-header .tpl-contact { justify-content: flex-end; }
+    .resume-campus .campus-name { font-size: calc(28px * var(--resume-font-scale)); font-weight: 850; color: #17445c; }
+    .resume-campus .campus-target { color: #16876f; font-weight: 750; margin-top: 4px; }
+    .resume-campus .tpl-section-title { color: #14745f; background: #e9faf5; border-radius: 999px; padding: 5px 12px; width: fit-content; }
+    .resume-campus .tpl-chip { background: #e9faf5; color: #14745f; border: 1px solid #c7efe3; }
+
+    .resume-business { display: grid; grid-template-columns: 32% 68%; min-height: 297mm; font-family: 'Segoe UI', Arial, sans-serif; color: #26313d; }
+    .resume-business .business-side { background: #243447; color: #eef4f8; padding: 34px 22px; }
+    .resume-business .business-main { padding: 34px 34px; }
+    .resume-business .business-name { font-size: calc(26px * var(--resume-font-scale)); font-weight: 850; }
+    .resume-business .business-target { color: #bfd0dc; margin-top: 6px; }
+    .resume-business .business-side .tpl-section-title { color: #fff; border-bottom: 1px solid rgb(255 255 255 / 0.28); padding-bottom: 5px; }
+    .resume-business .business-side .tpl-contact, .resume-business .business-side .tpl-item-desc, .resume-business .business-side .tpl-item-subtitle { color: #dce7ee; }
+    .resume-business .business-main .tpl-section-title { color: #243447; border-bottom: 2px solid #d6a95f; padding-bottom: 5px; }
+    .resume-business .tpl-chip { background: rgb(255 255 255 / 0.12); color: #eef4f8; border: 1px solid rgb(255 255 255 / 0.16); }
+
+    .resume-creative { padding: 0; font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif; color: #263238; background: #fff; }
+    .resume-creative .creative-header { padding: 30px 36px 24px; background: linear-gradient(135deg, #ff8a65, #22a699); color: #fff; }
+    .resume-creative .creative-name { font-size: calc(30px * var(--resume-font-scale)); font-weight: 850; }
+    .resume-creative .creative-target { margin-top: 6px; font-weight: 700; opacity: 0.92; }
+    .resume-creative .creative-body { padding: 28px 36px; }
+    .resume-creative .tpl-section-title { color: #14796f; display: flex; align-items: center; gap: 8px; }
+    .resume-creative .tpl-section-title::before { content: ""; width: 10px; height: 10px; border-radius: 999px; background: #ff8a65; flex: 0 0 auto; }
+    .resume-creative .tpl-item { background: #f7fbfa; border-left: 4px solid #22a699; border-radius: 7px; padding: 10px 12px; }
+    .resume-creative .tpl-chip { background: #fff3e0; color: #8a4b00; border: 1px solid #ffd8a8; }
+
+    .resume-tech { display: grid; grid-template-columns: 34% 66%; min-height: 297mm; font-family: 'Segoe UI', Arial, sans-serif; color: #dbeafe; background: #0f172a; }
+    .resume-tech .tech-side { background: #111827; padding: 34px 22px; border-right: 1px solid rgb(148 163 184 / 0.22); }
+    .resume-tech .tech-main { background: #f8fafc; color: #1e293b; padding: 34px 34px; }
+    .resume-tech .tech-name { font-size: calc(26px * var(--resume-font-scale)); font-weight: 850; color: #e0f2fe; }
+    .resume-tech .tech-target { color: #67e8f9; margin-top: 6px; }
+    .resume-tech .tech-side .tpl-section-title { color: #67e8f9; border-bottom: 1px solid rgb(103 232 249 / 0.32); padding-bottom: 5px; }
+    .resume-tech .tech-side .tpl-contact, .resume-tech .tech-side .tpl-item-desc, .resume-tech .tech-side .tpl-item-subtitle { color: #cbd5e1; }
+    .resume-tech .tech-main .tpl-section-title { color: #0f766e; border-bottom: 2px solid #14b8a6; padding-bottom: 5px; }
+    .resume-tech .tpl-chip { background: rgb(20 184 166 / 0.14); color: #0f766e; border: 1px solid rgb(20 184 166 / 0.22); }
 
     @media (max-width: 1535px) {
         .resume-view-switch {
@@ -790,6 +906,84 @@
         showUnsaved();
     }
 
+    function renderPreviewContact(b) {
+        const contacts = [
+            b.phone ? `电话：${b.phone}` : '',
+            b.email ? `邮箱：${b.email}` : '',
+            b.location ? `城市：${b.location}` : ''
+        ].filter(Boolean);
+
+        if (contacts.length === 0) return '';
+        const content = contacts.map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        return `<div class="tpl-contact">${content}</div>`;
+    }
+
+    function renderPreviewSection(title, content) {
+        if (!String(content || '').trim()) return '';
+        return `
+            <section class="tpl-section">
+                <div class="tpl-section-title">${title}</div>
+                ${content}
+            </section>
+        `;
+    }
+
+    function renderPreviewItem({ title, subtitle = '', date = '', desc = '' }) {
+        return `
+            <div class="tpl-item">
+                <div class="tpl-item-header">
+                    <span class="tpl-item-title">${escapeHtml(title)}</span>
+                    ${date ? `<span class="tpl-item-date">${escapeHtml(date)}</span>` : ''}
+                </div>
+                ${subtitle ? `<div class="tpl-item-subtitle">${escapeHtml(subtitle)}</div>` : ''}
+                ${desc ? `<div class="tpl-item-desc">${escapeHtml(desc)}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function renderPreviewAwards(items) {
+        return items.map(item => `
+            <div class="tpl-item">
+                <div class="tpl-award-title">${escapeHtml(item.name || '获奖名称')}</div>
+                <div class="tpl-award-meta">
+                    ${item.rank ? `<span class="tpl-chip">${escapeHtml(item.rank)}</span>` : ''}
+                    ${item.level ? `<span class="tpl-chip">${escapeHtml(item.level)}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderPreviewSkills(items) {
+        return `<div class="tpl-chip-row">${items.map(skill => `<span class="tpl-chip">${escapeHtml(skill)}</span>`).join('')}</div>`;
+    }
+
+    function renderPreviewContentBlock(p, key) {
+        const renderers = {
+            summary: () => p.showBasic && p.b.self_evaluation ? `<div class="tpl-item-desc">${escapeHtml(p.b.self_evaluation)}</div>` : '',
+            education: () => p.educationItems.map(item => renderPreviewItem({ title: item.school || '学校', subtitle: item.major || '', date: item.date || '' })).join(''),
+            experience: () => p.experienceItems.map(item => renderPreviewItem({ title: item.company || '公司', subtitle: item.position || '', date: item.date || '', desc: item.description || '' })).join(''),
+            projects: () => p.projectItems.map(item => renderPreviewItem({ title: item.name || '项目', subtitle: item.role || '', date: item.date || '', desc: item.description || '' })).join(''),
+            campus: () => p.campusItems.map(item => renderPreviewItem({ title: item.organization || '社团/组织', subtitle: item.position || '', desc: item.achievements || '' })).join(''),
+            awards: () => renderPreviewAwards(p.awardItems),
+            skills: () => p.skillItems.length > 0 ? renderPreviewSkills(p.skillItems) : ''
+        };
+        return renderers[key] ? renderers[key]() : '';
+    }
+
+    function renderPreviewSections(p, sections) {
+        const labels = {
+            summary: '自我评价',
+            education: '教育背景',
+            experience: '实习/工作经历',
+            projects: '项目经验',
+            campus: '校园内经历',
+            awards: '获奖',
+            skills: '技能与证书'
+        };
+
+        return sections.map(key => renderPreviewSection(labels[key], renderPreviewContentBlock(p, key))).join('');
+    }
+
     // --- 预览渲染逻辑 ---
 
     function renderPreview() {
@@ -808,6 +1002,16 @@
         const skillItems = (d.skills || []).filter(hasText);
         const showBasic = sectionVisible('basic');
         const showSkills = sectionVisible('skills') && skillItems.length > 0;
+        const p = {
+            b,
+            showBasic,
+            educationItems: sectionVisible('education') ? educationItems : [],
+            experienceItems: sectionVisible('experience') ? experienceItems : [],
+            projectItems: sectionVisible('projects') ? projectItems : [],
+            campusItems: sectionVisible('campus_experience') ? campusItems : [],
+            awardItems: sectionVisible('awards') ? awardItems : [],
+            skillItems: showSkills ? skillItems : []
+        };
 
         if (currentTemplate === 'modern') {
             container.innerHTML = `
@@ -875,12 +1079,12 @@
 
                         ${sectionVisible('awards') && awardItems.length > 0 ? `<div class="section-title">获奖</div>` : ''}
                         ${sectionVisible('awards') ? awardItems.map(item => `
-                            <div class="item">
-                                <div class="item-header">
-                                    <span class="item-title">${item.name || '获奖名称'}</span>
-                                    <span class="item-date">${item.rank || ''}</span>
+                            <div class="award-item">
+                                <div class="award-title">${item.name || '获奖名称'}</div>
+                                <div class="award-meta">
+                                    ${item.rank ? `<span class="award-badge">${item.rank}</span>` : ''}
+                                    ${item.level ? `<span class="award-badge">${item.level}</span>` : ''}
                                 </div>
-                                <div class="item-subtitle">${item.level || ''}</div>
                             </div>
                         `).join('') : ''}
 
@@ -895,6 +1099,94 @@
                             </div>
                         `).join('') : ''}
                     </div>
+                </div>
+            `;
+        } else if (currentTemplate === 'ats') {
+            container.innerHTML = `
+                <div class="resume-ats">
+                    ${p.showBasic ? `
+                        <header class="ats-header">
+                            <div class="ats-name">${escapeHtml(b.name || '姓名')}</div>
+                            <div class="ats-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                            ${renderPreviewContact(b)}
+                        </header>
+                    ` : ''}
+                    ${renderPreviewSections(p, ['summary', 'education', 'experience', 'projects', 'campus', 'awards', 'skills'])}
+                </div>
+            `;
+        } else if (currentTemplate === 'minimal') {
+            container.innerHTML = `
+                <div class="resume-minimal">
+                    ${p.showBasic ? `
+                        <header class="minimal-header">
+                            <div class="minimal-name">${escapeHtml(b.name || '姓名')}</div>
+                            <div class="minimal-target">${escapeHtml(b.job_target || '')}</div>
+                            ${renderPreviewContact(b)}
+                        </header>
+                    ` : ''}
+                    ${renderPreviewSections(p, ['summary', 'experience', 'projects', 'campus', 'awards', 'education', 'skills'])}
+                </div>
+            `;
+        } else if (currentTemplate === 'campus') {
+            container.innerHTML = `
+                <div class="resume-campus">
+                    ${p.showBasic ? `
+                        <header class="campus-header">
+                            <div>
+                                <div class="campus-name">${escapeHtml(b.name || '姓名')}</div>
+                                <div class="campus-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                            </div>
+                            ${renderPreviewContact(b)}
+                        </header>
+                    ` : ''}
+                    ${renderPreviewSections(p, ['summary', 'education', 'campus', 'awards', 'projects', 'experience', 'skills'])}
+                </div>
+            `;
+        } else if (currentTemplate === 'business') {
+            container.innerHTML = `
+                <div class="resume-business">
+                    <aside class="business-side">
+                        ${p.showBasic ? `
+                            <div class="business-name">${escapeHtml(b.name || '姓名')}</div>
+                            <div class="business-target">${escapeHtml(b.job_target || '')}</div>
+                            ${renderPreviewSection('联系方式', renderPreviewContact(b))}
+                        ` : ''}
+                        ${renderPreviewSections(p, ['skills', 'awards'])}
+                    </aside>
+                    <main class="business-main">
+                        ${renderPreviewSections(p, ['summary', 'experience', 'projects', 'campus', 'education'])}
+                    </main>
+                </div>
+            `;
+        } else if (currentTemplate === 'creative') {
+            container.innerHTML = `
+                <div class="resume-creative">
+                    ${p.showBasic ? `
+                        <header class="creative-header">
+                            <div class="creative-name">${escapeHtml(b.name || '姓名')}</div>
+                            <div class="creative-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                            ${renderPreviewContact(b)}
+                        </header>
+                    ` : ''}
+                    <div class="creative-body">
+                        ${renderPreviewSections(p, ['summary', 'projects', 'experience', 'campus', 'awards', 'education', 'skills'])}
+                    </div>
+                </div>
+            `;
+        } else if (currentTemplate === 'tech') {
+            container.innerHTML = `
+                <div class="resume-tech">
+                    <aside class="tech-side">
+                        ${p.showBasic ? `
+                            <div class="tech-name">${escapeHtml(b.name || '姓名')}</div>
+                            <div class="tech-target">${escapeHtml(b.job_target || '')}</div>
+                            ${renderPreviewSection('联系方式', renderPreviewContact(b))}
+                        ` : ''}
+                        ${renderPreviewSections(p, ['skills', 'awards'])}
+                    </aside>
+                    <main class="tech-main">
+                        ${renderPreviewSections(p, ['summary', 'projects', 'experience', 'campus', 'education'])}
+                    </main>
                 </div>
             `;
         } else {
