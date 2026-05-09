@@ -1387,61 +1387,107 @@
                         ` : ''}
 
                         ${sectionVisible('experience') && experienceItems.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
-                        ${sectionVisible('experience') ? experienceItems.map(item => `
-                            <div class="item">
+                        ${sectionVisible('experience') ? experienceItems.map(item => {
+                            const title = itemFieldVisible(item, 'company') ? (item.company || '') : '';
+                            const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                            const subtitle = itemFieldVisible(item, 'position') ? (item.position || '') : '';
+                            const desc = itemFieldVisible(item, 'description') ? (item.description || '') : '';
+                            if (!hasText(title) && !hasText(date) && !hasText(subtitle) && !hasText(desc)) return '';
+                            const header = (hasText(title) || hasText(date)) ? `
                                 <div class="item-header">
-                                    <span class="item-title">${item.company || '公司'}</span>
-                                    <span class="item-date">${item.date || ''}</span>
+                                    <span class="item-title">${escapeHtml(title)}</span>
+                                    ${hasText(date) ? `<span class=\"item-date\">${escapeHtml(date)}</span>` : ''}
                                 </div>
-                                <div class="item-subtitle">${item.position || '职位'}</div>
-                                <div class="item-desc">${item.description || ''}</div>
-                            </div>
-                        `).join('') : ''}
+                            ` : '';
+                            return `
+                                <div class="item">
+                                    ${header}
+                                    ${hasText(subtitle) ? `<div class=\"item-subtitle\">${escapeHtml(subtitle)}</div>` : ''}
+                                    ${hasText(desc) ? `<div class=\"item-desc\">${escapeHtml(desc)}</div>` : ''}
+                                </div>
+                            `;
+                        }).join('') : ''}
 
                         ${sectionVisible('projects') && projectItems.length > 0 ? `<div class="section-title">项目经验</div>` : ''}
-                        ${sectionVisible('projects') ? projectItems.map(item => `
-                            <div class="item">
+                        ${sectionVisible('projects') ? projectItems.map(item => {
+                            const title = itemFieldVisible(item, 'name') ? (item.name || '') : '';
+                            const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                            const subtitle = itemFieldVisible(item, 'role') ? (item.role || '') : '';
+                            const desc = itemFieldVisible(item, 'description') ? (item.description || '') : '';
+                            if (!hasText(title) && !hasText(date) && !hasText(subtitle) && !hasText(desc)) return '';
+                            const header = (hasText(title) || hasText(date)) ? `
                                 <div class="item-header">
-                                    <span class="item-title">${item.name || '项目'}</span>
-                                    <span class="item-date">${item.date || ''}</span>
+                                    <span class="item-title">${escapeHtml(title)}</span>
+                                    ${hasText(date) ? `<span class=\"item-date\">${escapeHtml(date)}</span>` : ''}
                                 </div>
-                                <div class="item-subtitle">${item.role || '角色'}</div>
-                                <div class="item-desc">${item.description || ''}</div>
-                            </div>
-                        `).join('') : ''}
+                            ` : '';
+                            return `
+                                <div class="item">
+                                    ${header}
+                                    ${hasText(subtitle) ? `<div class=\"item-subtitle\">${escapeHtml(subtitle)}</div>` : ''}
+                                    ${hasText(desc) ? `<div class=\"item-desc\">${escapeHtml(desc)}</div>` : ''}
+                                </div>
+                            `;
+                        }).join('') : ''}
 
                         ${sectionVisible('campus_experience') && campusItems.length > 0 ? `<div class="section-title">校园内经历</div>` : ''}
-                        ${sectionVisible('campus_experience') ? campusItems.map(item => `
-                            <div class="item">
+                        ${sectionVisible('campus_experience') ? campusItems.map(item => {
+                            const title = itemFieldVisible(item, 'organization') ? (item.organization || '') : '';
+                            const subtitle = itemFieldVisible(item, 'position') ? (item.position || '') : '';
+                            const desc = itemFieldVisible(item, 'achievements') ? (item.achievements || '') : '';
+                            if (!hasText(title) && !hasText(subtitle) && !hasText(desc)) return '';
+                            const header = hasText(title) ? `
                                 <div class="item-header">
-                                    <span class="item-title">${item.organization || '社团/组织'}</span>
+                                    <span class="item-title">${escapeHtml(title)}</span>
                                 </div>
-                                <div class="item-subtitle">${item.position || '担任岗位'}</div>
-                                <div class="item-desc">${item.achievements || ''}</div>
-                            </div>
-                        `).join('') : ''}
+                            ` : '';
+                            return `
+                                <div class="item">
+                                    ${header}
+                                    ${hasText(subtitle) ? `<div class=\"item-subtitle\">${escapeHtml(subtitle)}</div>` : ''}
+                                    ${hasText(desc) ? `<div class=\"item-desc\">${escapeHtml(desc)}</div>` : ''}
+                                </div>
+                            `;
+                        }).join('') : ''}
 
                         ${sectionVisible('awards') && awardItems.length > 0 ? `<div class="section-title">获奖</div>` : ''}
-                        ${sectionVisible('awards') ? awardItems.map(item => `
-                            <div class="award-item">
-                                <div class="award-title">${item.name || '获奖名称'}</div>
-                                <div class="award-meta">
-                                    ${item.rank ? `<span class="award-badge">${item.rank}</span>` : ''}
-                                    ${item.level ? `<span class="award-badge">${item.level}</span>` : ''}
+                        ${sectionVisible('awards') ? awardItems.map(item => {
+                            const title = itemFieldVisible(item, 'name') ? (item.name || '') : '';
+                            const rank = itemFieldVisible(item, 'rank') ? (item.rank || '') : '';
+                            const level = itemFieldVisible(item, 'level') ? (item.level || '') : '';
+                            if (!hasText(title) && !hasText(rank) && !hasText(level)) return '';
+                            return `
+                                <div class="award-item">
+                                    ${hasText(title) ? `<div class=\"award-title\">${escapeHtml(title)}</div>` : ''}
+                                    ${(hasText(rank) || hasText(level)) ? `
+                                        <div class="award-meta">
+                                            ${hasText(rank) ? `<span class=\"award-badge\">${escapeHtml(rank)}</span>` : ''}
+                                            ${hasText(level) ? `<span class=\"award-badge\">${escapeHtml(level)}</span>` : ''}
+                                        </div>
+                                    ` : ''}
                                 </div>
-                            </div>
-                        `).join('') : ''}
+                            `;
+                        }).join('') : ''}
 
                         ${sectionVisible('education') && educationItems.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
-                        ${sectionVisible('education') ? educationItems.map(item => `
-                            <div class="item">
+                        ${sectionVisible('education') ? educationItems.map(item => {
+                            const title = itemFieldVisible(item, 'school') ? (item.school || '') : '';
+                            const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                            const subtitle = itemFieldVisible(item, 'major') ? (item.major || '') : '';
+                            if (!hasText(title) && !hasText(date) && !hasText(subtitle)) return '';
+                            const header = (hasText(title) || hasText(date)) ? `
                                 <div class="item-header">
-                                    <span class="item-title">${item.school || '学校'}</span>
-                                    <span class="item-date">${item.date || ''}</span>
+                                    <span class="item-title">${escapeHtml(title)}</span>
+                                    ${hasText(date) ? `<span class=\"item-date\">${escapeHtml(date)}</span>` : ''}
                                 </div>
-                                <div class="item-subtitle">${item.major || '专业'}</div>
-                            </div>
-                        `).join('') : ''}
+                            ` : '';
+                            return `
+                                <div class="item">
+                                    ${header}
+                                    ${hasText(subtitle) ? `<div class=\"item-subtitle\">${escapeHtml(subtitle)}</div>` : ''}
+                                </div>
+                            `;
+                        }).join('') : ''}
                     </div>
                 </div>
             `;
