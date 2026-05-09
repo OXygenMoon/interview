@@ -125,6 +125,26 @@ def admin_company():
     return render_template('admin_company.html', companies=companies)
 
 
+@bp.route('/admin/resumes')
+@login_required
+@admin_required
+def admin_resumes():
+    """管理员：查看全校学生简历（只读预览）"""
+    # 取出所有简历，并 join 用户信息用于展示
+    resumes = Resume.query.join(User).order_by(Resume.updated_at.desc()).all()
+    return render_template('admin_resumes.html', resumes=resumes)
+
+
+@bp.route('/admin/resume/<int:resume_id>')
+@login_required
+@admin_required
+def admin_resume_preview(resume_id):
+    """管理员：只读预览指定简历"""
+    resume = Resume.query.get_or_404(resume_id)
+    student = User.query.get(resume.user_id)
+    return render_template('admin_resume_preview.html', resume=resume, student=student)
+
+
 @bp.route('/')
 @login_required
 def home():

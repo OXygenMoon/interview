@@ -1,0 +1,83 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}学生简历预览{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+        <div>
+            <h2 class="text-xl font-bold text-base-content">学生简历预览</h2>
+            <p class="text-sm text-base-content/60">仅支持查看与打印，不提供编辑/删除等操作</p>
+        </div>
+
+        <div class="w-full md:w-96">
+            <label class="input input-bordered flex items-center gap-2 w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+                <input id="search" type="text" class="grow" placeholder="按姓名/学号/简历标题/班级/系部搜索" oninput="filterRows()" />
+            </label>
+        </div>
+    </div>
+
+    <div class="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>学生</th>
+                        <th>学号</th>
+                        <th>系部 / 班级</th>
+                        <th>简历标题</th>
+                        <th>更新时间</th>
+                        <th class="text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="resume-tbody">
+                    {% for r in resumes %}
+                    {% set u = r.user %}
+                    <tr class="resume-row" data-search="{{ (u.truename or u.username or '') ~ ' ' ~ (u.student_id or '') ~ ' ' ~ (u.department or '') ~ ' ' ~ (u.class_name or '') ~ ' ' ~ (r.title or '') }}">
+                        <td class="font-semibold text-base-content">
+                            {{ u.truename or u.username }}
+                        </td>
+                        <td class="font-mono text-sm text-base-content/70">
+                            {{ u.student_id or '-' }}
+                        </td>
+                        <td class="text-sm text-base-content/70">
+                            {{ u.department or '-' }} / {{ u.class_name or '-' }}
+                        </td>
+                        <td class="text-base-content">
+                            {{ r.title or '我的简历' }}
+                        </td>
+                        <td class="text-sm text-base-content/60">
+                            {{ r.updated_at.strftime('%Y-%m-%d %H:%M') if r.updated_at else '-' }}
+                        </td>
+                        <td class="text-right">
+                            <a class="btn btn-sm btn-primary text-white" href="{{ url_for('routes.admin_resume_preview', resume_id=r.id) }}" target="_blank">预览</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if not resumes %}
+                    <tr>
+                        <td colspan="6" class="text-center text-base-content/50 py-10">暂无学生简历</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function filterRows() {
+        const q = (document.getElementById('search')?.value || '').trim().toLowerCase();
+        const rows = document.querySelectorAll('.resume-row');
+        rows.forEach(row => {
+            const hay = (row.dataset.search || '').toLowerCase();
+            row.style.display = (!q || hay.includes(q)) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
+
