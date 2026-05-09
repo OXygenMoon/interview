@@ -615,6 +615,7 @@
             if (!item || typeof item !== 'object') return;
             if (!item._id) item._id = generateLocalId();
             if (typeof item._hidden !== 'boolean') item._hidden = false;
+            if (!item._hiddenFields || typeof item._hiddenFields !== 'object' || Array.isArray(item._hiddenFields)) item._hiddenFields = {};
         });
     }
 
@@ -684,6 +685,17 @@
         if (!Array.isArray(resumeData[type]) || !resumeData[type][index]) return;
         ensureListItemMeta(type);
         resumeData[type][index]._hidden = !!hidden;
+        renderListEditors(type);
+        renderPreview();
+        showUnsaved();
+    }
+
+    function toggleItemFieldHidden(type, index, key, hidden) {
+        if (!Array.isArray(resumeData[type]) || !resumeData[type][index]) return;
+        ensureListItemMeta(type);
+        const item = resumeData[type][index];
+        if (!item._hiddenFields || typeof item._hiddenFields !== 'object' || Array.isArray(item._hiddenFields)) item._hiddenFields = {};
+        item._hiddenFields[key] = !!hidden;
         renderListEditors(type);
         renderPreview();
         showUnsaved();
@@ -985,6 +997,8 @@
 
         ensureListItemMeta(type);
         
+        const fieldHiddenAttr = (item, key) => (item && item._hiddenFields && item._hiddenFields[key]) ? 'checked' : '';
+
         resumeData[type].forEach((item, index) => {
             const div = document.createElement('div');
             div.className = `card bg-base-200 p-3 relative group ${item._hidden ? 'opacity-60' : ''}`;
@@ -999,10 +1013,22 @@
                             <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
                         </label>
                     </div>
-                    <input class="input input-sm w-full mb-2" placeholder="学校名称" value="${escapeAttr(item.school)}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="学校名称" value="${escapeAttr(item.school)}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'school')} onchange="toggleItemFieldHidden('${type}', ${index}, 'school', this.checked)">
+                        </label>
+                    </div>
                     <div class="flex gap-2">
-                        <input class="input input-sm w-1/2" placeholder="专业" value="${escapeAttr(item.major)}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间 (如 2020-2024)" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="专业" value="${escapeAttr(item.major)}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏专业" ${fieldHiddenAttr(item, 'major')} onchange="toggleItemFieldHidden('${type}', ${index}, 'major', this.checked)">
+                        </div>
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="时间 (如 2020-2024)" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏时间" ${fieldHiddenAttr(item, 'date')} onchange="toggleItemFieldHidden('${type}', ${index}, 'date', this.checked)">
+                        </div>
                     </div>
                 `;
             } else if (type === 'experience') {
@@ -1014,10 +1040,22 @@
                             <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
                         </label>
                     </div>
-                    <input class="input input-sm w-full mb-2" placeholder="公司名称" value="${escapeAttr(item.company)}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="公司名称" value="${escapeAttr(item.company)}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'company')} onchange="toggleItemFieldHidden('${type}', ${index}, 'company', this.checked)">
+                        </label>
+                    </div>
                     <div class="flex gap-2 mb-2">
-                        <input class="input input-sm w-1/2" placeholder="职位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="职位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏职位" ${fieldHiddenAttr(item, 'position')} onchange="toggleItemFieldHidden('${type}', ${index}, 'position', this.checked)">
+                        </div>
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏时间" ${fieldHiddenAttr(item, 'date')} onchange="toggleItemFieldHidden('${type}', ${index}, 'date', this.checked)">
+                        </div>
                     </div>
                     <div class="relative">
                         <div class="flex justify-between items-center mb-1">
@@ -1026,7 +1064,10 @@
                                 ✨ 润色
                             </button>
                         </div>
-                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="工作内容..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
+                        <div class="flex items-start gap-2">
+                            <textarea id="input-${type}-${index}-description" class="textarea textarea-sm flex-1" placeholder="工作内容..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
+                            <input type="checkbox" class="checkbox checkbox-xs mt-2" title="隐藏工作内容" ${fieldHiddenAttr(item, 'description')} onchange="toggleItemFieldHidden('${type}', ${index}, 'description', this.checked)">
+                        </div>
                     </div>
                 `;
             } else if (type === 'projects') {
@@ -1038,10 +1079,22 @@
                             <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
                         </label>
                     </div>
-                    <input class="input input-sm w-full mb-2" placeholder="项目名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="项目名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'name')} onchange="toggleItemFieldHidden('${type}', ${index}, 'name', this.checked)">
+                        </label>
+                    </div>
                     <div class="flex gap-2 mb-2">
-                        <input class="input input-sm w-1/2" placeholder="角色" value="${escapeAttr(item.role)}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="角色" value="${escapeAttr(item.role)}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏角色" ${fieldHiddenAttr(item, 'role')} onchange="toggleItemFieldHidden('${type}', ${index}, 'role', this.checked)">
+                        </div>
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="时间" value="${escapeAttr(item.date)}" oninput="updateListItem('${type}', ${index}, 'date', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏时间" ${fieldHiddenAttr(item, 'date')} onchange="toggleItemFieldHidden('${type}', ${index}, 'date', this.checked)">
+                        </div>
                     </div>
                     <div class="relative">
                         <div class="flex justify-between items-center mb-1">
@@ -1050,7 +1103,10 @@
                                 ✨ 润色
                             </button>
                         </div>
-                        <textarea id="input-${type}-${index}-description" class="textarea textarea-sm w-full" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
+                        <div class="flex items-start gap-2">
+                            <textarea id="input-${type}-${index}-description" class="textarea textarea-sm flex-1" placeholder="项目描述..." oninput="updateListItem('${type}', ${index}, 'description', this.value)">${escapeHtml(item.description)}</textarea>
+                            <input type="checkbox" class="checkbox checkbox-xs mt-2" title="隐藏项目描述" ${fieldHiddenAttr(item, 'description')} onchange="toggleItemFieldHidden('${type}', ${index}, 'description', this.checked)">
+                        </div>
                     </div>
                 `;
             } else if (type === 'campus_experience') {
@@ -1062,9 +1118,24 @@
                             <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
                         </label>
                     </div>
-                    <input class="input input-sm w-full mb-2" placeholder="社团/组织名称" value="${escapeAttr(item.organization)}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
-                    <input class="input input-sm w-full mb-2" placeholder="担任岗位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
-                    <textarea class="textarea textarea-sm w-full" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${escapeHtml(item.achievements)}</textarea>
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="社团/组织名称" value="${escapeAttr(item.organization)}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'organization')} onchange="toggleItemFieldHidden('${type}', ${index}, 'organization', this.checked)">
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="担任岗位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'position')} onchange="toggleItemFieldHidden('${type}', ${index}, 'position', this.checked)">
+                        </label>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <textarea class="textarea textarea-sm flex-1" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${escapeHtml(item.achievements)}</textarea>
+                        <input type="checkbox" class="checkbox checkbox-xs mt-2" title="隐藏主要事迹" ${fieldHiddenAttr(item, 'achievements')} onchange="toggleItemFieldHidden('${type}', ${index}, 'achievements', this.checked)">
+                    </div>
                 `;
             } else if (type === 'awards') {
                 fields = `
@@ -1075,10 +1146,22 @@
                             <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
                         </label>
                     </div>
-                    <input class="input input-sm w-full mb-2" placeholder="获奖名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                    <div class="flex items-center gap-2 mb-2">
+                        <input class="input input-sm flex-1" placeholder="获奖名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${fieldHiddenAttr(item, 'name')} onchange="toggleItemFieldHidden('${type}', ${index}, 'name', this.checked)">
+                        </label>
+                    </div>
                     <div class="flex gap-2">
-                        <input class="input input-sm w-1/2" placeholder="名次" value="${escapeAttr(item.rank)}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
-                        <input class="input input-sm w-1/2" placeholder="等级" value="${escapeAttr(item.level)}" oninput="updateListItem('${type}', ${index}, 'level', this.value)">
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="名次" value="${escapeAttr(item.rank)}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏名次" ${fieldHiddenAttr(item, 'rank')} onchange="toggleItemFieldHidden('${type}', ${index}, 'rank', this.checked)">
+                        </div>
+                        <div class="flex items-center gap-2 w-1/2">
+                            <input class="input input-sm flex-1" placeholder="等级" value="${escapeAttr(item.level)}" oninput="updateListItem('${type}', ${index}, 'level', this.value)">
+                            <input type="checkbox" class="checkbox checkbox-xs" title="隐藏等级" ${fieldHiddenAttr(item, 'level')} onchange="toggleItemFieldHidden('${type}', ${index}, 'level', this.checked)">
+                        </div>
                     </div>
                 `;
             }
@@ -1098,7 +1181,7 @@
     }
 
     function addItem(type) {
-        resumeData[type].push({ _hidden: false, _id: generateLocalId() });
+        resumeData[type].push({ _hidden: false, _id: generateLocalId(), _hiddenFields: {} });
         renderSectionEditor(activeSection);
         renderSectionNav();
         renderPreview();
@@ -1148,16 +1231,31 @@
         `;
     }
 
+    function itemFieldVisible(item, key) {
+        if (!item || typeof item !== 'object') return true;
+        if (item._hidden) return false;
+        if (!item._hiddenFields || typeof item._hiddenFields !== 'object' || Array.isArray(item._hiddenFields)) return true;
+        return !item._hiddenFields[key];
+    }
+
     function renderPreviewAwards(items) {
-        return items.map(item => `
-            <div class="tpl-item">
-                <div class="tpl-award-title">${escapeHtml(item.name || '获奖名称')}</div>
-                <div class="tpl-award-meta">
-                    ${item.rank ? `<span class="tpl-chip">${escapeHtml(item.rank)}</span>` : ''}
-                    ${item.level ? `<span class="tpl-chip">${escapeHtml(item.level)}</span>` : ''}
+        return items.map(item => {
+            const title = itemFieldVisible(item, 'name') ? (item.name || '') : '';
+            const rank = itemFieldVisible(item, 'rank') ? (item.rank || '') : '';
+            const level = itemFieldVisible(item, 'level') ? (item.level || '') : '';
+            if (!String(title || rank || level).trim()) return '';
+            return `
+                <div class="tpl-item">
+                    ${title ? `<div class="tpl-award-title">${escapeHtml(title)}</div>` : ''}
+                    ${(rank || level) ? `
+                        <div class="tpl-award-meta">
+                            ${rank ? `<span class="tpl-chip">${escapeHtml(rank)}</span>` : ''}
+                            ${level ? `<span class="tpl-chip">${escapeHtml(level)}</span>` : ''}
+                        </div>
+                    ` : ''}
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function renderPreviewSkills(items) {
@@ -1167,10 +1265,36 @@
     function renderPreviewContentBlock(p, key) {
         const renderers = {
             summary: () => p.showBasic && !isFieldHidden('basic', 'self_evaluation') && p.b.self_evaluation ? `<div class="tpl-item-desc">${escapeHtml(p.b.self_evaluation)}</div>` : '',
-            education: () => p.educationItems.map(item => renderPreviewItem({ title: item.school || '学校', subtitle: item.major || '', date: item.date || '' })).join(''),
-            experience: () => p.experienceItems.map(item => renderPreviewItem({ title: item.company || '公司', subtitle: item.position || '', date: item.date || '', desc: item.description || '' })).join(''),
-            projects: () => p.projectItems.map(item => renderPreviewItem({ title: item.name || '项目', subtitle: item.role || '', date: item.date || '', desc: item.description || '' })).join(''),
-            campus: () => p.campusItems.map(item => renderPreviewItem({ title: item.organization || '社团/组织', subtitle: item.position || '', desc: item.achievements || '' })).join(''),
+            education: () => p.educationItems.map(item => {
+                const title = itemFieldVisible(item, 'school') ? (item.school || '') : '';
+                const subtitle = itemFieldVisible(item, 'major') ? (item.major || '') : '';
+                const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                if (!String(title || subtitle || date).trim()) return '';
+                return renderPreviewItem({ title, subtitle, date });
+            }).join(''),
+            experience: () => p.experienceItems.map(item => {
+                const title = itemFieldVisible(item, 'company') ? (item.company || '') : '';
+                const subtitle = itemFieldVisible(item, 'position') ? (item.position || '') : '';
+                const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                const desc = itemFieldVisible(item, 'description') ? (item.description || '') : '';
+                if (!String(title || subtitle || date || desc).trim()) return '';
+                return renderPreviewItem({ title, subtitle, date, desc });
+            }).join(''),
+            projects: () => p.projectItems.map(item => {
+                const title = itemFieldVisible(item, 'name') ? (item.name || '') : '';
+                const subtitle = itemFieldVisible(item, 'role') ? (item.role || '') : '';
+                const date = itemFieldVisible(item, 'date') ? (item.date || '') : '';
+                const desc = itemFieldVisible(item, 'description') ? (item.description || '') : '';
+                if (!String(title || subtitle || date || desc).trim()) return '';
+                return renderPreviewItem({ title, subtitle, date, desc });
+            }).join(''),
+            campus: () => p.campusItems.map(item => {
+                const title = itemFieldVisible(item, 'organization') ? (item.organization || '') : '';
+                const subtitle = itemFieldVisible(item, 'position') ? (item.position || '') : '';
+                const desc = itemFieldVisible(item, 'achievements') ? (item.achievements || '') : '';
+                if (!String(title || subtitle || desc).trim()) return '';
+                return renderPreviewItem({ title, subtitle, desc });
+            }).join(''),
             awards: () => renderPreviewAwards(p.awardItems),
             skills: () => p.skillItems.length > 0 ? renderPreviewSkills(p.skillItems) : ''
         };
