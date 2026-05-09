@@ -543,6 +543,28 @@
     };
     if (!resumeData.hiddenSections || typeof resumeData.hiddenSections !== 'object' || Array.isArray(resumeData.hiddenSections)) resumeData.hiddenSections = {};
     resumeData.hiddenSections = { ...defaultHiddenSections, ...resumeData.hiddenSections };
+
+    // Field-level visibility (fine-grained hide for individual form items)
+    const defaultHiddenFields = {
+        basic: {
+            name: false,
+            job_target: false,
+            phone: false,
+            email: false,
+            location: false,
+            self_evaluation: false
+        }
+    };
+    if (!resumeData.hiddenFields || typeof resumeData.hiddenFields !== 'object' || Array.isArray(resumeData.hiddenFields)) resumeData.hiddenFields = {};
+    resumeData.hiddenFields = {
+        ...defaultHiddenFields,
+        ...resumeData.hiddenFields,
+        basic: { ...defaultHiddenFields.basic, ...(resumeData.hiddenFields.basic || {}) }
+    };
+
+    // Skills are stored as strings, so hide-by-skill-text for now.
+    // (If you keep duplicates, hiding one will hide all same-text skills.)
+    if (!resumeData.hiddenSkills || typeof resumeData.hiddenSkills !== 'object' || Array.isArray(resumeData.hiddenSkills)) resumeData.hiddenSkills = {};
     const layoutPresets = [
         { fontScale: 1, lineHeight: 1.6, sectionTop: 20, sectionBottom: 15, sectionPadding: 5, itemMargin: 20, itemHeaderMargin: 4, descMargin: 5, modernPaddingY: 30, modernMainPaddingX: 30, modernSidebarPaddingX: 20, classicPadding: 40, classicHeaderPadding: 20, classicHeaderMargin: 20, contactMargin: 10, skillPaddingY: 4, skillPaddingX: 8, skillMarginBottom: 6 },
         { fontScale: 0.98, lineHeight: 1.5, sectionTop: 18, sectionBottom: 13, sectionPadding: 4, itemMargin: 17, itemHeaderMargin: 3, descMargin: 4, modernPaddingY: 28, modernMainPaddingX: 28, modernSidebarPaddingX: 18, classicPadding: 36, classicHeaderPadding: 18, classicHeaderMargin: 18, contactMargin: 8, skillPaddingY: 3, skillPaddingX: 7, skillMarginBottom: 5 },
@@ -557,6 +579,13 @@
 
     // 初始化页面
     document.addEventListener('DOMContentLoaded', () => {
+        // Ensure list items have editor/preview meta.
+        ensureListItemMeta('education');
+        ensureListItemMeta('experience');
+        ensureListItemMeta('projects');
+        ensureListItemMeta('campus_experience');
+        ensureListItemMeta('awards');
+
         // 填充表单
         fillForm();
         // 渲染预览
@@ -574,6 +603,91 @@
     });
 
     // --- 表单逻辑 ---
+
+    function generateLocalId() {
+        return `i_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+    }
+
+    function ensureListItemMeta(type) {
+        const list = resumeData[type];
+        if (!Array.isArray(list)) return;
+        list.forEach(item => {
+            if (!item || typeof item !== 'object') return;
+            if (!item._id) item._id = generateLocalId();
+            if (typeof item._hidden !== 'boolean') item._hidden = false;
+        });
+    }
+
+    function isFieldHidden(section, key) {
+        return !!(resumeData.hiddenFields && resumeData.hiddenFields[section] && resumeData.hiddenFields[section][key]);
+    }
+
+    function updateHiddenField(section, key, hidden) {
+        if (!resumeData.hiddenFields || typeof resumeData.hiddenFields !== 'object' || Array.isArray(resumeData.hiddenFields)) {
+            resumeData.hiddenFields = {};
+        }
+        if (!resumeData.hiddenFields[section] || typeof resumeData.hiddenFields[section] !== 'object' || Array.isArray(resumeData.hiddenFields[section])) {
+            resumeData.hiddenFields[section] = {};
+        }
+        resumeData.hiddenFields[section][key] = !!hidden;
+        renderPreview();
+        showUnsaved();
+    }
+
+    function isSkillHidden(skill) {
+        return !!(resumeData.hiddenSkills && resumeData.hiddenSkills[String(skill)]);
+    }
+
+    function toggleHiddenSkillByIndex(index, hidden) {
+        const skills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
+        const skill = skills[index];
+        if (!skill) return;
+        if (!resumeData.hiddenSkills || typeof resumeData.hiddenSkills !== 'object' || Array.isArray(resumeData.hiddenSkills)) {
+            resumeData.hiddenSkills = {};
+        }
+        if (hidden) {
+            resumeData.hiddenSkills[String(skill)] = true;
+        } else {
+            delete resumeData.hiddenSkills[String(skill)];
+        }
+        renderSkillsHideList();
+        renderPreview();
+        showUnsaved();
+    }
+
+    function renderSkillsHideList() {
+        const container = document.getElementById('skills-hide-list');
+        if (!container) return;
+        const skills = (Array.isArray(resumeData.skills) ? resumeData.skills : []).filter(s => String(s || '').trim());
+        if (skills.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = skills.map((skill, idx) => {
+            const hidden = isSkillHidden(skill);
+            return `
+                <div class="flex items-center justify-between gap-3 border border-base-200 rounded-lg px-3 py-2 ${hidden ? 'opacity-60' : ''}">
+                    <div class="min-w-0">
+                        <div class="text-sm font-medium truncate">${escapeHtml(skill)}</div>
+                    </div>
+                    <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                        <span class="label-text text-xs">隐藏</span>
+                        <input type="checkbox" class="checkbox checkbox-xs" ${hidden ? 'checked' : ''} onchange="toggleHiddenSkillByIndex(${idx}, this.checked)">
+                    </label>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleItemHidden(type, index, hidden) {
+        if (!Array.isArray(resumeData[type]) || !resumeData[type][index]) return;
+        ensureListItemMeta(type);
+        resumeData[type][index]._hidden = !!hidden;
+        renderListEditors(type);
+        renderPreview();
+        showUnsaved();
+    }
 
     function fillForm() {
         renderSectionNav();
@@ -662,42 +776,85 @@
         `;
 
         if (['education', 'experience', 'projects', 'campus_experience', 'awards'].includes(section)) {
+            ensureListItemMeta(section);
             renderListEditors(section);
+        }
+
+        if (section === 'skills') {
+            renderSkillsHideList();
         }
     }
 
     function renderSectionEditorBody(section) {
         const b = resumeData.basic || {};
+        const hiddenBasic = (resumeData.hiddenFields && resumeData.hiddenFields.basic) ? resumeData.hiddenFields.basic : {};
+        const basicHiddenAttr = (key) => hiddenBasic[key] ? 'checked' : '';
 
         if (section === 'basic') {
             return `
                 <div class="section-form-grid">
                     <div class="form-control">
-                        <label class="label"><span class="label-text">姓名</span></label>
+                        <label class="label justify-between">
+                            <span class="label-text">姓名</span>
+                            <span class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs opacity-60">隐藏</span>
+                                <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('name')} onchange="updateHiddenField('basic', 'name', this.checked)">
+                            </span>
+                        </label>
                         <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.name)}" oninput="updateField('basic', 'name', this.value)" id="input-name">
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">求职意向</span></label>
+                        <label class="label justify-between">
+                            <span class="label-text">求职意向</span>
+                            <span class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs opacity-60">隐藏</span>
+                                <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('job_target')} onchange="updateHiddenField('basic', 'job_target', this.checked)">
+                            </span>
+                        </label>
                         <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.job_target)}" oninput="updateField('basic', 'job_target', this.value)" id="input-job_target">
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">电话</span></label>
+                        <label class="label justify-between">
+                            <span class="label-text">电话</span>
+                            <span class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs opacity-60">隐藏</span>
+                                <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('phone')} onchange="updateHiddenField('basic', 'phone', this.checked)">
+                            </span>
+                        </label>
                         <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.phone)}" oninput="updateField('basic', 'phone', this.value)" id="input-phone">
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">邮箱</span></label>
+                        <label class="label justify-between">
+                            <span class="label-text">邮箱</span>
+                            <span class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs opacity-60">隐藏</span>
+                                <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('email')} onchange="updateHiddenField('basic', 'email', this.checked)">
+                            </span>
+                        </label>
                         <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.email)}" oninput="updateField('basic', 'email', this.value)" id="input-email">
                     </div>
                     <div class="form-control span-full">
-                        <label class="label"><span class="label-text">所在城市</span></label>
+                        <label class="label justify-between">
+                            <span class="label-text">所在城市</span>
+                            <span class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs opacity-60">隐藏</span>
+                                <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('location')} onchange="updateHiddenField('basic', 'location', this.checked)">
+                            </span>
+                        </label>
                         <input type="text" class="input input-bordered input-sm" value="${escapeAttr(b.location)}" oninput="updateField('basic', 'location', this.value)" id="input-location">
                     </div>
                     <div class="form-control span-full">
                         <label class="label justify-between">
                             <span class="label-text">自我评价</span>
-                            <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-basic-0-self_evaluation" onclick="optimizeField('basic', 0, 'self_evaluation')">
-                                ✨ 润色
-                            </button>
+                            <span class="flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="text-xs opacity-60">隐藏</span>
+                                    <input type="checkbox" class="checkbox checkbox-xs" ${basicHiddenAttr('self_evaluation')} onchange="updateHiddenField('basic', 'self_evaluation', this.checked)">
+                                </span>
+                                <button class="btn btn-ghost btn-xs text-accent gap-1" id="btn-opt-basic-0-self_evaluation" onclick="optimizeField('basic', 0, 'self_evaluation')">
+                                    ✨ 润色
+                                </button>
+                            </span>
                         </label>
                         <textarea class="textarea textarea-bordered h-28" oninput="updateField('basic', 'self_evaluation', this.value)" id="input-self_evaluation">${escapeHtml(b.self_evaluation)}</textarea>
                     </div>
@@ -710,6 +867,7 @@
                 <div class="form-control">
                     <label class="label"><span class="label-text">专业技能 (每行一个)</span></label>
                     <textarea class="textarea textarea-bordered h-40" oninput="updateArrayField('skills', this.value)" id="input-skills" placeholder="Java&#10;Python&#10;SQL">${escapeHtml((resumeData.skills || []).join('\n'))}</textarea>
+                    <div id="skills-hide-list" class="mt-3 grid gap-2"></div>
                 </div>
             `;
         }
@@ -745,6 +903,18 @@
 
     function updateArrayField(key, value) {
         resumeData[key] = value.split('\n').filter(i => i.trim());
+
+        if (key === 'skills') {
+            if (!resumeData.hiddenSkills || typeof resumeData.hiddenSkills !== 'object' || Array.isArray(resumeData.hiddenSkills)) {
+                resumeData.hiddenSkills = {};
+            }
+            const set = new Set((resumeData.skills || []).map(s => String(s)));
+            Object.keys(resumeData.hiddenSkills).forEach(k => {
+                if (!set.has(String(k))) delete resumeData.hiddenSkills[k];
+            });
+            renderSkillsHideList();
+        }
+
         renderPreview();
         showUnsaved();
     }
@@ -812,14 +982,23 @@
         const container = document.getElementById(listContainers[type]);
         if (!container) return;
         container.innerHTML = '';
+
+        ensureListItemMeta(type);
         
         resumeData[type].forEach((item, index) => {
             const div = document.createElement('div');
-            div.className = 'card bg-base-200 p-3 relative group';
+            div.className = `card bg-base-200 p-3 relative group ${item._hidden ? 'opacity-60' : ''}`;
             
             let fields = '';
             if (type === 'education') {
                 fields = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs opacity-60">第 ${index + 1} 条</span>
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏本条</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
+                        </label>
+                    </div>
                     <input class="input input-sm w-full mb-2" placeholder="学校名称" value="${escapeAttr(item.school)}" oninput="updateListItem('${type}', ${index}, 'school', this.value)">
                     <div class="flex gap-2">
                         <input class="input input-sm w-1/2" placeholder="专业" value="${escapeAttr(item.major)}" oninput="updateListItem('${type}', ${index}, 'major', this.value)">
@@ -828,6 +1007,13 @@
                 `;
             } else if (type === 'experience') {
                 fields = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs opacity-60">第 ${index + 1} 条</span>
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏本条</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
+                        </label>
+                    </div>
                     <input class="input input-sm w-full mb-2" placeholder="公司名称" value="${escapeAttr(item.company)}" oninput="updateListItem('${type}', ${index}, 'company', this.value)">
                     <div class="flex gap-2 mb-2">
                         <input class="input input-sm w-1/2" placeholder="职位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
@@ -845,6 +1031,13 @@
                 `;
             } else if (type === 'projects') {
                 fields = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs opacity-60">第 ${index + 1} 条</span>
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏本条</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
+                        </label>
+                    </div>
                     <input class="input input-sm w-full mb-2" placeholder="项目名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
                     <div class="flex gap-2 mb-2">
                         <input class="input input-sm w-1/2" placeholder="角色" value="${escapeAttr(item.role)}" oninput="updateListItem('${type}', ${index}, 'role', this.value)">
@@ -862,12 +1055,26 @@
                 `;
             } else if (type === 'campus_experience') {
                 fields = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs opacity-60">第 ${index + 1} 条</span>
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏本条</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
+                        </label>
+                    </div>
                     <input class="input input-sm w-full mb-2" placeholder="社团/组织名称" value="${escapeAttr(item.organization)}" oninput="updateListItem('${type}', ${index}, 'organization', this.value)">
                     <input class="input input-sm w-full mb-2" placeholder="担任岗位" value="${escapeAttr(item.position)}" oninput="updateListItem('${type}', ${index}, 'position', this.value)">
                     <textarea class="textarea textarea-sm w-full" placeholder="主要事迹..." oninput="updateListItem('${type}', ${index}, 'achievements', this.value)">${escapeHtml(item.achievements)}</textarea>
                 `;
             } else if (type === 'awards') {
                 fields = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs opacity-60">第 ${index + 1} 条</span>
+                        <label class="label cursor-pointer gap-2 p-0" onclick="event.stopPropagation()">
+                            <span class="label-text text-xs">隐藏本条</span>
+                            <input type="checkbox" class="checkbox checkbox-xs" ${item._hidden ? 'checked' : ''} onchange="toggleItemHidden('${type}', ${index}, this.checked)">
+                        </label>
+                    </div>
                     <input class="input input-sm w-full mb-2" placeholder="获奖名称" value="${escapeAttr(item.name)}" oninput="updateListItem('${type}', ${index}, 'name', this.value)">
                     <div class="flex gap-2">
                         <input class="input input-sm w-1/2" placeholder="名次" value="${escapeAttr(item.rank)}" oninput="updateListItem('${type}', ${index}, 'rank', this.value)">
@@ -891,7 +1098,7 @@
     }
 
     function addItem(type) {
-        resumeData[type].push({});
+        resumeData[type].push({ _hidden: false, _id: generateLocalId() });
         renderSectionEditor(activeSection);
         renderSectionNav();
         renderPreview();
@@ -908,9 +1115,9 @@
 
     function renderPreviewContact(b) {
         const contacts = [
-            b.phone ? `电话：${b.phone}` : '',
-            b.email ? `邮箱：${b.email}` : '',
-            b.location ? `城市：${b.location}` : ''
+            (b.phone && !isFieldHidden('basic', 'phone')) ? `电话：${b.phone}` : '',
+            (b.email && !isFieldHidden('basic', 'email')) ? `邮箱：${b.email}` : '',
+            (b.location && !isFieldHidden('basic', 'location')) ? `城市：${b.location}` : ''
         ].filter(Boolean);
 
         if (contacts.length === 0) return '';
@@ -959,7 +1166,7 @@
 
     function renderPreviewContentBlock(p, key) {
         const renderers = {
-            summary: () => p.showBasic && p.b.self_evaluation ? `<div class="tpl-item-desc">${escapeHtml(p.b.self_evaluation)}</div>` : '',
+            summary: () => p.showBasic && !isFieldHidden('basic', 'self_evaluation') && p.b.self_evaluation ? `<div class="tpl-item-desc">${escapeHtml(p.b.self_evaluation)}</div>` : '',
             education: () => p.educationItems.map(item => renderPreviewItem({ title: item.school || '学校', subtitle: item.major || '', date: item.date || '' })).join(''),
             experience: () => p.experienceItems.map(item => renderPreviewItem({ title: item.company || '公司', subtitle: item.position || '', date: item.date || '', desc: item.description || '' })).join(''),
             projects: () => p.projectItems.map(item => renderPreviewItem({ title: item.name || '项目', subtitle: item.role || '', date: item.date || '', desc: item.description || '' })).join(''),
@@ -993,15 +1200,26 @@
         const hidden = d.hiddenSections || {};
         const sectionVisible = (section) => !hidden[section];
         const hasText = (value) => String(value || '').trim().length > 0;
-        const filterItems = (items, keys) => (items || []).filter(item => item && keys.some(key => hasText(item[key])));
+        const filterItems = (items, keys) => (items || []).filter(item => item && !item._hidden && keys.some(key => hasText(item[key])));
         const educationItems = filterItems(d.education, ['school', 'major', 'date']);
         const experienceItems = filterItems(d.experience, ['company', 'position', 'date', 'description']);
         const projectItems = filterItems(d.projects, ['name', 'role', 'date', 'description']);
         const campusItems = filterItems(d.campus_experience, ['organization', 'position', 'achievements']);
         const awardItems = filterItems(d.awards, ['name', 'rank', 'level']);
-        const skillItems = (d.skills || []).filter(hasText);
+        const skillItems = (d.skills || []).filter(hasText).filter(s => !isSkillHidden(s));
         const showBasic = sectionVisible('basic');
         const showSkills = sectionVisible('skills') && skillItems.length > 0;
+
+        const basicVisible = {
+            name: showBasic && !isFieldHidden('basic', 'name'),
+            job_target: showBasic && !isFieldHidden('basic', 'job_target'),
+            phone: showBasic && !isFieldHidden('basic', 'phone'),
+            email: showBasic && !isFieldHidden('basic', 'email'),
+            location: showBasic && !isFieldHidden('basic', 'location'),
+            self_evaluation: showBasic && !isFieldHidden('basic', 'self_evaluation')
+        };
+        const hasAnyContact = (basicVisible.phone && hasText(b.phone)) || (basicVisible.email && hasText(b.email)) || (basicVisible.location && hasText(b.location));
+        const hasAnyBasicHeader = (basicVisible.name && hasText(b.name)) || (basicVisible.job_target && hasText(b.job_target)) || hasAnyContact;
         const p = {
             b,
             showBasic,
@@ -1018,15 +1236,17 @@
                 <div class="resume-modern">
                     <div class="sidebar">
                         ${showBasic ? `
-                            <div class="name" style="margin-bottom:20px; text-align:left;">${b.name || '姓名'}</div>
-                            
-                            <div class="section-title">联系方式</div>
-                            ${b.phone ? `<div class="contact-item">📞 ${b.phone}</div>` : ''}
-                            ${b.email ? `<div class="contact-item">✉️ ${b.email}</div>` : ''}
-                            ${b.location ? `<div class="contact-item">📍 ${b.location}</div>` : ''}
-                            
-                            <div class="section-title">求职意向</div>
-                            <div class="contact-item">${b.job_target || '未填写'}</div>
+                            ${basicVisible.name ? `<div class="name" style="margin-bottom:20px; text-align:left;">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${(basicVisible.phone && b.phone) || (basicVisible.email && b.email) || (basicVisible.location && b.location) ? `
+                                <div class="section-title">联系方式</div>
+                                ${basicVisible.phone && b.phone ? `<div class="contact-item">📞 ${escapeHtml(b.phone)}</div>` : ''}
+                                ${basicVisible.email && b.email ? `<div class="contact-item">✉️ ${escapeHtml(b.email)}</div>` : ''}
+                                ${basicVisible.location && b.location ? `<div class="contact-item">📍 ${escapeHtml(b.location)}</div>` : ''}
+                            ` : ''}
+                            ${basicVisible.job_target ? `
+                                <div class="section-title">求职意向</div>
+                                <div class="contact-item">${escapeHtml(b.job_target || '未填写')}</div>
+                            ` : ''}
                         ` : ''}
 
                         ${showSkills ? `
@@ -1037,9 +1257,9 @@
                         ` : ''}
                     </div>
                     <div class="main">
-                        ${showBasic ? `
+                        ${showBasic && basicVisible.self_evaluation ? `
                             <div class="section-title" style="margin-top:0;">自我评价</div>
-                            <p class="item-desc">${b.self_evaluation || '暂无'}</p>
+                            <p class="item-desc">${escapeHtml(b.self_evaluation || '暂无')}</p>
                         ` : ''}
 
                         ${sectionVisible('experience') && experienceItems.length > 0 ? `<div class="section-title">工作经历</div>` : ''}
@@ -1104,10 +1324,10 @@
         } else if (currentTemplate === 'ats') {
             container.innerHTML = `
                 <div class="resume-ats">
-                    ${p.showBasic ? `
+                    ${p.showBasic && hasAnyBasicHeader ? `
                         <header class="ats-header">
-                            <div class="ats-name">${escapeHtml(b.name || '姓名')}</div>
-                            <div class="ats-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                            ${basicVisible.name ? `<div class="ats-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${basicVisible.job_target ? `<div class="ats-target">${escapeHtml(b.job_target || '求职意向')}</div>` : ''}
                             ${renderPreviewContact(b)}
                         </header>
                     ` : ''}
@@ -1117,10 +1337,10 @@
         } else if (currentTemplate === 'minimal') {
             container.innerHTML = `
                 <div class="resume-minimal">
-                    ${p.showBasic ? `
+                    ${p.showBasic && hasAnyBasicHeader ? `
                         <header class="minimal-header">
-                            <div class="minimal-name">${escapeHtml(b.name || '姓名')}</div>
-                            <div class="minimal-target">${escapeHtml(b.job_target || '')}</div>
+                            ${basicVisible.name ? `<div class="minimal-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${basicVisible.job_target ? `<div class="minimal-target">${escapeHtml(b.job_target || '')}</div>` : ''}
                             ${renderPreviewContact(b)}
                         </header>
                     ` : ''}
@@ -1130,11 +1350,11 @@
         } else if (currentTemplate === 'campus') {
             container.innerHTML = `
                 <div class="resume-campus">
-                    ${p.showBasic ? `
+                    ${p.showBasic && hasAnyBasicHeader ? `
                         <header class="campus-header">
                             <div>
-                                <div class="campus-name">${escapeHtml(b.name || '姓名')}</div>
-                                <div class="campus-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                                ${basicVisible.name ? `<div class="campus-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                                ${basicVisible.job_target ? `<div class="campus-target">${escapeHtml(b.job_target || '求职意向')}</div>` : ''}
                             </div>
                             ${renderPreviewContact(b)}
                         </header>
@@ -1146,9 +1366,9 @@
             container.innerHTML = `
                 <div class="resume-business">
                     <aside class="business-side">
-                        ${p.showBasic ? `
-                            <div class="business-name">${escapeHtml(b.name || '姓名')}</div>
-                            <div class="business-target">${escapeHtml(b.job_target || '')}</div>
+                        ${p.showBasic && hasAnyBasicHeader ? `
+                            ${basicVisible.name ? `<div class="business-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${basicVisible.job_target ? `<div class="business-target">${escapeHtml(b.job_target || '')}</div>` : ''}
                             ${renderPreviewSection('联系方式', renderPreviewContact(b))}
                         ` : ''}
                         ${renderPreviewSections(p, ['skills', 'awards'])}
@@ -1161,10 +1381,10 @@
         } else if (currentTemplate === 'creative') {
             container.innerHTML = `
                 <div class="resume-creative">
-                    ${p.showBasic ? `
+                    ${p.showBasic && hasAnyBasicHeader ? `
                         <header class="creative-header">
-                            <div class="creative-name">${escapeHtml(b.name || '姓名')}</div>
-                            <div class="creative-target">${escapeHtml(b.job_target || '求职意向')}</div>
+                            ${basicVisible.name ? `<div class="creative-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${basicVisible.job_target ? `<div class="creative-target">${escapeHtml(b.job_target || '求职意向')}</div>` : ''}
                             ${renderPreviewContact(b)}
                         </header>
                     ` : ''}
@@ -1177,9 +1397,9 @@
             container.innerHTML = `
                 <div class="resume-tech">
                     <aside class="tech-side">
-                        ${p.showBasic ? `
-                            <div class="tech-name">${escapeHtml(b.name || '姓名')}</div>
-                            <div class="tech-target">${escapeHtml(b.job_target || '')}</div>
+                        ${p.showBasic && hasAnyBasicHeader ? `
+                            ${basicVisible.name ? `<div class="tech-name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                            ${basicVisible.job_target ? `<div class="tech-target">${escapeHtml(b.job_target || '')}</div>` : ''}
                             ${renderPreviewSection('联系方式', renderPreviewContact(b))}
                         ` : ''}
                         ${renderPreviewSections(p, ['skills', 'awards'])}
@@ -1191,19 +1411,26 @@
             `;
         } else {
             // Classic Template
+            const classicContacts = [
+                (b.phone && !isFieldHidden('basic', 'phone')) ? b.phone : '',
+                (b.email && !isFieldHidden('basic', 'email')) ? b.email : '',
+                (b.location && !isFieldHidden('basic', 'location')) ? b.location : ''
+            ].filter(v => hasText(v)).join(' | ');
             container.innerHTML = `
                 <div class="resume-classic">
                     ${showBasic ? `
-                        <div class="header">
-                            <div class="name">${b.name || '姓名'}</div>
-                            <div class="contact">
-                                ${b.phone || ''} | ${b.email || ''} | ${b.location || ''}
+                        ${hasAnyBasicHeader ? `
+                            <div class="header">
+                                ${basicVisible.name ? `<div class="name">${escapeHtml(b.name || '姓名')}</div>` : ''}
+                                ${classicContacts ? `<div class="contact">${escapeHtml(classicContacts)}</div>` : ''}
+                                ${basicVisible.job_target ? `<div class="contact">求职意向：${escapeHtml(b.job_target || '')}</div>` : ''}
                             </div>
-                            <div class="contact">求职意向：${b.job_target || ''}</div>
-                        </div>
+                        ` : ''}
 
-                        <div class="section-title">自我评价</div>
-                        <p class="item-desc">${b.self_evaluation || ''}</p>
+                        ${basicVisible.self_evaluation ? `
+                            <div class="section-title">自我评价</div>
+                            <p class="item-desc">${escapeHtml(b.self_evaluation || '')}</p>
+                        ` : ''}
                     ` : ''}
 
                     ${sectionVisible('education') && educationItems.length > 0 ? `<div class="section-title">教育背景</div>` : ''}
