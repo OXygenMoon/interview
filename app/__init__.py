@@ -14,6 +14,9 @@ def create_app():
 
     db.init_app(app)
 
+    from .filters import register_filters
+    register_filters(app)
+
     # === 初始化登录管理 ===
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'  # 未登录时自动跳到这里
