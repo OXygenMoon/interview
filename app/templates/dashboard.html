@@ -4,222 +4,462 @@
 
 {% block content %}
 {% set avatar_styles = [
-    'bg-secondary/10 text-secondary border border-secondary/20',
-    'bg-accent/10 text-accent border border-accent/20',
-    'bg-primary/10 text-primary border border-primary/20',
-    'bg-neutral/10 text-neutral border border-neutral/20'
+    'bg-teal-50 text-teal-700 border border-teal-100',
+    'bg-sky-50 text-sky-700 border border-sky-100',
+    'bg-amber-50 text-amber-700 border border-amber-100',
+    'bg-rose-50 text-rose-700 border border-rose-100',
+    'bg-violet-50 text-violet-700 border border-violet-100'
 ] %}
+{% set best_session = top_students[0] if top_students else none %}
 
-<div class="space-y-8 pb-12">
-
-    <!-- 顶部欢迎卡片 (Cupcake 风格) -->
-    <div class="card bg-base-100 shadow-xl image-full relative overflow-hidden">
-        <!-- 背景装饰 -->
-        <div class="absolute inset-0 bg-gradient-to-r from-secondary/80 to-primary/80 mix-blend-multiply"></div>
-        <figure><img src="https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.jpg" alt="background" class="blur-sm opacity-50" /></figure>
-        
-        <div class="card-body relative z-10 flex-row justify-between items-end">
-            <div>
-                <h1 class="card-title text-3xl font-extrabold text-base-100 mb-2">教学数据驾驶舱</h1>
-                <p class="text-base-100/90 font-medium flex items-center gap-3">
-                    <span>欢迎回来，{{ current_user.truename }} 老师</span>
-                    <div class="badge badge-accent badge-outline text-xs font-bold uppercase">{{ current_user.role }}</div>
-                </p>
-            </div>
-            
-            <div class="hidden md:block text-right bg-base-100/20 px-5 py-3 rounded-xl backdrop-blur-sm border border-base-100/30">
-                <div class="text-[10px] text-base-100/80 font-bold uppercase tracking-widest mb-1">Today</div>
-                <div class="text-xl font-mono font-bold text-base-100" id="current-date">--/--</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 统计卡片区 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="stats shadow bg-base-100 border border-base-200">
-            <div class="stat">
-                <div class="stat-figure text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <div class="stat-title">总面试场次</div>
-                <div class="stat-value text-secondary">{{ total_interviews }}</div>
-                <div class="stat-desc">范围内累计完成</div>
-            </div>
-        </div>
-        
-        <div class="stats shadow bg-base-100 border border-base-200">
-            <div class="stat">
-                <div class="stat-figure text-primary">
-                    <div class="radial-progress bg-primary/10 text-primary border-4 border-transparent" style="--value:{{ avg_score }}; --size:3rem; --thickness: 0.3rem;" role="progressbar">{{ avg_score|int }}%</div>
-                </div>
-                <div class="stat-title">平均综合得分</div>
-                <div class="stat-value text-primary">{{ avg_score }}</div>
-                <div class="stat-desc">整体表现评估</div>
-            </div>
-        </div>
-
-        <div class="stats shadow bg-base-100 border border-base-200 cursor-pointer hover:shadow-lg transition-shadow" onclick="location.href='{{ url_for('routes.teacher_students') }}'">
-            <div class="stat">
-                <div class="stat-figure text-accent">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
-                <div class="stat-title">快捷入口</div>
-                <div class="stat-value text-accent text-2xl">学生花名册</div>
-                <div class="stat-desc text-accent">点击查看班级详情 & 进度</div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
-        <!-- Top Students -->
-        <div class="lg:col-span-1">
-            <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
-                <div class="card-body p-0">
-                    <div class="p-5 border-b border-base-200 bg-base-200/50 flex justify-between items-center">
-                        <h3 class="font-bold text-base-content flex items-center gap-2">
-                            <span class="text-xl">🏆</span> 优秀表现 Top 5
-                        </h3>
+<div class="dashboard-shell space-y-6 pb-12">
+    <section class="dashboard-hero overflow-hidden rounded-[1.35rem] border border-white/70 bg-white/70 shadow-[0_22px_45px_-34px_rgba(15,23,42,0.55)] backdrop-blur-xl">
+        <div class="relative p-6 md:p-8">
+            <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(135deg,rgba(15,118,110,0.12),rgba(14,165,233,0.08)_48%,rgba(245,158,11,0.10))]"></div>
+            <div class="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                <div class="max-w-3xl">
+                    <div class="mb-4 flex flex-wrap items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-teal-700">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50/80 px-3 py-1.5">
+                            <span class="h-2 w-2 rounded-full bg-teal-500"></span>
+                            {{ current_user.role }}
+                        </span>
+                        <span class="text-slate-400">/</span>
+                        <span class="text-slate-500">{{ title }}</span>
                     </div>
+                    <h1 class="text-3xl font-black tracking-tight text-slate-800 md:text-4xl">教学数据驾驶舱</h1>
+                    <p class="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-500 md:text-base">
+                        欢迎回来，{{ current_user.truename }} 老师。这里汇总了当前权限范围内的面试完成情况、成绩表现和最新动态。
+                    </p>
+                </div>
 
-                    <div class="divide-y divide-base-200">
-                        {% for s in top_students %}
-                        <div class="flex items-center gap-3 p-3 hover:bg-base-200/50 transition-colors group">
-                            <div class="font-black text-sm w-6 h-6 rounded flex items-center justify-center shadow-sm
-                                {% if loop.index == 1 %}bg-warning/20 text-warning
-                                {% elif loop.index == 2 %}bg-base-300 text-base-content
-                                {% elif loop.index == 3 %}bg-secondary/20 text-secondary
-                                {% else %}bg-transparent text-base-content/50{% endif %}">
-                                {{ loop.index }}
-                            </div>
+                <div class="grid grid-cols-2 gap-3 sm:flex sm:items-center">
+                    <div class="rounded-2xl border border-white/80 bg-white/60 px-4 py-3 text-left shadow-sm backdrop-blur">
+                        <div class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Today</div>
+                        <div id="current-date" class="mt-1 whitespace-nowrap text-sm font-extrabold text-slate-700">--</div>
+                    </div>
+                    <a href="{{ url_for('routes.teacher_students') }}" class="btn btn-primary h-auto min-h-0 rounded-2xl px-4 py-3 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m0-4a4 4 0 100-8 4 4 0 000 8zm8 0a4 4 0 100-8 4 4 0 000 8z" />
+                        </svg>
+                        学生名册
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                            <div class="avatar placeholder">
-                                {% set style_class = avatar_styles[(s.user.id) % 4] %}
-                                <div class="{{ style_class }} rounded-full w-8 h-8 flex items-center justify-center ring-2 ring-base-100 shadow-sm">
-                                    <span class="text-xs font-bold">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
-                                </div>
-                            </div>
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="metric-card border-teal-100 bg-white/78">
+            <div class="metric-icon bg-teal-50 text-teal-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="metric-label">总面试场次</p>
+                <p class="metric-value text-teal-700">{{ total_interviews }}</p>
+                <p class="metric-desc">已完成记录</p>
+            </div>
+        </div>
 
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-base-content text-sm truncate group-hover:text-primary transition-colors">{{ s.user.truename }}</div>
-                                <div class="text-[10px] text-base-content/60 truncate">{{ s.target_role }}</div>
-                            </div>
+        <div class="metric-card border-sky-100 bg-white/78">
+            <div class="metric-icon bg-sky-50 text-sky-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="metric-label">平均综合得分</p>
+                <div class="flex items-baseline gap-2">
+                    <p class="metric-value text-sky-700">{{ avg_score }}</p>
+                    <span class="text-sm font-bold text-slate-400">分</span>
+                </div>
+                <p class="metric-desc">整体表现评估</p>
+            </div>
+        </div>
 
-                            <div class="text-right">
-                                <div class="font-black text-success text-sm">{{ s.total_score }}</div>
-                                <a href="/interview/summary/{{ s.id }}" class="text-[10px] text-primary hover:text-primary-focus font-bold uppercase tracking-wider">查看</a>
+        <div class="metric-card border-amber-100 bg-white/78">
+            <div class="metric-icon bg-amber-50 text-amber-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4m14 0h-4m2-2v4M9 14l2 2 4-4M7 21h10a2 2 0 002-2v-7a2 2 0 00-.586-1.414l-5-5A2 2 0 0012 5H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="metric-label">当前最高分</p>
+                <p class="metric-value text-amber-700">{{ (best_session.total_score or 0) if best_session else 0 }}</p>
+                <p class="metric-desc truncate">{{ best_session.user.truename if best_session else '暂无数据' }}</p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('routes.admin_capability_profile') }}" class="metric-card border-violet-100 bg-white/78 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-lg">
+            <div class="metric-icon bg-violet-50 text-violet-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="metric-label">分析入口</p>
+                <p class="text-xl font-black text-violet-700">能力画像</p>
+                <p class="metric-desc">查看班级能力分布</p>
+            </div>
+        </a>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div class="xl:col-span-8">
+            <div class="panel overflow-hidden">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">最新面试记录</h2>
+                        <p class="panel-subtitle">按完成时间倒序展示</p>
+                    </div>
+                    <a href="{{ url_for('routes.admin_interviews') }}" class="btn btn-sm btn-ghost text-teal-700 hover:bg-teal-50">
+                        全部记录
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table w-full" id="realtime-table">
+                        <thead>
+                            <tr class="text-xs uppercase tracking-wide text-slate-400">
+                                <th class="min-w-[13rem] pl-6">学生</th>
+                                <th class="min-w-[10rem]">归属</th>
+                                <th class="min-w-[12rem]">面试岗位</th>
+                                <th class="min-w-[7rem]">得分</th>
+                                <th class="min-w-[8rem]">时间</th>
+                                <th class="pr-6 text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sessions %}
+                            {% set score = s.total_score or 0 %}
+                            <tr data-session-row class="group">
+                                <td class="pl-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="avatar placeholder">
+                                            {% set style_class = avatar_styles[(s.user.id) % 5] %}
+                                            <div class="{{ style_class }} h-10 w-10 rounded-full grid place-items-center">
+                                                <span class="text-sm font-black">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="truncate text-sm font-extrabold text-slate-700 group-hover:text-teal-700">{{ s.user.truename }}</div>
+                                            <div class="truncate text-xs text-slate-400">{{ s.user.student_id or '未填写学号' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="max-w-[11rem]">
+                                        <div class="truncate text-xs font-bold text-slate-600">{{ s.user.department or '未设置系部' }}</div>
+                                        <div class="truncate text-xs text-slate-400">{{ s.user.class_name or '未设置班级' }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="max-w-[14rem] truncate text-sm font-bold text-slate-700">{{ s.target_role or '通用面试' }}</div>
+                                    <div class="text-xs text-slate-400">{{ s.difficulty or '默认难度' }}</div>
+                                </td>
+                                <td>
+                                    {% if score >= 85 %}
+                                        <span class="score-pill bg-emerald-50 text-emerald-700 border-emerald-100">{{ score }} 分</span>
+                                    {% elif score >= 60 %}
+                                        <span class="score-pill bg-amber-50 text-amber-700 border-amber-100">{{ score }} 分</span>
+                                    {% else %}
+                                        <span class="score-pill bg-rose-50 text-rose-700 border-rose-100">{{ score }} 分</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-slate-500">
+                                    <div class="font-mono font-bold">{{ s.start_time.strftime('%m-%d %H:%M') }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ s.start_time | time_ago }}</div>
+                                </td>
+                                <td class="pr-6 text-right">
+                                    <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-outline border-slate-200 bg-white/70 text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700">
+                                        查看
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="py-14 text-center">
+                                    <div class="mx-auto flex max-w-sm flex-col items-center">
+                                        <div class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m0 0l-3-3m3 3l-3 3M5 5h8a2 2 0 012 2v1M5 5a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-1" />
+                                            </svg>
+                                        </div>
+                                        <p class="font-bold text-slate-600">暂无面试记录</p>
+                                        <p class="mt-1 text-sm text-slate-400">学生完成面试后会出现在这里。</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagination-controls" class="flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-slate-50/50 p-4"></div>
+            </div>
+        </div>
+
+        <aside class="space-y-6 xl:col-span-4">
+            <div class="panel overflow-hidden">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">优秀表现 Top 5</h2>
+                        <p class="panel-subtitle">按单场得分排序</p>
+                    </div>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                    {% for s in top_students %}
+                    {% set score = s.total_score or 0 %}
+                    <a href="/interview/summary/{{ s.id }}" class="top-row group">
+                        <div class="rank-badge
+                            {% if loop.index == 1 %}bg-amber-50 text-amber-700 border-amber-100
+                            {% elif loop.index == 2 %}bg-slate-100 text-slate-600 border-slate-200
+                            {% elif loop.index == 3 %}bg-teal-50 text-teal-700 border-teal-100
+                            {% else %}bg-white text-slate-400 border-slate-100{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="avatar placeholder">
+                            {% set style_class = avatar_styles[(s.user.id) % 5] %}
+                            <div class="{{ style_class }} h-9 w-9 rounded-full grid place-items-center">
+                                <span class="text-xs font-black">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
                             </div>
                         </div>
-                        {% else %}
-                        <div class="p-8 text-center text-base-content/50 text-sm">暂无面试数据</div>
-                        {% endfor %}
-                    </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="truncate text-sm font-extrabold text-slate-700 group-hover:text-teal-700">{{ s.user.truename }}</div>
+                            <div class="truncate text-xs text-slate-400">{{ s.target_role or '通用面试' }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-black text-slate-800">{{ score }}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Score</div>
+                        </div>
+                    </a>
+                    {% else %}
+                    <div class="px-6 py-12 text-center text-sm font-medium text-slate-400">暂无排名数据</div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Sessions -->
-        <div class="lg:col-span-2">
-            <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
-                <div class="card-body p-0">
-                    <div class="p-5 border-b border-base-200 bg-base-200/50 flex justify-between items-center">
-                        <h3 class="font-bold text-base-content flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            实时面试流水
-                        </h3>
-                        <span class="badge badge-ghost text-xs font-normal">最近动态</span>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="table table-zebra w-full" id="realtime-table">
-                            <thead class="text-base-content/60 bg-base-100 border-b border-base-200">
-                                <tr>
-                                    <th class="pl-6 font-medium">学生信息</th>
-                                    <th class="font-medium">归属</th>
-                                    <th class="font-medium">岗位 & 得分</th>
-                                    <th class="font-medium">时间</th>
-                                    <th class="pr-6 text-right font-medium">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-base-content/80">
-                                {% for s in sessions %}
-                                <tr class="group hover:bg-base-200/50 transition-colors">
-                                    <td class="pl-6">
-                                        <div class="flex items-center gap-3">
-                                            <div class="avatar placeholder">
-                                                {% set style_class = avatar_styles[(s.user.id) % 4] %}
-                                                <div class="{{ style_class }} rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
-                                                    <span class="text-xs font-bold">{{ s.user.truename[0] if s.user.truename else '无' }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="font-bold">{{ s.user.truename }}</div>
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="flex flex-col">
-                                            <span class="text-xs font-bold text-base-content/70">{{ s.user.department }}</span>
-                                            <span class="text-xs text-base-content/50">{{ s.user.class_name }}</span>
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="font-medium text-sm mb-1">{{ s.target_role }}</div>
-                                        {% if s.total_score >= 85 %}
-                                            <span class="badge badge-sm badge-success text-white font-bold border-none">{{ s.total_score }}分</span>
-                                        {% elif s.total_score >= 60 %}
-                                            <span class="badge badge-sm badge-warning text-white font-bold border-none">{{ s.total_score }}分</span>
-                                        {% else %}
-                                            <span class="badge badge-sm badge-error text-white font-bold border-none">{{ s.total_score }}分</span>
-                                        {% endif %}
-                                    </td>
-
-                                    <td class="text-base-content/50 text-xs font-mono">
-                                        <div>{{ s.start_time.strftime('%m-%d %H:%M') }}</div>
-                                        <div class="text-[10px] text-base-content/30">{{ s.start_time | time_ago }}</div>
-                                    </td>
-
-                                    <td class="pr-6 text-right">
-                                        <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-ghost text-secondary hover:bg-secondary/10">
-                                            查看
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center py-10 text-base-content/50">
-                                        暂无记录
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="pagination-controls" class="p-4 border-t border-base-200 flex justify-end gap-2 bg-base-200/30"></div>
+            <div class="panel p-5">
+                <h2 class="panel-title">快捷操作</h2>
+                <div class="mt-4 grid gap-3">
+                    <a href="{{ url_for('routes.teacher_students') }}" class="quick-link">
+                        <span class="quick-icon bg-teal-50 text-teal-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-sm font-extrabold text-slate-700">学生名册</span>
+                            <span class="block text-xs text-slate-400">查看学生详情与进度</span>
+                        </span>
+                    </a>
+                    <a href="{{ url_for('routes.admin_interviews') }}" class="quick-link">
+                        <span class="quick-icon bg-sky-50 text-sky-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 9h6M9 13h4m-7 8h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-sm font-extrabold text-slate-700">面试流水</span>
+                            <span class="block text-xs text-slate-400">筛查最近面试记录</span>
+                        </span>
+                    </a>
+                    <a href="{{ url_for('routes.admin_capability_profile') }}" class="quick-link">
+                        <span class="quick-icon bg-violet-50 text-violet-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-sm font-extrabold text-slate-700">能力画像</span>
+                            <span class="block text-xs text-slate-400">定位班级能力短板</span>
+                        </span>
+                    </a>
                 </div>
             </div>
-        </div>
-    </div>
+        </aside>
+    </section>
 </div>
 
-<script>
-    // 1. 日期显示
-    const dateEl = document.getElementById('current-date');
-    const now = new Date();
-    dateEl.innerText = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+<style>
+    .dashboard-shell {
+        color: #1e293b;
+    }
 
-    // 2. 分页逻辑
+    .dashboard-hero,
+    .panel,
+    .metric-card {
+        backdrop-filter: blur(18px) saturate(145%);
+        -webkit-backdrop-filter: blur(18px) saturate(145%);
+    }
+
+    .metric-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-height: 7.25rem;
+        border-width: 1px;
+        border-radius: 1.25rem;
+        padding: 1.25rem;
+        box-shadow: 0 18px 38px -30px rgba(15, 23, 42, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    }
+
+    .metric-icon,
+    .quick-icon {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        border-radius: 1rem;
+    }
+
+    .metric-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #64748b;
+    }
+
+    .metric-value {
+        margin-top: 0.15rem;
+        font-size: 2rem;
+        line-height: 1;
+        font-weight: 900;
+    }
+
+    .metric-desc {
+        margin-top: 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+    }
+
+    .panel {
+        border: 1px solid rgba(226, 232, 240, 0.96);
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 18px 38px -30px rgba(15, 23, 42, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1.25rem 1.5rem;
+        background: rgba(248, 250, 252, 0.62);
+    }
+
+    .panel-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #1e293b;
+    }
+
+    .panel-subtitle {
+        margin-top: 0.2rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+    }
+
+    .score-pill {
+        display: inline-flex;
+        min-width: 4.5rem;
+        justify-content: center;
+        border-width: 1px;
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 900;
+    }
+
+    .top-row,
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        transition: background-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .top-row {
+        padding: 0.95rem 1.25rem;
+    }
+
+    .top-row:hover,
+    .quick-link:hover {
+        background: rgba(20, 184, 166, 0.07);
+    }
+
+    .rank-badge {
+        display: grid;
+        width: 1.9rem;
+        height: 1.9rem;
+        place-items: center;
+        flex-shrink: 0;
+        border-width: 1px;
+        border-radius: 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 900;
+    }
+
+    .quick-link {
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 0.85rem;
+    }
+
+    .quick-link:hover {
+        transform: translateY(-1px);
+        border-color: #99f6e4;
+    }
+
+    .quick-icon {
+        width: 2.35rem;
+        height: 2.35rem;
+    }
+
+    @media (max-width: 640px) {
+        .panel-header {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .metric-card {
+            min-height: 6.5rem;
+            padding: 1rem;
+        }
+    }
+</style>
+
+<script>
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) {
+        const now = new Date();
+        dateEl.innerText = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         const table = document.getElementById('realtime-table');
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
         const controls = document.getElementById('pagination-controls');
-        const rowsPerPage = 5; 
+        if (!table || !controls) return;
 
-        if (rows.length === 0 || rows.length <= rowsPerPage) {
+        const rows = Array.from(table.querySelectorAll('tbody tr[data-session-row]'));
+        const rowsPerPage = 6;
+
+        if (rows.length <= rowsPerPage) {
             controls.style.display = 'none';
             return;
         }
@@ -228,8 +468,8 @@
         let currentPage = 1;
 
         function showPage(page) {
-            currentPage = page;
-            const start = (page - 1) * rowsPerPage;
+            currentPage = Math.min(Math.max(page, 1), pageCount);
+            const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
 
             rows.forEach((row, index) => {
@@ -239,29 +479,24 @@
             renderControls();
         }
 
+        function makeButton(label, disabled, active, onClick) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `btn btn-sm ${active ? 'btn-primary text-white' : 'btn-ghost'} ${disabled ? 'btn-disabled' : ''}`;
+            button.innerText = label;
+            button.onclick = onClick;
+            return button;
+        }
+
         function renderControls() {
             controls.innerHTML = '';
+            controls.appendChild(makeButton('上一页', currentPage === 1, false, () => showPage(currentPage - 1)));
 
-            const prevBtn = document.createElement('button');
-            prevBtn.className = `btn btn-sm ${currentPage === 1 ? 'btn-disabled' : 'btn-ghost'}`;
-            prevBtn.innerText = '上一页';
-            prevBtn.onclick = () => showPage(currentPage - 1);
-            controls.appendChild(prevBtn);
-
-            for (let i = 1; i <= pageCount; i++) {
-                const btn = document.createElement('button');
-                const activeClass = i === currentPage ? 'btn-active btn-primary text-white' : 'btn-ghost';
-                btn.className = `btn btn-sm ${activeClass}`;
-                btn.innerText = i;
-                btn.onclick = () => showPage(i);
-                controls.appendChild(btn);
+            for (let i = 1; i <= pageCount; i += 1) {
+                controls.appendChild(makeButton(String(i), false, i === currentPage, () => showPage(i)));
             }
 
-            const nextBtn = document.createElement('button');
-            nextBtn.className = `btn btn-sm ${currentPage === pageCount ? 'btn-disabled' : 'btn-ghost'}`;
-            nextBtn.innerText = '下一页';
-            nextBtn.onclick = () => showPage(currentPage + 1);
-            controls.appendChild(nextBtn);
+            controls.appendChild(makeButton('下一页', currentPage === pageCount, false, () => showPage(currentPage + 1)));
         }
 
         showPage(1);
