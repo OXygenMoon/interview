@@ -37,6 +37,22 @@ def expire_stale_sessions(user_id):
     return len(stale)
 
 
+def reap_stuck_reports(user_id):
+    """把当前用户卡在 processing 过久的 session 标记为 failed（防 worker 崩溃后永久卡死）。"""
+    timeout = _cfg_int('report_timeout_minutes', 15)
+    cutoff = datetime.now() - timedelta(minutes=timeout)
+    stuck = InterviewSession.query.filter(
+        InterviewSession.user_id == user_id,
+        InterviewSession.status == 'processing',
+        InterviewSession.last_activity < cutoff,
+    ).all()
+    for s in stuck:
+        s.status = 'failed'
+    if stuck:
+        db.session.commit()
+    return len(stuck)
+
+
 def get_resumable_session(user_id):
     """返回当前用户可续接的 ongoing session（TTL 内仍存活），否则 None。"""
     expire_stale_sessions(user_id)
@@ -67,6 +83,7 @@ def get_cooldown_status(user_id):
     reason: ok / abandon_cooldown / complete_cooldown / review_required / has_ongoing
     """
     expire_stale_sessions(user_id)
+    reap_stuck_reports(user_id)
     last = InterviewSession.query.filter(
         InterviewSession.user_id == user_id,
     ).order_by(InterviewSession.last_activity.desc()).first()

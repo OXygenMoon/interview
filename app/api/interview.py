@@ -6,7 +6,6 @@ import os
 import random
 import time
 import uuid
-from threading import Thread
 
 
 # 使用相对导入，引用上一级 app 目录下的 db 和 models
@@ -414,9 +413,11 @@ def visual_feedback(session_id):
         return jsonify({'error': str(e)}), 500
 
 
-def background_report_task(app, session_id):
-    """后台线程：执行耗时的 AI 分析任务"""
-    with app.app_context():  # 必须手动推入应用上下文，否则无法访问数据库
+def background_report_task(session_id):
+    """生成面试报告（RQ 任务 / Thread 通用入口，自建 app 上下文）。"""
+    from .. import create_app
+    app = create_app()
+    with app.app_context():  # 独立上下文，RQ worker 进程与 Thread 回退都适用
         try:
             print(f"⏳ [后台任务] 开始为 Session {session_id} 生成报告...")
             session = InterviewSession.query.get(session_id)
@@ -484,22 +485,50 @@ def finish_session(session_id):
         session.end_time = datetime.now()
         db.session.commit()
 
-        # 2. 启动后台线程
-        # 注意：必须获取真实的 app 对象传给线程，current_app 是代理对象，线程中无法直接使用
-        app = current_app._get_current_object()
-        thread = Thread(target=background_report_task, args=(app, session_id))
-        thread.start()
+        # 2. 入队报告生成任务（RQ 优先，无 Redis 回退 Thread）
+        from ..services.report_queue import enqueue_report
+        job = enqueue_report(session_id)
 
         # 3. 立即响应前端，不等待 AI
         return jsonify({
             'status': 'processing',
-            'message': '面试已结束，AI 正在后台生成报告，请稍后在列表中查看。'
+            'message': '面试已结束，AI 正在后台生成报告，请稍后在列表中查看。',
+            'report_backend': job.get('backend'),
+            'report_job_id': job.get('job_id')
         })
 
     except Exception as e:
         print(f"❌ Error: {e}")
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/<int:session_id>/report-status', methods=['GET'])
+@login_required
+def report_status(session_id):
+    """查询报告生成状态（前端轮询用）"""
+    session = InterviewSession.query.get_or_404(session_id)
+    if session.user_id != current_user.id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    return jsonify({
+        'session_id': session.id,
+        'status': session.status,  # processing / completed / failed / ...
+        'total_score': session.total_score,
+        'has_report': session.status == 'completed' and bool(session.summary_comment),
+    })
+
+
+@api_bp.route('/processing-statuses', methods=['GET'])
+@login_required
+def processing_statuses():
+    """返回当前用户处于 processing 的 session（首页自动轮询刷新用）"""
+    from ..utils.session_state import reap_stuck_reports, expire_stale_sessions
+    reap_stuck_reports(current_user.id)
+    expire_stale_sessions(current_user.id)
+    sessions = InterviewSession.query.filter_by(
+        user_id=current_user.id, status='processing'
+    ).with_entities(InterviewSession.id).all()
+    return jsonify({'processing': [s.id for s in sessions]})
 
 
 @api_bp.route('/random/question', methods=['GET'])

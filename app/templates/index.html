@@ -717,5 +717,25 @@ function startCountdown(seconds) {
     _cooldownTimer = setInterval(tick, 1000);
 }
 checkCooldownBanner();
+
+// 有"生成中"的报告时自动轮询，完成即刷新
+(async function pollProcessingReports() {
+    try {
+        const res = await fetch('/api/interview/processing-statuses');
+        const data = await res.json();
+        const ids = data.processing || [];
+        if (ids.length === 0) return;
+        const timer = setInterval(async () => {
+            try {
+                const r = await fetch('/api/interview/processing-statuses');
+                const d = await r.json();
+                if ((d.processing || []).length === 0) {
+                    clearInterval(timer);
+                    location.reload();
+                }
+            } catch (e) { /* 静默，下轮重试 */ }
+        }, 8000);
+    } catch (e) { /* 静默 */ }
+})();
 </script>
 {% endblock %}

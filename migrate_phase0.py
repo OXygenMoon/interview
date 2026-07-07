@@ -57,6 +57,7 @@ def main():
     seed_config(cur, "cooldown_abandon_minutes", "10", "中途放弃后再次开始面试的冷却罚时（分钟）")
     seed_config(cur, "cooldown_complete_minutes", "30", "完成一次面试后再次开始的冷却时长（分钟）")
     seed_config(cur, "cooldown_requires_review", "true", "完成后是否强制复盘上次报告才能开始下一次")
+    seed_config(cur, "report_timeout_minutes", "15", "报告生成卡在 processing 多久后判为 failed（分钟）")
 
     conn.commit()
     conn.close()

@@ -11,7 +11,7 @@ from . import db  # 确保导入 db 实例，用于 db.session.add/commit
 from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress, Company, Position, Resume, SystemConfig
 from .config import Config
 from .decorators import teacher_required, dept_head_required, admin_required
-from .utils.session_state import mark_reviewed
+from .utils.session_state import mark_reviewed, expire_stale_sessions, reap_stuck_reports
 
 bp = Blueprint('routes', __name__)
 
@@ -174,6 +174,10 @@ def home():
     # 1. 角色检查
     if current_user.role != 'student':
         return redirect(url_for('routes.dashboard'))
+
+    # 1.5 懒清理：过期 ongoing、卡死的 processing
+    expire_stale_sessions(current_user.id)
+    reap_stuck_reports(current_user.id)
 
     # 2. 查询历史记录 (修改点：包含 completed 和 processing)
     # 使用 .in_(['completed', 'processing']) 来同时获取两种状态

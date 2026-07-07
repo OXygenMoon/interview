@@ -16,6 +16,8 @@ Flask==3.1.2
 Flask-Login==0.6.3
 Flask-Migrate==4.1.0
 Flask-SQLAlchemy==3.1.1
+redis==8.0.1
+rq==2.10.0
 greenlet==3.3.2
 httplib2==0.20.2
 idna==3.3
