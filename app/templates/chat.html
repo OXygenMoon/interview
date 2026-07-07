@@ -486,6 +486,45 @@
      * 发送消息给 AI
      * @param {string|null} manualText - 如果不为空，则直接使用该文本（来自语音转文字）
      */
+    // ====== 流式 SSE：打字机 + 音频队列 ======
+    const _audioQueue = [];
+    let _audioPlaying = false;
+    function enqueueAudio(url) {
+        _audioQueue.push(url);
+        if (!_audioPlaying) _playNextAudio();
+    }
+    function _playNextAudio() {
+        if (_audioQueue.length === 0) { _audioPlaying = false; return; }
+        _audioPlaying = true;
+        const url = _audioQueue.shift();
+        const a = new Audio(url);
+        a.onended = _playNextAudio;
+        a.onerror = _playNextAudio;
+        a.play().catch(e => { console.warn('播放受限:', e); _playNextAudio(); });
+    }
+    function playAudioQueue(urls) {
+        _audioQueue.length = 0;
+        urls.forEach(u => _audioQueue.push(u));
+        if (!_audioPlaying) _playNextAudio();
+    }
+
+    function appendAiStreamingBubble() {
+        const html = `
+        <div class="chat chat-start fade-in-up">
+            <div class="chat-image avatar"><div class="w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-2"><svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg></div></div>
+            <div class="chat-header text-xs opacity-50 mb-1">AI 面试官</div>
+            <div class="chat-bubble bg-white text-stone-700 shadow-sm border border-stone-100 cursor-pointer hover:bg-stone-100 transition group">
+                <span class="ai-stream-content"></span>
+            </div>
+        </div>`;
+        chatContainer.insertAdjacentHTML('beforeend', html);
+        const wrap = chatContainer.lastElementChild;
+        const bubbleEl = wrap.querySelector('.chat-bubble');
+        const contentEl = wrap.querySelector('.ai-stream-content');
+        scrollToBottom();
+        return { contentEl, bubbleEl };
+    }
+
     async function sendMessage(manualText = null) {
         // 1. 确定要发送的文本
         const text = manualText || msgInput.value.trim();
@@ -509,24 +548,71 @@
             // 4.5 捕获当前视频帧
             const imageBase64 = captureFrame();
 
-            // 5. 请求 AI 回复 (复用旧接口)
+            // 5. SSE 流式请求
             const res = await fetch(`/api/interview/${sessionId}/chat`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    message: text,
-                    image: imageBase64 // 发送图片
-                })
+                body: JSON.stringify({ message: text, image: imageBase64 })
             });
-            const data = await res.json();
+
+            if (!res.ok) {
+                removeTypingIndicator();
+                appendMessage('ai', '（连接中断，请重试）');
+                return;
+            }
 
             removeTypingIndicator();
+            const { contentEl, bubbleEl } = appendAiStreamingBubble();
+            let fullText = '';
+            const audioUrls = [];
 
-            if (data.status === 'success') {
-                appendMessage('ai', data.ai_response, data.audio_url);
-                if (data.audio_url) playAudioResponse(data.audio_url);
-            } else {
-                appendMessage('ai', '（连接中断，请重试）');
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let idx;
+                while ((idx = buffer.indexOf('\n\n')) !== -1) {
+                    const raw = buffer.slice(0, idx);
+                    buffer = buffer.slice(idx + 2);
+                    // 提取 data: 行
+                    const payload = raw.split('\n')
+                        .map(l => l.trim())
+                        .filter(l => l.startsWith('data:'))
+                        .map(l => l.slice(5).trim())
+                        .join('');
+                    if (!payload) continue;
+                    let evt;
+                    try { evt = JSON.parse(payload); } catch (e) { continue; }
+
+                    if (evt.type === 'token') {
+                        fullText += evt.content;
+                        // 安全追加（文本节点，不解析 HTML）
+                        contentEl.appendChild(document.createTextNode(evt.content));
+                        scrollToBottom();
+                    } else if (evt.type === 'audio') {
+                        audioUrls.push(evt.url);
+                        enqueueAudio(evt.url);
+                    } else if (evt.type === 'error') {
+                        console.warn('SSE error:', evt.message);
+                    }
+                }
+            }
+
+            // 流结束后用 markdown 重渲染（兼顾排版与 XSS 防护）
+            if (fullText) {
+                contentEl.innerHTML = renderAiContent(fullText);
+            }
+            // 挂载点击重播
+            if (audioUrls.length) {
+                const icon = document.createElement('span');
+                icon.className = 'inline-flex items-center justify-center w-5 h-5 ml-2 rounded-full bg-stone-100 text-primary group-hover:bg-white align-middle';
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>';
+                contentEl.appendChild(icon);
+                bubbleEl.onclick = () => playAudioQueue(audioUrls);
             }
         } catch (e) {
             console.error(e);

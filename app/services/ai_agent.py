@@ -32,15 +32,8 @@ def parse_json_safely(text):
         return {}
 
 
-def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str=""):
-    """
-    调用硅基流动大模型生成回复
-    history_messages: 数据库 ChatMessage 列表
-    target_role: 岗位名称
-    context_info: 公司和岗位介绍信息
-    visual_context_str: 当前的视觉分析结果 (如: "表情:紧张, 视线:躲闪")
-    """
-
+def _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str):
+    """构建面试对话的消息列表（系统提示 + 历史）。供流式/非流式共用。"""
     difficulty_prompts = {
         "新手模式": (
             "你是一位非常友善、循循善诱的面试官。你的目标是帮助新手建立自信。"
@@ -55,10 +48,8 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
             "特点：1. 语气冷淡甚至带有质疑（如'你确定吗？'、'这听起来很普通'）。2. 频繁打断（模拟），对细节通过不断追问来挖掘漏洞。3. 不要给任何提示。"
         )
     }
-
     mode_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["标准模式"])
 
-    # 1. 系统提示词 (System Prompt) - 定义面试官人设
     system_prompt = f"""
     你现在是一位严厉但专业的面试官，正在面试【{target_role}】岗位。
     {mode_prompt}
@@ -77,37 +68,52 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
     请用口语化的风格交流，不要像个机器人。
     """
 
-
-    # 2. 构建消息历史
-    # 硅基流动的 DeepSeek 模型支持 System Message
     messages = [{"role": "system", "content": system_prompt}]
-
-    # 遍历数据库历史记录
     for msg in history_messages:
-        # 映射 sender: 'ai' -> 'assistant', 'user' -> 'user'
         role = "assistant" if msg.sender == "ai" else "user"
         messages.append({"role": role, "content": msg.content})
+    return messages
 
+
+def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str=""):
+    """非流式调用硅基流动大模型（保留用于兼容路径）。"""
+    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str)
     try:
-        # 3. 发起请求
         print(f"正在请求硅基流动模型: {Config.LLM_MODEL_NAME} ...")
-
         response = client.chat.completions.create(
             model=Config.LLM_MODEL_NAME,
             messages=messages,
-            temperature=0.7,  # 创造性
-            max_tokens=512,  # 限制回复长度
+            temperature=0.7,
+            max_tokens=512,
             top_p=0.9
         )
-
-        # 获取回复文本
-        ai_content = response.choices[0].message.content
-        return ai_content
+        return response.choices[0].message.content
 
     except Exception as e:
         print(f"❌ SiliconFlow API Error: {e}")
         # 错误处理：返回中性兜底，避免把 SDK 错误串写入历史并被 TTS 朗读
         return "抱歉，我刚才走神了，能再说一遍吗？"
+
+
+def stream_ai_response(history_messages, target_role="Python工程师", difficulty="标准模式", context_info="", visual_context_str=""):
+    """流式调用：逐 token yield 内容片段。出错抛异常，由调用方捕获并兜底。"""
+    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str)
+    print(f"正在流式请求硅基流动模型: {Config.LLM_MODEL_NAME} ...")
+    response = client.chat.completions.create(
+        model=Config.LLM_MODEL_NAME,
+        messages=messages,
+        temperature=0.7,
+        max_tokens=512,
+        top_p=0.9,
+        stream=True,
+    )
+    for chunk in response:
+        if not chunk.choices:
+            continue
+        delta = chunk.choices[0].delta
+        content = getattr(delta, "content", None)
+        if content:
+            yield content
 
 
 def evaluate_random_answer(question, answer):

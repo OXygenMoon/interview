@@ -270,113 +270,119 @@ def abandon(session_id):
 @api_bp.route('/<int:session_id>/chat', methods=['POST'])
 @login_required
 def chat(session_id):
-    """处理纯文本聊天消息 (支持视觉)"""
-    try:
-        data = request.get_json(silent=True) or {}
-        user_text = data.get('message')
-        user_image = data.get('image')
+    """处理纯文本聊天消息 (支持视觉) — SSE 流式响应：逐 token + 分句 TTS"""
+    from flask import Response, stream_with_context
+    from ..services.ai_agent import stream_ai_response
+    from ..services.tts_service import text_to_speech_chunks
 
-        if not user_text:
-            return jsonify({'error': 'Message is empty'}), 400
+    data = request.get_json(silent=True) or {}
+    user_text = data.get('message')
+    user_image = data.get('image')
 
-        # 1. 鉴权 + 获取 Session（必须在任何写操作之前）
-        session = InterviewSession.query.get_or_404(session_id)
-        if session.user_id != current_user.id and current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+    if not user_text:
+        return jsonify({'error': 'Message is empty'}), 400
 
-        # 仅进行中的面试可继续对话
-        if session.status != 'ongoing':
-            return jsonify({'error': '该面试已结束，无法继续对话'}), 400
+    # 1. 鉴权 + 获取 Session（必须在任何写操作之前）
+    session = InterviewSession.query.get_or_404(session_id)
+    if session.user_id != current_user.id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    if session.status != 'ongoing':
+        return jsonify({'error': '该面试已结束，无法继续对话'}), 400
 
-        # 刷新活跃时间（用于 10min TTL 判定）
-        session.last_activity = datetime.now()
-
-        # 2. 视觉分析 (如果有图片)
-        visual_context_str = ""
-        if user_image:
+    # 2. 视觉分析 (同步先做，结果拼到上下文)
+    visual_context_str = ""
+    if user_image:
+        try:
             visual_context_str = analyze_image(user_image)
+        except Exception as e:
+            print(f"Visual analyze error: {e}")
 
-        # 3. 保存用户消息
-        user_msg = ChatMessage(
-            session_id=session_id,
-            sender="user",
-            content=user_text,
-            timestamp=datetime.now(),
-            visual_context=visual_context_str
-        )
-        db.session.add(user_msg)
-        db.session.commit()
+    # 3. 保存用户消息 + 刷新活跃时间
+    user_msg = ChatMessage(
+        session_id=session_id,
+        sender="user",
+        content=user_text,
+        timestamp=datetime.now(),
+        visual_context=visual_context_str
+    )
+    db.session.add(user_msg)
+    session.last_activity = datetime.now()
+    db.session.commit()
 
-        # 4. 获取上下文
-        history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
+    # 4. 取上下文
+    history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
+    role = getattr(session, 'target_role', 'Python工程师')
+    difficulty = getattr(session, 'difficulty', '标准模式')
 
-        # 4. 调用 AI 大脑
-        role = getattr(session, 'target_role', 'Python工程师')
+    context_info = ""
+    if session.position_id:
+        from ..models import Position
+        pos = Position.query.get(session.position_id)
+        if pos:
+            if pos.company:
+                context_info += f"### 公司介绍：{pos.company.name}\n{pos.company.description}\n\n"
+            context_info += f"### 岗位介绍：{pos.name}\n{pos.description}"
+    if getattr(session, 'use_resume', False) and session.user.resume_text:
+        context_info += f"\n\n### 求职者简历\n{session.user.resume_text}"
 
-        # === ✅ 修改点 1：获取当前面试的难度模式 ===
-        difficulty = getattr(session, 'difficulty', '标准模式')
+    enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
+    audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
 
-        # === 构建上下文信息 ===
-        context_info = ""
-        if session.position_id:
-            from ..models import Position
-            pos = Position.query.get(session.position_id)
-            if pos:
-                if pos.company:
-                     context_info += f"### 公司介绍：{pos.company.name}\n{pos.company.description}\n\n"
-                context_info += f"### 岗位介绍：{pos.name}\n{pos.description}"
+    def sse(obj):
+        return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
-        # 5. 如果启用了简历，将简历拼接到 context_info
-        if getattr(session, 'use_resume', False) and session.user.resume_text:
-            context_info += f"\n\n### 求职者简历\n{session.user.resume_text}"
-
-        # === ✅ 修改点 2：将 difficulty 和 visual_context 传给 AI 服务 ===
-        ai_text = get_ai_response(
-            history,
-            target_role=role,
-            difficulty=difficulty,
-            context_info=context_info,
-            visual_context_str=visual_context_str
-        )
-
-        # 6. 生成语音 (TTS)
-        audio_url = None
-        
-        # 检查系统配置：是否启用了 TTS
-        enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
-        
-        if enable_tts:
+    def generate():
+        full_text = ""
+        audio_urls = []
+        try:
+            # ① 流式输出 AI token（打字机效果）
             try:
-                audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
-                # 传入 session 中保存的 voice_type
-                audio_filename = text_to_speech(ai_text, audio_dir, specific_voice=session.voice_type)
+                for token in stream_ai_response(
+                    history, target_role=role, difficulty=difficulty,
+                    context_info=context_info, visual_context_str=visual_context_str
+                ):
+                    full_text += token
+                    yield sse({'type': 'token', 'content': token})
+            except Exception as e:
+                print(f"❌ Stream AI Error: {e}")
+                if not full_text:
+                    full_text = "抱歉，我刚才走神了，能再说一遍吗？"
+                    yield sse({'type': 'token', 'content': full_text})
+                yield sse({'type': 'error', 'message': 'AI 响应中断，已兜底'})
 
-                if audio_filename:
-                    audio_url = url_for('static', filename=f'uploads/audio/{audio_filename}')
-            except Exception as tts_error:
-                print(f"TTS Generation Failed: {tts_error}")
-                # TTS 失败不应阻断流程，继续返回文字
+            # ② 流式 TTS：分句生成，逐片返回 URL，前端排队播放
+            if enable_tts and full_text:
+                try:
+                    for idx, fn in text_to_speech_chunks(full_text, audio_dir, specific_voice=session.voice_type):
+                        url = url_for('static', filename=f'uploads/audio/{fn}')
+                        audio_urls.append(url)
+                        yield sse({'type': 'audio', 'url': url, 'index': idx})
+                except Exception as e:
+                    print(f"TTS stream error: {e}")
 
-        # 5. 保存 AI 消息
-        ai_msg = ChatMessage(
-            session_id=session_id,
-            sender="ai",
-            content=ai_text,
-            audio_url=audio_url,
-            timestamp=datetime.now()
-        )
-        db.session.add(ai_msg)
-        db.session.commit()
+            # ③ 保存 AI 消息（完整文本 + 音频片段）
+            ai_msg = ChatMessage(
+                session_id=session_id,
+                sender="ai",
+                content=full_text,
+                audio_url=audio_urls[0] if audio_urls else None,
+                audio_urls=audio_urls if audio_urls else None,
+                timestamp=datetime.now()
+            )
+            db.session.add(ai_msg)
+            session.last_activity = datetime.now()
+            db.session.commit()
+            yield sse({'type': 'done', 'message_id': ai_msg.id})
+        except Exception as e:
+            print(f"❌ Chat stream error: {e}")
+            db.session.rollback()
+            yield sse({'type': 'error', 'message': str(e)})
 
-        return jsonify({
-            'status': 'success',
-            'ai_response': ai_text,
-            'audio_url': audio_url
-        })
-
-    except Exception as e:
-        print(f"Chat Error: {e}")
-        return jsonify({'error': str(e)}), 500
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
 
 
 

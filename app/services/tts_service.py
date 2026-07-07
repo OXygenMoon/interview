@@ -1,5 +1,6 @@
 import base64
 import json
+import re
 import uuid
 import requests
 import os
@@ -80,3 +81,45 @@ def text_to_speech(text, output_dir, specific_voice=None):
     except Exception as e:
         print(f"❌ TTS 系统异常: {e}")
         return None
+
+
+def split_text_for_tts(text, min_len=18, max_len=70):
+    """按句末标点/换行切分，过短则合并，过长则硬切。返回片段列表。"""
+    if not text:
+        return []
+    # 按句号/问号/叹号/换行后的位置切分
+    parts = re.split(r'(?<=[。！？!?…\n])', text)
+    chunks = []
+    buf = ""
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+        buf += p
+        if len(buf) >= min_len:
+            chunks.append(buf)
+            buf = ""
+    if buf:
+        chunks.append(buf)
+
+    # 过长硬切
+    final = []
+    for c in chunks:
+        while len(c) > max_len:
+            final.append(c[:max_len])
+            c = c[max_len:]
+        if c:
+            final.append(c)
+    return final or [text]
+
+
+def text_to_speech_chunks(text, output_dir, specific_voice=None):
+    """
+    分句流式 TTS：逐片生成并 yield (index, filename)。
+    失败的片段跳过（不影响整体）。用于 SSE 边生成边播放。
+    """
+    chunks = split_text_for_tts(text)
+    for i, chunk in enumerate(chunks):
+        fn = text_to_speech(chunk, output_dir, specific_voice)
+        if fn:
+            yield i, fn

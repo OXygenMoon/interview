@@ -47,6 +47,8 @@ def main():
     add_column(cur, "interview_sessions", "last_activity", "DATETIME")
     add_column(cur, "interview_sessions", "reviewed", "BOOLEAN DEFAULT 0")
     add_column(cur, "interview_sessions", "abandoned", "BOOLEAN DEFAULT 0")
+    # Phase 2：流式 TTS 多片段
+    add_column(cur, "chat_messages", "audio_urls", "TEXT")
 
     # 旧数据回填 last_activity = start_time，避免立即被判过期
     cur.execute("UPDATE interview_sessions SET last_activity = start_time WHERE last_activity IS NULL")

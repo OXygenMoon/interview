@@ -101,6 +101,7 @@ class ChatMessage(db.Model):
     sender = db.Column(db.String(10))
     content = db.Column(db.Text)
     audio_url = db.Column(db.String(200))
+    audio_urls = db.Column(db.JSON)  # 流式 TTS 的多片段 URL 列表
 
     is_good_response = db.Column(db.Boolean, default=False)
     suggestion = db.Column(db.Text)
