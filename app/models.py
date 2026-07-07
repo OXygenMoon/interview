@@ -76,7 +76,7 @@ class InterviewSession(db.Model):
 
     target_role = db.Column(db.String(50))
     difficulty = db.Column(db.String(20))
-    voice_type = db.Column(db.String(50), default='BV001_streaming')
+    voice_type = db.Column(db.String(50), default='zh_male_dayi_saturn_bigtts')
     use_resume = db.Column(db.Boolean, default=False)
 
     status = db.Column(db.String(20), default='ongoing')
@@ -85,6 +85,11 @@ class InterviewSession(db.Model):
     summary_comment = db.Column(db.Text)
     start_time = db.Column(db.DateTime, default=datetime.now)
     end_time = db.Column(db.DateTime)
+
+    # Phase 0：刷新保留 / 冷却系统 / 复盘门槛
+    last_activity = db.Column(db.DateTime, default=datetime.now)  # 最近一次互动（用于 10min TTL）
+    reviewed = db.Column(db.Boolean, default=False)  # 学生是否已查看本次报告（复盘门槛）
+    abandoned = db.Column(db.Boolean, default=False)  # 是否中途放弃（触发放弃罚时）
 
 
 class ChatMessage(db.Model):

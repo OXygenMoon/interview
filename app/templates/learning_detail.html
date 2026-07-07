@@ -196,8 +196,8 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4 pt-4">
-                {% if lesson.prev_id %}
-                <a href="{{ url_for('routes.learning_detail', material_id=lesson.prev_id) }}"
+                {% if prev_id %}
+                <a href="{{ url_for('routes.learning_detail', material_id=prev_id) }}"
                    class="btn btn-outline border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 h-14 rounded-2xl shadow-sm justify-start pl-6 group">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                     <div>
@@ -209,8 +209,8 @@
                 <div></div>
                 {% endif %}
 
-                {% if lesson.next_id %}
-                <a href="{{ url_for('routes.learning_detail', material_id=lesson.next_id) }}"
+                {% if next_id %}
+                <a href="{{ url_for('routes.learning_detail', material_id=next_id) }}"
                    class="btn btn-outline border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 h-14 rounded-2xl shadow-sm justify-end pr-6 group">
                     <div class="text-right">
                         <div class="text-[10px] text-slate-400 font-normal uppercase">Next</div>

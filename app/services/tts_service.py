@@ -28,7 +28,6 @@ def text_to_speech(text, output_dir, specific_voice=None):
         # 鉴权 Header (注意：官方示例只用了 Authorization)
         header = {"Authorization": f"Bearer;{Config.VOLC_ACCESS_TOKEN}"}
 
-        # final_voice = specific_voice if specific_voice else Config.VOLC_VOICE_TYPE
         final_voice = specific_voice if specific_voice else Config.VOLC_DEFAULT_VOICE
 
         # 3. 构造请求体 (完全照搬官方示例结构)
@@ -59,7 +58,7 @@ def text_to_speech(text, output_dir, specific_voice=None):
         }
 
         # 4. 发送请求
-        resp = requests.post(api_url, json=request_json, headers=header)
+        resp = requests.post(api_url, json=request_json, headers=header, timeout=(5, 30))
 
         # 5. 处理响应
         resp_data = resp.json()

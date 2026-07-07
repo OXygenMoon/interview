@@ -259,6 +259,15 @@
     const recordBtn = document.getElementById('record-btn');
     const recordingOverlay = document.getElementById('recording-overlay');
 
+    // 刷新保留：未发送的草稿存 sessionStorage，刷新后恢复
+    const DRAFT_KEY = 'interview_draft_' + sessionId;
+    if (sessionStorage.getItem(DRAFT_KEY)) {
+        msgInput.value = sessionStorage.getItem(DRAFT_KEY);
+    }
+    msgInput.addEventListener('input', () => {
+        sessionStorage.setItem(DRAFT_KEY, msgInput.value);
+    });
+
     let mediaRecorder = null;
     let audioChunks = [];
     let stream = null;
@@ -389,8 +398,23 @@
         if(chatContainer) chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[char]));
+    }
+
+    function renderAiContent(text) {
+        // 先转义 HTML，再用 marked 渲染 markdown（语法符号不受转义影响）
+        const safe = escapeHtml(text);
+        if (typeof marked !== 'undefined' && marked.parse) {
+            try { return marked.parse(safe); } catch (e) { return safe; }
+        }
+        return safe;
+    }
+
     function playAudioResponse(url) {
-        if (!url || url === 'None') return;
+        if (!url || url === 'None' || url === 'null' || url === 'undefined') return;
         new Audio(url).play().catch(e => console.warn("自动播放受限:", e));
     }
 
@@ -402,7 +426,7 @@
                 <div class="chat-image avatar"><div class="w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 p-2"><svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg></div></div>
                 <div class="chat-header text-xs opacity-50 mb-1">AI 面试官</div>
                 <div class="chat-bubble bg-white text-stone-700 shadow-sm border border-stone-100 cursor-pointer hover:bg-stone-100 transition group" onclick="playAudioResponse('${audioUrl}')">
-                    ${text}
+                    ${renderAiContent(text)}
                     ${ audioUrl ? '<span class="inline-flex items-center justify-center w-5 h-5 ml-2 rounded-full bg-stone-100 text-primary group-hover:bg-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg></span>' : '' }
                 </div>
             </div>`;
@@ -410,7 +434,7 @@
             html = `
             <div class="chat chat-end fade-in-up">
                 <div class="chat-header text-xs opacity-50 mb-1">我</div>
-                <div class="chat-bubble bg-primary text-white shadow-md">${text}</div>
+                <div class="chat-bubble bg-primary text-white shadow-md">${escapeHtml(text)}</div>
             </div>`;
         }
         chatContainer.insertAdjacentHTML('beforeend', html);
@@ -474,6 +498,7 @@
 
         // 3. 清理输入框状态
         msgInput.value = '';
+        sessionStorage.removeItem(DRAFT_KEY);
         msgInput.disabled = true;
         isProcessing = true;
 

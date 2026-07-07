@@ -52,6 +52,36 @@
 
                 <div class="divider"></div>
 
+                <h3 class="text-base font-bold text-slate-700 mb-3">面试节奏控制（冷却系统）</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-700">会话保留时长（分钟）</span></label>
+                        <input type="number" min="1" name="session_ttl_minutes" class="input input-bordered w-full" value="{{ cooldown.session_ttl_minutes }}" />
+                        <p class="text-xs text-slate-400 mt-1">进行中的面试无活动多久后自动判为放弃（expired），默认 10。</p>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-700">放弃罚时（分钟）</span></label>
+                        <input type="number" min="0" name="cooldown_abandon_minutes" class="input input-bordered w-full" value="{{ cooldown.cooldown_abandon_minutes }}" />
+                        <p class="text-xs text-slate-400 mt-1">中途放弃后再次开始面试的冷却时长，默认 10。</p>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-slate-700">完成冷却（分钟）</span></label>
+                        <input type="number" min="0" name="cooldown_complete_minutes" class="input input-bordered w-full" value="{{ cooldown.cooldown_complete_minutes }}" />
+                        <p class="text-xs text-slate-400 mt-1">完成一次面试后再次开始的冷却，默认 30，鼓励先复盘。</p>
+                    </div>
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-4">
+                            <input type="checkbox" name="cooldown_requires_review" class="toggle toggle-primary" {{ 'checked' if cooldown.cooldown_requires_review else '' }} />
+                            <div>
+                                <span class="label-text font-bold text-slate-700">强制复盘后才能再面</span>
+                                <div class="text-xs text-slate-400 mt-1">勾选后，完成面试须先查看上次报告才能开始下一次。</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
                 <div class="flex justify-end">
                     <button type="submit" class="btn btn-primary text-white gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>

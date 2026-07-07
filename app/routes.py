@@ -11,6 +11,7 @@ from . import db  # 确保导入 db 实例，用于 db.session.add/commit
 from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress, Company, Position, Resume, SystemConfig
 from .config import Config
 from .decorators import teacher_required, dept_head_required, admin_required
+from .utils.session_state import mark_reviewed
 
 bp = Blueprint('routes', __name__)
 
@@ -76,19 +77,39 @@ def admin_settings():
         # 处理开关设置
         enable_tts = request.form.get('enable_tts') == 'on'
         enable_video = request.form.get('enable_video') == 'on'
-        
+
         # 保存设置
         SystemConfig.set('enable_tts', 'true' if enable_tts else 'false', '是否启用面试官语音输出 (TTS)')
         SystemConfig.set('enable_video', 'true' if enable_video else 'false', '是否启用视频面试 (摄像头与视觉分析)')
-        
+
+        # 冷却系统配置
+        try:
+            ttl = int(request.form.get('session_ttl_minutes', 10))
+            abandon_cd = int(request.form.get('cooldown_abandon_minutes', 10))
+            complete_cd = int(request.form.get('cooldown_complete_minutes', 30))
+        except ValueError:
+            ttl, abandon_cd, complete_cd = 10, 10, 30
+        requires_review = request.form.get('cooldown_requires_review') == 'on'
+
+        SystemConfig.set('session_ttl_minutes', str(max(1, ttl)), 'ongoing 面试无活动多久后判为 expired（分钟）')
+        SystemConfig.set('cooldown_abandon_minutes', str(max(0, abandon_cd)), '中途放弃后再次开始面试的冷却罚时（分钟）')
+        SystemConfig.set('cooldown_complete_minutes', str(max(0, complete_cd)), '完成一次面试后再次开始的冷却时长（分钟）')
+        SystemConfig.set('cooldown_requires_review', 'true' if requires_review else 'false', '完成后是否强制复盘上次报告才能开始下一次')
+
         flash('系统设置已更新', 'success')
         return redirect(url_for('routes.admin_settings'))
-    
+
     # 读取设置
     enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
     enable_video = SystemConfig.get('enable_video', 'true') == 'true'
-    
-    return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video)
+    cooldown = {
+        'session_ttl_minutes': SystemConfig.get('session_ttl_minutes', '10'),
+        'cooldown_abandon_minutes': SystemConfig.get('cooldown_abandon_minutes', '10'),
+        'cooldown_complete_minutes': SystemConfig.get('cooldown_complete_minutes', '30'),
+        'cooldown_requires_review': SystemConfig.get('cooldown_requires_review', 'true') == 'true',
+    }
+
+    return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video, cooldown=cooldown)
 
 
 @bp.route('/admin/random_questions', methods=['GET', 'POST'])
@@ -399,6 +420,10 @@ def interview_summary(session_id):
     if not (is_owner or is_teacher_allowed):
         flash("您无权访问该报告", "error")
         return redirect(url_for('routes.home'))
+
+    # 学生本人查看已完成的报告 → 标记已复盘（满足冷却系统的复盘门槛）
+    if is_owner and session.status == 'completed':
+        mark_reviewed(session)
 
     messages = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
 
@@ -841,9 +866,10 @@ def admin_organization():
 
 @bp.route('/api/admin/department/add', methods=['POST'])
 @login_required
+@admin_required
 def add_department():
     """API: 新增系部"""
-    name = request.json.get('name', '').strip()
+    name = (request.get_json(silent=True) or {}).get('name', '').strip()
     if not name: return jsonify({'error': '名称不能为空'}), 400
 
     if Department.query.filter_by(name=name).first():
@@ -856,6 +882,7 @@ def add_department():
 
 @bp.route('/api/admin/department/delete/<int:dept_id>', methods=['POST'])
 @login_required
+@admin_required
 def delete_department(dept_id):
     """API: 删除系部"""
     dept = Department.query.get_or_404(dept_id)
@@ -872,9 +899,10 @@ def delete_department(dept_id):
 
 @bp.route('/api/admin/class/add', methods=['POST'])
 @login_required
+@admin_required
 def add_class():
     """API: 新增班级 (支持逗号分隔批量创建)"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     dept_id = data.get('dept_id')
     class_names_str = data.get('class_names', '').strip()
 
@@ -902,6 +930,7 @@ def add_class():
 
 @bp.route('/api/admin/class/delete/<int:class_id>', methods=['POST'])
 @login_required
+@admin_required
 def delete_class(class_id):
     """API: 删除班级 (级联删除学生和面试记录)"""
     cls = SchoolClass.query.get_or_404(class_id)
@@ -923,8 +952,12 @@ def delete_class(class_id):
             ChatMessage.query.filter_by(session_id=session.id).delete()
             # 删除 Session
             db.session.delete(session)
-        
-        # 3. 删除学生账号
+
+        # 3. 删除学生的简历与学习进度（避免外键孤儿）
+        Resume.query.filter_by(user_id=student.id).delete()
+        UserLearningProgress.query.filter_by(user_id=student.id).delete()
+
+        # 4. 删除学生账号
         db.session.delete(student)
 
     # 4. 删除班级
@@ -935,6 +968,7 @@ def delete_class(class_id):
 
 @bp.route('/api/admin/student/template')
 @login_required
+@admin_required
 def download_student_template():
     """API: 下载学生导入模板 (Excel)"""
     # 创建一个空的 DataFrame 并包含表头
@@ -951,6 +985,7 @@ def download_student_template():
 
 @bp.route('/api/admin/student/import', methods=['POST'])
 @login_required
+@admin_required
 def import_students():
     """API: 批量导入学生 (Excel)"""
     if 'file' not in request.files:
@@ -1039,8 +1074,9 @@ def delete_student_api(user_id):
             ChatMessage.query.filter_by(session_id=session.id).delete()
             # 删除 Session
             db.session.delete(session)
-        
-        # 2. 删除学习进度
+
+        # 2. 删除简历与学习进度（避免外键孤儿）
+        Resume.query.filter_by(user_id=student.id).delete()
         UserLearningProgress.query.filter_by(user_id=student.id).delete()
 
         # 3. 删除学生账号
@@ -1084,7 +1120,7 @@ def ability_radar():
     for s in my_sessions:
         # 趋势图：最近 10 次
         trend_labels.append(s.start_time.strftime('%m-%d'))
-        trend_data.append(s.total_score)
+        trend_data.append(s.total_score if s.total_score is not None else 0)
 
         # 雷达图聚合
         if s.radar_data:
@@ -1154,7 +1190,7 @@ def analyze_radar_ai():
     """
     API: 调用 AI 对雷达图数据进行深度诊断
     """
-    data = request.json
+    data = request.get_json(silent=True) or {}
     my_scores = data.get('my_scores', [])  # [70, 80, ...]
     dimensions = data.get('dimensions', [])  # ["专业技能", ...]
 
@@ -1323,7 +1359,7 @@ def admin_learning():
 @login_required
 @teacher_required
 def add_learning_category():
-    name = request.json.get('name')
+    name = (request.get_json(silent=True) or {}).get('name')
     if not name: return jsonify({'error': '名称不能为空'}), 400
 
     # 简单的自动排序逻辑
@@ -1339,6 +1375,10 @@ def add_learning_category():
 @teacher_required
 def delete_learning_category(cat_id):
     cat = LearningCategory.query.get_or_404(cat_id)
+    # 清理分类下所有材料的学习进度（避免外键孤儿）
+    material_ids = [m.id for m in cat.materials]
+    if material_ids:
+        UserLearningProgress.query.filter(UserLearningProgress.material_id.in_(material_ids)).delete(synchronize_session=False)
     db.session.delete(cat)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -1348,7 +1388,7 @@ def delete_learning_category(cat_id):
 @login_required
 @teacher_required
 def add_learning_material():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     category_id = data.get('category_id')
     title = data.get('title')
     m_type = data.get('type')  # article 或 quiz
@@ -1380,6 +1420,8 @@ def add_learning_material():
 @teacher_required
 def delete_learning_material(m_id):
     mat = LearningMaterial.query.get_or_404(m_id)
+    # 清理学生的学习进度（避免外键孤儿）
+    UserLearningProgress.query.filter_by(material_id=mat.id).delete()
     db.session.delete(mat)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -1423,6 +1465,17 @@ def learning_detail(material_id):
     # 获取同分类下的所有课程，用于生成侧边栏目录
     siblings = LearningMaterial.query.filter_by(category_id=category.id).order_by(LearningMaterial.sort_order).all()
 
+    # 计算上一节/下一节
+    prev_id = None
+    next_id = None
+    for idx, m in enumerate(siblings):
+        if m.id == material.id:
+            if idx > 0:
+                prev_id = siblings[idx - 1].id
+            if idx < len(siblings) - 1:
+                next_id = siblings[idx + 1].id
+            break
+
     # 获取我的完成状态
     progress = UserLearningProgress.query.filter_by(user_id=current_user.id, material_id=material.id).first()
     is_completed = (progress is not None)
@@ -1444,7 +1497,9 @@ def learning_detail(material_id):
                            category=category,
                            siblings=siblings,
                            is_completed=is_completed,
-                           my_done_ids=my_done_ids)
+                           my_done_ids=my_done_ids,
+                           prev_id=prev_id,
+                           next_id=next_id)
 
 
 @bp.route('/api/learning/complete/<int:material_id>', methods=['POST'])
@@ -1467,7 +1522,7 @@ def complete_learning_material(material_id):
 
     # 2. 测验类型：需要判分
     elif material.material_type == 'quiz':
-        user_answers = request.json.get('answers', {})  # {'0': 'A', '1': 'B'}
+        user_answers = (request.get_json(silent=True) or {}).get('answers', {})  # {'0': 'A', '1': 'B'}
         questions = json.loads(material.content)
 
         correct_count = 0

@@ -48,7 +48,7 @@ def upload_resume():
 @login_required
 def save_resume():
     """保存简历文本，并自动提取标签"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     text = data.get('text', '').strip()
 
     if not text:
@@ -73,7 +73,7 @@ def save_resume():
 @login_required
 def anonymize_resume():
     """调用 AI 进行隐私脱敏 (想法三)"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     text = data.get('text', '')
 
     try:

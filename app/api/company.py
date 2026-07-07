@@ -53,7 +53,7 @@ def create_company():
     if not check_admin():
         return jsonify({'error': 'Unauthorized'}), 403
     
-    data = request.json
+    data = request.get_json(silent=True) or {}
     name = data.get('name')
     description = data.get('description', '')
     
@@ -73,7 +73,7 @@ def update_company(company_id):
         return jsonify({'error': 'Unauthorized'}), 403
         
     company = Company.query.get_or_404(company_id)
-    data = request.json
+    data = request.get_json(silent=True) or {}
     
     company.name = data.get('name', company.name)
     company.description = data.get('description', company.description)
@@ -102,7 +102,7 @@ def create_position(company_id):
         return jsonify({'error': 'Unauthorized'}), 403
         
     company = Company.query.get_or_404(company_id)
-    data = request.json
+    data = request.get_json(silent=True) or {}
     name = data.get('name')
     description = data.get('description', '')
     
@@ -122,7 +122,7 @@ def update_position(position_id):
         return jsonify({'error': 'Unauthorized'}), 403
         
     position = Position.query.get_or_404(position_id)
-    data = request.json
+    data = request.get_json(silent=True) or {}
     
     position.name = data.get('name', position.name)
     position.description = data.get('description', position.description)

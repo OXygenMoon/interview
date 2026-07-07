@@ -7,8 +7,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # === 硅基流动 (SiliconFlow) 配置 ===
-    # 1. 填入你在官网申请的 Key
-    LLM_API_KEY = "sk-oyiwowqyddmemzkgjgkyajwkpkbrestyrxmhzipwveifoipx"
+    # 密钥从环境变量读取（本地放 .env，生产用 systemd Environment=），勿硬编码进源码
+    LLM_API_KEY = os.environ.get('LLM_API_KEY')
 
     # 2. 硅基流动的 Base URL (固定写法)
     LLM_BASE_URL = "https://api.siliconflow.cn/v1"
@@ -22,9 +22,9 @@ class Config:
     VLM_MODEL_NAME = "Qwen/Qwen2-VL-72B-Instruct"
 
     # === 火山引擎 TTS 配置 (豆包同款) ===
-    # 请填入您在火山引擎控制台获取的信息
-    VOLC_APPID = "7407227094"  # 您的 AppID
-    VOLC_ACCESS_TOKEN = "Y1EtUCSI2GL0x612i-_uO-tGF_8mqOrn"  # 您的 Access Token
+    # 密钥从环境变量读取
+    VOLC_APPID = os.environ.get('VOLC_APPID')
+    VOLC_ACCESS_TOKEN = os.environ.get('VOLC_ACCESS_TOKEN')
 
     # Cluster ID 通常是 'volcano_tts'，如果控制台显示不一样请修改
     VOLC_CLUSTER_ID = "volcano_tts"

@@ -37,40 +37,10 @@ def login():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('routes.home'))
-
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        truename = request.form.get('truename')
-
-        # === 新增字段 ===
-        role = request.form.get('role')
-        department = request.form.get('department')
-        class_name = request.form.get('class_name')
-        # ===============
-
-        if User.query.filter_by(username=username).first():
-            flash('账号已存在')
-            return redirect(url_for('auth.register'))
-
-        new_user = User(
-            username=username,
-            truename=truename,
-            role=role,
-            department=department,
-            class_name=class_name
-        )
-        new_user.set_password(password)
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('注册成功！请登录。')
-        return redirect(url_for('auth.login'))
-
-    return render_template('register.html')
+    # 注册接口已关闭：账号统一由管理员通过 Excel 导入或后台创建。
+    # 如需恢复自助注册，把下方两行替换回原逻辑即可。
+    flash('注册已关闭，请联系管理员开通账号。')
+    return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/logout')

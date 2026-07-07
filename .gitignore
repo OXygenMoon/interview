@@ -1,3 +1,16 @@
 *.db
 __pycache__/
 *.pyc
+
+# 敏感配置（含 API 密钥），不提交（.env.example 模板可提交）
+.env
+.env.*
+!.env.example
+
+# resume-builder 的环境文件
+resume-builder/frontend/.env*
+resume-builder/frontend/src/.env*
+
+# 本地运行态
+.local/
+server.log

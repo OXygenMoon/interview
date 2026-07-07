@@ -20,6 +20,8 @@ from ..services.ai_agent import get_ai_response, generate_interview_report, tran
 from ..services.tts_service import text_to_speech
 # 引入文件解析服务 (解析简历用)
 from ..utils.file_parser import extract_text_from_file
+# 面试会话状态：10min TTL 续接 / 冷却系统 / 复盘门槛
+from ..utils.session_state import get_resumable_session, mark_abandoned, get_cooldown_status
 
 def resume_json_to_text(data):
     """将结构化简历转换为文本"""
@@ -138,6 +140,11 @@ def create_session():
     创建一个新的面试会话
     """
     try:
+        # 0. 冷却系统守卫：放弃罚时 / 完成冷却 / 复盘门槛
+        cd = get_cooldown_status(current_user.id)
+        if not cd['can_start']:
+            return jsonify({'error': 'cooldown', 'cooldown': cd}), 423
+
         # 1. 获取表单数据
         target_role = request.form.get('target_role', 'Python工程师')
         # 如果前端没传音色，默认用配置里的默认值，或者这里写死一个兜底
@@ -225,39 +232,84 @@ def create_session():
         return jsonify({'error': str(e)}), 500
 
 
+@api_bp.route('/cooldown-status', methods=['GET'])
+@login_required
+def cooldown_status():
+    """查询当前用户能否开始新面试（冷却/复盘状态）"""
+    return jsonify(get_cooldown_status(current_user.id))
+
+
+@api_bp.route('/resumable', methods=['GET'])
+@login_required
+def resumable():
+    """查询当前用户是否有可续接的进行中面试（10min TTL 内）"""
+    s = get_resumable_session(current_user.id)
+    if not s:
+        return jsonify({'has_session': False})
+    return jsonify({
+        'has_session': True,
+        'session_id': s.id,
+        'target_role': s.target_role,
+        'start_time': s.start_time.strftime('%Y-%m-%d %H:%M') if s.start_time else None,
+        'last_activity': s.last_activity.strftime('%Y-%m-%d %H:%M') if s.last_activity else None,
+    })
+
+
+@api_bp.route('/<int:session_id>/abandon', methods=['POST'])
+@login_required
+def abandon(session_id):
+    """学生主动放弃进行中的面试（触发放弃罚时）"""
+    session = InterviewSession.query.get_or_404(session_id)
+    if session.user_id != current_user.id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    if session.status not in ('ongoing', 'expired'):
+        return jsonify({'error': '该面试已结束，无需放弃'}), 400
+    mark_abandoned(session)
+    return jsonify({'status': 'abandoned'})
+
+
 @api_bp.route('/<int:session_id>/chat', methods=['POST'])
+@login_required
 def chat(session_id):
     """处理纯文本聊天消息 (支持视觉)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         user_text = data.get('message')
-        user_image = data.get('image')  # 新增：接收图片 Base64
+        user_image = data.get('image')
 
         if not user_text:
             return jsonify({'error': 'Message is empty'}), 400
 
-        # 1. 视觉分析 (如果有图片)
+        # 1. 鉴权 + 获取 Session（必须在任何写操作之前）
+        session = InterviewSession.query.get_or_404(session_id)
+        if session.user_id != current_user.id and current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        # 仅进行中的面试可继续对话
+        if session.status != 'ongoing':
+            return jsonify({'error': '该面试已结束，无法继续对话'}), 400
+
+        # 刷新活跃时间（用于 10min TTL 判定）
+        session.last_activity = datetime.now()
+
+        # 2. 视觉分析 (如果有图片)
         visual_context_str = ""
         if user_image:
-            # 异步调用还是同步？为了对话连贯性，这里暂时同步调用
-            # Qwen-VL 响应通常较快
             visual_context_str = analyze_image(user_image)
 
-        # 2. 保存用户消息
+        # 3. 保存用户消息
         user_msg = ChatMessage(
             session_id=session_id,
             sender="user",
             content=user_text,
             timestamp=datetime.now(),
-            visual_context=visual_context_str  # 保存视觉标签
+            visual_context=visual_context_str
         )
         db.session.add(user_msg)
         db.session.commit()
 
-        # 3. 获取上下文和 Session 信息
+        # 4. 获取上下文
         history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
-        # 使用 get_or_404 防止 ID 不存在报错
-        session = InterviewSession.query.get_or_404(session_id)
 
         # 4. 调用 AI 大脑
         role = getattr(session, 'target_role', 'Python工程师')
@@ -330,20 +382,20 @@ def chat(session_id):
 
 
 @api_bp.route('/<int:session_id>/visual_feedback', methods=['POST'])
+@login_required
 def visual_feedback(session_id):
-    """
-    处理纯视觉分析请求 (不产生对话)
-    """
+    """处理纯视觉分析请求 (不产生对话)"""
     try:
-        data = request.json
+        session = InterviewSession.query.get_or_404(session_id)
+        if session.user_id != current_user.id and current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        data = request.get_json(silent=True) or {}
         image_base64 = data.get('image')
 
         if not image_base64:
             return jsonify({'status': 'ignored'})
 
-        # 调用 VLM 分析
-        # 注意：这里我们希望得到更具体的反馈，而不仅仅是标签
-        # 但为了复用 analyze_image，我们暂且使用它
         feedback_str = analyze_image(image_base64)
 
         if not feedback_str:
@@ -400,19 +452,30 @@ def background_report_task(app, session_id):
 
         except Exception as e:
             print(f"❌ [后台任务] 报告生成失败: {e}")
-            # 可选：如果失败，将状态改回 failed 或 completed 但分数为0
-            # session.status = 'failed'
-            # db.session.commit()
+            db.session.rollback()
+            try:
+                session = InterviewSession.query.get(session_id)
+                if session:
+                    session.status = 'failed'
+                    db.session.commit()
+            except Exception as e2:
+                print(f"❌ [后台任务] 状态回写失败: {e2}")
+                db.session.rollback()
 
 
 # 3. 修改：结束面试接口
 @api_bp.route('/<int:session_id>/finish', methods=['POST'])
+@login_required
 def finish_session(session_id):
     """结束面试（异步版）"""
     try:
         session = InterviewSession.query.get_or_404(session_id)
 
-        # 防止重复提交
+        # 鉴权：仅本人或管理员可结束
+        if session.user_id != current_user.id and current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        # 防止重复提交（failed 状态允许重试）
         if session.status in ['completed', 'processing']:
             return jsonify({'status': 'already_finished'})
 
@@ -462,7 +525,7 @@ def evaluate_random_question():
     if current_user.role != 'student':
         return jsonify({'error': 'Only students are allowed'}), 403
 
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     question = (data.get('question') or '').strip()
     answer = (data.get('answer') or '').strip()
 

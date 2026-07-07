@@ -106,8 +106,8 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
 
     except Exception as e:
         print(f"❌ SiliconFlow API Error: {e}")
-        # 错误处理：返回一个兜底的回复，防止前端卡死
-        return f"（面试官正在思考中... 错误信息: {str(e)}）"
+        # 错误处理：返回中性兜底，避免把 SDK 错误串写入历史并被 TTS 朗读
+        return "抱歉，我刚才走神了，能再说一遍吗？"
 
 
 def evaluate_random_answer(question, answer):
@@ -197,8 +197,9 @@ def generate_interview_report(history_messages, target_role):
     if visual_logs:
         full_text += "\n\n【视觉/体态观察记录】\n" + "\n".join(visual_logs)
 
-    # 任务 1: 宏观评分
-    overall_data = _get_overall_score(full_text, target_role)
+    # 任务 1: 宏观评分（传入实际作答轮数，用于完成度因子）
+    round_count = len(qa_pairs)
+    overall_data = _get_overall_score(full_text, target_role, round_count)
 
     # 任务 2: 逐句点评 + 范例生成 (传入 QA 对)
     details_list = _get_details_feedback(qa_pairs, target_role)
@@ -208,12 +209,30 @@ def generate_interview_report(history_messages, target_role):
         "details_list": details_list
     }
 
-def _get_overall_score(full_text, target_role):
-    """内部函数：请求 AI 进行整体打分"""
+def _get_overall_score(full_text, target_role, round_count=0):
+    """内部函数：请求 AI 进行整体打分（含完成度因子）"""
     print("📊 正在进行整体打分...")
+
+    # 完成度上限：依据求职者实际作答轮数
+    if round_count < 3:
+        cap = 60
+        completeness = "不完整（草草结束或中途退出）"
+    elif round_count <= 5:
+        cap = 100
+        completeness = "正常"
+    else:
+        cap = 100
+        completeness = "完整（经历开场→主体→收尾）"
+
     system_prompt = f"""
     你是一位资深的【{target_role}】面试官。
     请根据面试记录，对求职者进行整体评估。
+
+    【完成度参考】本次面试求职者实际作答约 {round_count} 轮，判定为：{completeness}。
+    评分必须体现完成度：
+    - 作答不足 3 轮或中途退出：总分上限 60。
+    - 3-5 轮：正常评分。
+    - 超过 5 轮且经历自我介绍→主体→收尾的完整流程：可给 80 以上。
 
     请严格返回 JSON 格式：
     {{
@@ -233,12 +252,20 @@ def _get_overall_score(full_text, target_role):
             temperature=0.7,
             response_format={"type": "json_object"}
         )
-        return json.loads(response.choices[0].message.content)
+        result = parse_json_safely(response.choices[0].message.content)
+        # 后校准兜底：防 LLM 不守 prompt 越界
+        try:
+            t = int(result.get("total_score", 0))
+            if t > cap:
+                result["total_score"] = cap
+        except Exception:
+            result["total_score"] = cap
+        return result
     except Exception as e:
         print(f"❌ 整体打分失败: {e}")
         return {
             "scores": {"专业技能": 60, "逻辑思维": 60, "语言表达": 60, "抗压能力": 60, "礼仪态度": 60},
-            "total_score": 60,
+            "total_score": min(60, cap),
             "comment": "（系统繁忙，暂无评语）"
         }
 

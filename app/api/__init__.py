@@ -1,7 +1,3 @@
-# app/api/__init__.py
-from flask import Blueprint
-
-# 定义一个空的通用 API 蓝图（暂时用不到，但也留着防止报错）
-api_bp = Blueprint('api', __name__)
-
-# 注意：这里不要再 import interview 了，我们在主程序里直接 import 它
+# app/api 包初始化
+# 各 API 蓝图（interview/user/company/resume）在各自模块内定义并注册，
+# 此处无需再定义通用 api_bp。

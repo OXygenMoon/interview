@@ -16,7 +16,7 @@ def create_resume():
     if count >= 5:
         return jsonify({'success': False, 'error': '最多只能创建 5 份简历'}), 400
 
-    data = request.json
+    data = request.get_json(silent=True) or {}
     title = data.get('title', '我的简历').strip() or '我的简历'
     import_basic = data.get('import_basic', False)
     
@@ -93,7 +93,7 @@ def get_resume(id):
 @resume_bp.route('/save', methods=['POST'])
 @login_required
 def save_resume():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     resume_id = data.get('id')
     content = data.get('content')
     title = data.get('title', '我的简历')
@@ -125,7 +125,7 @@ def save_resume():
 @login_required
 def rename_resume():
     """重命名简历"""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     resume_id = data.get('id')
     new_title = data.get('title')
     
@@ -158,7 +158,7 @@ def optimize_resume():
     """
     AI 简历优化接口 - 硅基流动 (纯净版，彻底解决配置读取问题)
     """
-    data = request.json
+    data = request.get_json(silent=True) or {}
     field_value = data.get('content', '')
     field_type = data.get('type', '自我评价')
     

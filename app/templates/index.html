@@ -6,6 +6,19 @@
 
 <div class="space-y-8 pb-10">
 
+    <!-- 冷却/复盘状态横幅（JS 注入显示） -->
+    <div id="cooldown_banner" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-center gap-4">
+        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+            <div id="cooldown_title" class="font-bold text-amber-700"></div>
+            <div id="cooldown_desc" class="text-sm text-amber-600 mt-1"></div>
+        </div>
+        <div id="cooldown_countdown" class="text-2xl font-extrabold tabular-nums text-amber-700 whitespace-nowrap"></div>
+        <a id="cooldown_review_link" href="#" class="hidden btn btn-sm bg-amber-500 hover:bg-amber-600 text-white border-none whitespace-nowrap">去复盘</a>
+    </div>
+
     <div class="hero rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white shadow-xl shadow-orange-200 overflow-hidden relative group">
         <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
         <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
@@ -560,6 +573,8 @@ async function submitSetup() {
 
         if(data.session_id) {
             window.location.href = `/interview/room/${data.session_id}`;
+        } else if(res.status === 423 && data.cooldown) {
+            handleCooldownBlock(data.cooldown, btn);
         } else {
             alert("创建失败: " + (data.error || "未知错误"));
             btn.disabled = false;
@@ -572,5 +587,135 @@ async function submitSetup() {
         btn.innerHTML = '开始模拟面试';
     }
 }
+</script>
+
+<!-- 续接未完成面试的弹窗 -->
+<dialog id="resumable_modal" class="modal">
+    <div class="modal-box bg-white rounded-2xl shadow-xl border border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            发现未完成的面试
+        </h3>
+        <p class="mt-3 text-slate-600 text-sm leading-relaxed" id="resumable_desc"></p>
+        <div class="modal-action mt-6 gap-2">
+            <button type="button" id="resumable_abandon_btn" class="btn btn-ghost text-slate-500">放弃本次</button>
+            <button type="button" id="resumable_continue_btn" class="btn bg-orange-500 hover:bg-orange-600 text-white border-none">继续面试</button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script>
+// 冷却/复盘拦截处理
+function handleCooldownBlock(cd, btn) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '开始模拟面试'; }
+    const mins = Math.floor(cd.wait_seconds / 60);
+    const secs = cd.wait_seconds % 60;
+    const waitTxt = mins > 0 ? `${mins} 分 ${secs} 秒` : `${secs} 秒`;
+
+    if (cd.reason === 'abandon_cooldown') {
+        alert(`你上次面试中途放弃了，需等待 ${waitTxt} 后才能再次开始。请稍后再试。`);
+    } else if (cd.reason === 'review_required') {
+        alert('请先查看上一次面试的报告并复盘，之后才能开始下一次面试。');
+        if (cd.last_session_id && confirm('是否现在去复盘上次报告？')) {
+            window.location.href = `/interview/summary/${cd.last_session_id}`;
+        }
+    } else if (cd.reason === 'complete_cooldown') {
+        alert(`上次面试刚结束，建议先复盘报告再开始下一次。请等待 ${waitTxt}。`);
+    } else if (cd.reason === 'has_ongoing') {
+        if (confirm('你有一场进行中的面试，是否继续？')) {
+            window.location.href = `/interview/room/${cd.last_session_id}`;
+        }
+    } else {
+        alert('当前无法开始面试，请稍后再试。');
+    }
+}
+
+// 页面加载：检查是否有可续接的面试
+(async function checkResumable() {
+    try {
+        const res = await fetch('/api/interview/resumable');
+        const data = await res.json();
+        if (!data.has_session) return;
+        const dlg = document.getElementById('resumable_modal');
+        document.getElementById('resumable_desc').textContent =
+            `你在 ${data.last_activity || '稍早前'} 开始了一场【${data.target_role || '面试'}】，尚未完成。是否继续？继续可接着上次进度；放弃则本场作废并触发短暂冷却。`;
+        document.getElementById('resumable_continue_btn').onclick = () => {
+            window.location.href = `/interview/room/${data.session_id}`;
+        };
+        document.getElementById('resumable_abandon_btn').onclick = async () => {
+            if (!confirm('确定放弃本场面试？放弃后会有短暂冷却才能开始下一次。')) return;
+            try {
+                const r = await fetch(`/api/interview/${data.session_id}/abandon`, { method: 'POST' });
+                if (r.ok) { location.reload(); }
+                else { alert('放弃失败，请重试'); }
+            } catch (e) { alert('网络错误'); }
+        };
+        dlg.showModal();
+    } catch (e) { /* 静默 */ }
+})();
+
+// 页面加载：在首页顶部显示冷却/复盘倒计时横幅
+let _cooldownTimer = null;
+function fmtTime(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m}分${String(s).padStart(2,'0')}秒` : `${s}秒`;
+}
+async function checkCooldownBanner() {
+    const banner = document.getElementById('cooldown_banner');
+    if (!banner) return;
+    try {
+        const res = await fetch('/api/interview/cooldown-status');
+        const cd = await res.json();
+        const titleEl = document.getElementById('cooldown_title');
+        const descEl = document.getElementById('cooldown_desc');
+        const cdEl = document.getElementById('cooldown_countdown');
+        const linkEl = document.getElementById('cooldown_review_link');
+
+        if (cd.can_start || cd.reason === 'has_ongoing') {
+            banner.classList.add('hidden');
+            return;
+        }
+        banner.classList.remove('hidden');
+
+        if (cd.reason === 'abandon_cooldown') {
+            titleEl.textContent = '面试冷却中（中途放弃罚时）';
+            descEl.textContent = '你上次面试中途放弃，需等待冷却结束才能开始下一次。';
+            linkEl.classList.add('hidden');
+            startCountdown(cd.wait_seconds);
+        } else if (cd.reason === 'complete_cooldown') {
+            titleEl.textContent = '面试冷却中';
+            descEl.textContent = '上次面试刚结束，建议先复盘报告，稍候再开始下一次。';
+            linkEl.classList.add('hidden');
+            startCountdown(cd.wait_seconds);
+        } else if (cd.reason === 'review_required') {
+            titleEl.textContent = '请先复盘上次面试';
+            descEl.textContent = '查看上一次面试报告后才能开始下一次面试，复盘有助于你针对性提升。';
+            cdEl.textContent = '';
+            linkEl.href = `/interview/summary/${cd.last_session_id}`;
+            linkEl.classList.remove('hidden');
+        }
+    } catch (e) { /* 静默 */ }
+}
+function startCountdown(seconds) {
+    if (_cooldownTimer) clearInterval(_cooldownTimer);
+    let remain = seconds;
+    const cdEl = document.getElementById('cooldown_countdown');
+    const tick = () => {
+        cdEl.textContent = fmtTime(remain);
+        if (remain <= 0) {
+            clearInterval(_cooldownTimer);
+            _cooldownTimer = null;
+            // 冷却结束，刷新状态
+            checkCooldownBanner();
+        }
+        remain -= 1;
+    };
+    tick();
+    _cooldownTimer = setInterval(tick, 1000);
+}
+checkCooldownBanner();
 </script>
 {% endblock %}
