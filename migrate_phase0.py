@@ -47,6 +47,9 @@ def main():
     add_column(cur, "interview_sessions", "last_activity", "DATETIME")
     add_column(cur, "interview_sessions", "reviewed", "BOOLEAN DEFAULT 0")
     add_column(cur, "interview_sessions", "abandoned", "BOOLEAN DEFAULT 0")
+    # Phase 4：面试进阶链
+    add_column(cur, "interview_sessions", "round", "INTEGER DEFAULT 1")
+    add_column(cur, "interview_sessions", "parent_session_id", "INTEGER")
     # Phase 2：流式 TTS 多片段
     add_column(cur, "chat_messages", "audio_urls", "TEXT")
 

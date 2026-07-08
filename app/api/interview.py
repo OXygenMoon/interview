@@ -339,7 +339,8 @@ def chat(session_id):
             try:
                 for token in stream_ai_response(
                     history, target_role=role, difficulty=difficulty,
-                    context_info=context_info, visual_context_str=visual_context_str
+                    context_info=context_info, visual_context_str=visual_context_str,
+                    round_num=getattr(session, 'round', 1) or 1
                 ):
                     full_text += token
                     yield sse({'type': 'token', 'content': token})
@@ -524,6 +525,54 @@ def report_status(session_id):
     })
 
 
+@api_bp.route('/<int:session_id>/next-round', methods=['POST'])
+@login_required
+def next_round(session_id):
+    """面试进阶链：基于上一轮 completed session 创建下一轮（复面/终面）。"""
+    prev = InterviewSession.query.get_or_404(session_id)
+    if prev.user_id != current_user.id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    if prev.status != 'completed':
+        return jsonify({'error': '上一轮面试尚未完成，无法进入下一轮'}), 400
+    if (prev.round or 1) >= 3:
+        return jsonify({'error': '已是终面，无下一轮'}), 400
+
+    # 冷却系统守卫（复用 create_session 同款）
+    cd = get_cooldown_status(current_user.id)
+    if not cd['can_start'] and cd['reason'] != 'has_ongoing':
+        return jsonify({'error': 'cooldown', 'cooldown': cd}), 423
+
+    next_round_num = (prev.round or 1) + 1
+    session = InterviewSession(
+        user_id=current_user.id,
+        target_role=prev.target_role,
+        position_id=prev.position_id,
+        voice_type=prev.voice_type,
+        difficulty=prev.difficulty,
+        status="ongoing",
+        start_time=datetime.now(),
+        last_activity=datetime.now(),
+        use_resume=prev.use_resume,
+        round=next_round_num,
+        parent_session_id=prev.id,
+    )
+    db.session.add(session)
+    db.session.commit()
+
+    round_name = {2: "复面（技术面）", 3: "终面（高管面）"}.get(next_round_num, f"第{next_round_num}轮")
+    first_msg = f"你好，我是本轮的面试官。这是你的{round_name}。我们将重点考察与上一轮不同的方面。请先做一个简短的自我介绍，并说说你希望在本轮展示什么。"
+    welcome = ChatMessage(
+        session_id=session.id,
+        sender="ai",
+        content=first_msg,
+        timestamp=datetime.now(),
+    )
+    db.session.add(welcome)
+    db.session.commit()
+
+    return jsonify({'session_id': session.id, 'round': next_round_num, 'round_name': round_name})
+
+
 @api_bp.route('/processing-statuses', methods=['GET'])
 @login_required
 def processing_statuses():
@@ -655,16 +704,33 @@ def transcribe_audio_only():
         filepath = os.path.join(upload_folder, filename)
         file.save(filepath)
 
-        # 2. 调用 STT 服务 (Whisper/Volcengine等)
-        print(f"🎤 [STT] 开始转录: {filepath}")
-        user_text = transcribe_audio(filepath)
+        # 1.5 webm → wav 转码（SenseVoiceSmall 对 wav 兼容最好；无 ffmpeg 则降级直传）
+        transcribe_path = filepath
+        converted = False
+        try:
+            from pydub import AudioSegment
+            AudioSegment.converter = "ffmpeg"  # 依赖系统 ffmpeg
+            wav_path = filepath.rsplit('.', 1)[0] + '.wav'
+            audio = AudioSegment.from_file(filepath)  # 自动按扩展名解码
+            audio = audio.set_frame_rate(16000).set_channels(1)  # ASR 友好参数
+            audio.export(wav_path, format='wav')
+            transcribe_path = wav_path
+            converted = True
+            print(f"🎤 [STT] 已转码 webm→wav: {wav_path}")
+        except Exception as conv_e:
+            print(f"🎤 [STT] 转码跳过（无 ffmpeg 或解码失败），直传原文件: {conv_e}")
+
+        # 2. 调用 STT 服务
+        print(f"🎤 [STT] 开始转录: {transcribe_path}")
+        user_text = transcribe_audio(transcribe_path)
         print(f"🎤 [STT] 转录结果: {user_text}")
 
         # 3. 删除临时文件 (用完即焚)
-        try:
-            os.remove(filepath)
-        except Exception as e:
-            print(f"⚠️ 删除临时文件失败: {e}")
+        for p in ({transcribe_path, filepath} if converted else {filepath}):
+            try:
+                os.remove(p)
+            except Exception as e:
+                print(f"⚠️ 删除临时文件失败: {e}")
 
         # 4. 处理空语音
         if not user_text or len(user_text.strip()) == 0:

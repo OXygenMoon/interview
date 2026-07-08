@@ -32,8 +32,8 @@ def parse_json_safely(text):
         return {}
 
 
-def _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str):
-    """构建面试对话的消息列表（系统提示 + 历史）。供流式/非流式共用。"""
+def _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str, round_num=1):
+    """构建面试对话的消息列表（系统提示 + 历史）。供流式/非流式共用。round_num 控制面试官人设。"""
     difficulty_prompts = {
         "新手模式": (
             "你是一位非常友善、循循善诱的面试官。你的目标是帮助新手建立自信。"
@@ -50,8 +50,17 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
     }
     mode_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["标准模式"])
 
+    # 进阶链：按轮次切换面试官人设
+    round_personas = {
+        1: "本轮为【初面】（HR 面）：你是企业的人力资源面试官，重点考察自我介绍、求职动机、沟通表达能力、职业素养与企业文化契合度。语气亲和、轻松。",
+        2: "本轮为【复面】（技术面）：你是企业的技术面试官，针对【{role}】岗位深入考察专业技能、项目经验、技术深度与问题解决能力。可以出具体的技术问题、追问实现细节。",
+        3: "本轮为【终面】（高管/CTO 面）：你是企业的高管，考察综合素质、战略思维、抗压能力、职业规划与价值观。语气沉稳、有压迫感，会问宏观与开放性问题。",
+    }
+    round_persona = round_personas.get(round_num, round_personas[1]).format(role=target_role)
+
     system_prompt = f"""
-    你现在是一位严厉但专业的面试官，正在面试【{target_role}】岗位。
+    你现在是一位专业的面试官，正在面试【{target_role}】岗位。
+    {round_persona}
     {mode_prompt}
 
     {f"【背景资料】\n{context_info}\n" if context_info else ""}
@@ -75,9 +84,9 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
     return messages
 
 
-def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str=""):
+def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str="", round_num=1):
     """非流式调用硅基流动大模型（保留用于兼容路径）。"""
-    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str)
+    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str, round_num)
     try:
         print(f"正在请求硅基流动模型: {Config.LLM_MODEL_NAME} ...")
         response = client.chat.completions.create(
@@ -95,9 +104,9 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
         return "抱歉，我刚才走神了，能再说一遍吗？"
 
 
-def stream_ai_response(history_messages, target_role="Python工程师", difficulty="标准模式", context_info="", visual_context_str=""):
+def stream_ai_response(history_messages, target_role="Python工程师", difficulty="标准模式", context_info="", visual_context_str="", round_num=1):
     """流式调用：逐 token yield 内容片段。出错抛异常，由调用方捕获并兜底。"""
-    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str)
+    messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str, round_num)
     print(f"正在流式请求硅基流动模型: {Config.LLM_MODEL_NAME} ...")
     response = client.chat.completions.create(
         model=Config.LLM_MODEL_NAME,

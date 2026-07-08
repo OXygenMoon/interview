@@ -58,6 +58,10 @@
                         {% else %}badge-info text-blue-600{% endif %}">
                         {{ session.difficulty or '标准模式' }}
                     </span>
+                    {% set _r = session.round or 1 %}
+                    <span class="badge badge-outline text-xs {% if _r == 1 %}text-emerald-600{% elif _r == 2 %}text-indigo-600{% else %}text-amber-600{% endif %}">
+                        {% if _r == 1 %}初面·HR{% elif _r == 2 %}复面·技术{% else %}终面·高管{% endif %}
+                    </span>
                 </div>
 
                 <p class="text-xs text-stone-400 mt-1">
@@ -273,6 +277,7 @@
     let stream = null;
     let isRecording = false;
     let isProcessing = false;
+    let _vadTimer = null;
 
     // =========================================================
     // 1.5 摄像头逻辑
@@ -659,6 +664,35 @@
             mediaRecorder.start();
             isRecording = true;
 
+            // 静音自动停止（能量 VAD）：分析麦克风音量，连续 1.5s 低于阈值则停止
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaStreamSource(stream);
+                const analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 512;
+                source.connect(analyser);
+                const data = new Uint8Array(analyser.frequencyBinCount);
+                let silenceStart = 0;
+                const SILENCE_THRESHOLD = 18;  // 音量阈值（0-128）
+                const SILENCE_MS = 1500;
+                _vadTimer = setInterval(() => {
+                    if (!isRecording) { clearInterval(_vadTimer); audioCtx.close(); return; }
+                    analyser.getByteFrequencyData(data);
+                    let sum = 0;
+                    for (let i = 0; i < data.length; i++) sum += data[i];
+                    const avg = sum / data.length;
+                    if (avg < SILENCE_THRESHOLD) {
+                        if (!silenceStart) silenceStart = Date.now();
+                        else if (Date.now() - silenceStart > SILENCE_MS) {
+                            clearInterval(_vadTimer); audioCtx.close();
+                            stopRecording();
+                        }
+                    } else {
+                        silenceStart = 0;
+                    }
+                }, 200);
+            } catch (e) { console.warn('VAD 不可用，回退手动停止', e); }
+
             // UI 变更
             recordingOverlay.classList.remove('hidden');
             recordBtn.classList.add('btn-active');
@@ -675,6 +709,7 @@
 
     function stopRecording() {
         if (!isRecording || !mediaRecorder) return;
+        if (_vadTimer) { clearInterval(_vadTimer); _vadTimer = null; }
         mediaRecorder.stop();
         isRecording = false;
         if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }

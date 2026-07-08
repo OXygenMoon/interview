@@ -85,6 +85,41 @@
                     回听录音
                 </a>
             </div>
+
+            {% if session.status == 'completed' and (session.round or 1) < 3 %}
+            <div class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <div class="font-bold text-indigo-700">挑战下一轮面试</div>
+                        <div class="text-xs text-indigo-500 mt-1">
+                            当前：{% set r = session.round or 1 %}{% if r == 1 %}初面（HR）{% elif r == 2 %}复面（技术）{% else %}终面{% endif %}
+                            · 下一轮：{% if r == 1 %}复面（技术面，深挖专业能力）{% else %}终面（高管面，考察综合素质）{% endif %}
+                        </div>
+                    </div>
+                    <button onclick="startNextRound()" id="nextRoundBtn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm whitespace-nowrap">进入下一轮 →</button>
+                </div>
+            </div>
+            <script>
+            async function startNextRound() {
+                const btn = document.getElementById('nextRoundBtn');
+                if(!confirm('确定开始下一轮面试？将创建一场新的面试并跳转。')) return;
+                btn.disabled = true; btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> 创建中...';
+                try {
+                    const res = await fetch(`/api/interview/{{ session.id }}/next-round`, {method:'POST'});
+                    const data = await res.json();
+                    if (data.session_id) {
+                        window.location.href = `/interview/room/${data.session_id}`;
+                    } else if (res.status === 423 && data.cooldown) {
+                        alert('当前处于冷却中，请稍后再试：' + (data.cooldown.reason || ''));
+                        btn.disabled = false; btn.innerHTML = '进入下一轮 →';
+                    } else {
+                        alert(data.error || '创建失败');
+                        btn.disabled = false; btn.innerHTML = '进入下一轮 →';
+                    }
+                } catch(e) { alert('网络错误'); btn.disabled = false; btn.innerHTML = '进入下一轮 →'; }
+            }
+            </script>
+            {% endif %}
         </div>
 
         <div class="lg:col-span-8">

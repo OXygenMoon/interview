@@ -91,6 +91,10 @@ class InterviewSession(db.Model):
     reviewed = db.Column(db.Boolean, default=False)  # 学生是否已查看本次报告（复盘门槛）
     abandoned = db.Column(db.Boolean, default=False)  # 是否中途放弃（触发放弃罚时）
 
+    # Phase 4：面试进阶链（初面→复面→终面）
+    round = db.Column(db.Integer, default=1)  # 当前轮次 1/2/3
+    parent_session_id = db.Column(db.Integer, nullable=True)  # 关联上一轮 session（首轮为 None）
+
 
 class ChatMessage(db.Model):
     """对话详情表"""
