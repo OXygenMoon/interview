@@ -53,6 +53,10 @@ def create_app():
     from .api.resume import resume_bp
     app.register_blueprint(resume_bp, url_prefix='/api/resume')
 
+    # === Phase 3：数据洞察 API ===
+    from .api.insights import insights_bp
+    app.register_blueprint(insights_bp, url_prefix='/api/insights')
+
     # 自动创建数据库表
     with app.app_context():
         db.create_all()

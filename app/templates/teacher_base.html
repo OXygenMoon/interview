@@ -288,6 +288,12 @@
                         <span>数据驾驶舱</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url_for('routes.dashboard_compare') }}" class="menu-item flex items-center gap-3 px-4 py-3 {{ 'active' if request.endpoint == 'routes.dashboard_compare' else '' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                        <span>班级对比看板</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="menu-section-title">学生管理</div>

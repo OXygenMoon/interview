@@ -240,4 +240,49 @@
         animation: pulse-once 0.5s ease-out forwards;
     }
 </style>
+
+{% if session.position_id %}
+<div class="card bg-white border border-indigo-100 shadow-sm mt-6">
+    <div class="card-body">
+        <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">🎯 岗位匹配度评估</h3>
+        <p class="text-sm text-slate-400 mb-4">综合你的历次能力画像与该岗位要求，评估匹配度并给出提升建议。</p>
+        <div id="matchResult" class="min-h-[80px]">
+            <button onclick="loadMatch()" class="btn btn-outline btn-sm border-indigo-200 text-indigo-600">评估匹配度</button>
+        </div>
+    </div>
+</div>
+<script>
+async function loadMatch() {
+    const box = document.getElementById('matchResult');
+    box.innerHTML = '<span class="loading loading-spinner loading-md text-indigo-500"></span> 正在评估...';
+    try {
+        const res = await fetch('/api/insights/match?position_id={{ session.position_id }}');
+        const data = await res.json();
+        if (data.error || !data.has_data) {
+            box.innerHTML = `<p class="text-sm text-slate-400">${data.error || '数据不足'}</p>`;
+            return;
+        }
+        const r = data.result || {};
+        const score = r.match_score != null ? r.match_score : '-';
+        const esc = s => String(s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+        box.innerHTML = `
+            <div class="flex items-center gap-4 mb-4">
+                <div class="radial-progress text-indigo-500" style="--value:${score};" role="progressbar">${score}<span class="text-xs">/100</span></div>
+                <div>
+                    <div class="text-sm text-slate-500">目标岗位：<span class="font-bold text-slate-700">${esc(data.position.name)}</span></div>
+                    <div class="text-xs text-slate-400 mt-1">基于最近 10 次面试能力画像</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><h4 class="text-xs font-bold text-emerald-600 mb-2">✅ 优势</h4><ul class="space-y-1">${(r.strengths||[]).map(x=>`<li class="text-sm text-slate-600">• ${esc(x)}</li>`).join('') || '<li class="text-xs text-slate-400">无</li>'}</ul></div>
+                <div><h4 class="text-xs font-bold text-rose-600 mb-2">⚠ 待提升</h4><ul class="space-y-1">${(r.gaps||[]).map(x=>`<li class="text-sm text-slate-600">• ${esc(x)}</li>`).join('') || '<li class="text-xs text-slate-400">无</li>'}</ul></div>
+            </div>
+            <div class="mt-4"><h4 class="text-xs font-bold text-indigo-600 mb-2">💡 提升建议</h4><ul class="space-y-1">${(r.suggestions||[]).map(x=>`<li class="text-sm text-slate-600">• ${esc(x)}</li>`).join('') || '<li class="text-xs text-slate-400">无</li>'}</ul></div>
+        `;
+    } catch (e) {
+        box.innerHTML = '<p class="text-sm text-rose-400">评估失败，请稍后重试</p>';
+    }
+}
+</script>
+{% endif %}
 {% endblock %}

@@ -559,6 +559,14 @@ def dashboard():
                            top_students=top_students)
 
 
+@bp.route('/dashboard/compare')
+@login_required
+@teacher_required
+def dashboard_compare():
+    """班级/系部对比看板页（图表由 /api/insights/compare 填充）。"""
+    return render_template('compare.html')
+
+
 @bp.route('/admin/capability_profile')
 @login_required
 @teacher_required

@@ -1,0 +1,110 @@
+{% extends "teacher_base.html" %}
+
+{% block title %}班级对比看板{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">班级对比看板</h1>
+            <p class="text-sm text-slate-500 mt-1">各班级面试表现横向对比、维度热力、薄弱题聚合</p>
+        </div>
+        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-ghost btn-sm text-slate-500">返回概况</a>
+    </div>
+
+    <div class="card bg-white shadow-sm border border-slate-100">
+        <div class="card-body">
+            <h2 class="card-title text-lg font-bold text-slate-700">各班级平均总分</h2>
+            <div style="position:relative;height:360px"><canvas id="barChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card bg-white shadow-sm border border-slate-100">
+            <div class="card-body">
+                <h2 class="card-title text-lg font-bold text-slate-700">五维能力热力</h2>
+                <div class="overflow-x-auto mt-4">
+                    <table class="table table-zebra">
+                        <thead><tr id="heatHead"></tr></thead>
+                        <tbody id="heatBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card bg-white shadow-sm border border-slate-100">
+            <div class="card-body">
+                <h2 class="card-title text-lg font-bold text-slate-700">高频薄弱题（不合格率 Top）</h2>
+                <div id="weakList" class="mt-4 space-y-3 max-h-[360px] overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+
+function heatColor(v) {
+    // 0-100 -> 从浅红到深红表达薄弱
+    const t = Math.min(100, Math.max(0, 100 - v)) / 100;
+    const r = 244, g = 63, b = 94;
+    return `rgba(${r}, ${g}, ${b}, ${(0.08 + t * 0.6).toFixed(2)})`;
+}
+
+async function loadCompare() {
+    const res = await fetch('/api/insights/compare');
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    const classes = data.classes || [];
+    const dims = data.dimensions || [];
+
+    // 1. 柱状图
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: classes.map(c => c.class_name),
+            datasets: [{
+                label: '平均总分',
+                data: classes.map(c => c.avg_total),
+                backgroundColor: classes.map((_, i) => COLORS[i % COLORS.length]),
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, suggestedMax: 100 } },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: (c) => `场次: ${classes[c.dataIndex].count}` } } }
+        }
+    });
+
+    // 2. 热力表
+    const head = document.getElementById('heatHead');
+    head.innerHTML = '<th>班级</th>' + dims.map(d => `<th class="text-center">${d}</th>`).join('') + '<th class="text-center">总分</th>';
+    const body = document.getElementById('heatBody');
+    body.innerHTML = classes.map(c => {
+        const tds = dims.map(d => `<td class="text-center font-bold" style="background:${heatColor(c.dims[d]||0)}">${c.dims[d]||0}</td>`).join('');
+        return `<tr><td class="font-bold text-slate-700">${c.class_name}</td>${tds}<td class="text-center font-extrabold">${c.avg_total}</td></tr>`;
+    }).join('');
+
+    // 3. 薄弱题
+    const wk = await (await fetch('/api/insights/weak-questions')).json();
+    const wl = document.getElementById('weakList');
+    if (!wk.weak || wk.weak.length === 0) {
+        wl.innerHTML = '<p class="text-sm text-slate-400">暂无足够点评数据</p>';
+        return;
+    }
+    wl.innerHTML = wk.weak.map((w, i) => `
+        <div class="p-3 rounded-xl border border-slate-100 bg-slate-50">
+            <div class="flex justify-between items-start gap-2">
+                <span class="text-sm font-bold text-slate-700">#${i+1} · ${escapeHtml(w.answer_snippet)}</span>
+                <span class="badge ${w.bad_rate >= 0.6 ? 'badge-error' : 'badge-warning'} badge-sm">${Math.round(w.bad_rate*100)}% 不合格</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">样本 ${w.total} · ${w.sample_suggestion ? '点评: ' + escapeHtml(w.sample_suggestion) : ''}</p>
+        </div>`).join('');
+}
+
+function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+loadCompare();
+</script>
+{% endblock %}
