@@ -3,11 +3,21 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
 const helmet = require('helmet');
-// rateLimit 暂时移除或调大限制，避免上传大文件时被误杀
-// const rateLimit = require('express-rate-limit'); 
+const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const config = require('./config');
+const PORT = config.PORT;
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: '请求过于频繁，请稍后再试' }
+});
+
+app.use(limiter);
 
 // 定义目录路径
 const dataDir = path.join(__dirname, 'data');

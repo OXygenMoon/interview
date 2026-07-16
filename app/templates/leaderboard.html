@@ -26,10 +26,13 @@
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 flex gap-6">
                 <div class="text-center">
                     <div class="text-xs text-emerald-100 uppercase font-bold tracking-wider">我的平均分</div>
-                    {% set my_rank_item = avg_rank | selectattr("user.id", "equalto", current_user.id) | list | first %}
                     <div class="text-xl font-black text-white">
-                        {% if my_rank_item %}
-                            {{ my_rank_item.avg_score }}
+                        {% if my_avg_rank %}
+                            {% for item in avg_rank if item.user.id == current_user.id %}
+                                {{ item.avg_score }}
+                            {% else %}
+                                -
+                            {% endfor %}
                         {% else %}
                             -
                         {% endif %}
@@ -39,8 +42,8 @@
                 <div class="text-center">
                     <div class="text-xs text-emerald-100 uppercase font-bold tracking-wider">我的排名</div>
                     <div class="text-xl font-black text-warning">
-                        {% if my_rank_item %}
-                            #{{ loop.index if loop is defined else (avg_rank.index(my_rank_item) + 1) }}
+                        {% if my_avg_rank %}
+                            #{{ my_avg_rank }}
                         {% else %}
                             -
                         {% endif %}

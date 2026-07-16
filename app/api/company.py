@@ -43,7 +43,9 @@ def get_position_detail(position_id):
 # === 管理员接口 (需要权限控制) ===
 
 def check_admin():
-    if not current_user.is_authenticated or not current_user.is_admin:
+    if not current_user.is_authenticated:
+        return False
+    if not getattr(current_user, 'is_admin', False):
         return False
     return True
 

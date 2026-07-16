@@ -2,25 +2,22 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs').promises;
+const authMiddleware = require('../middleware/auth');
 
-// 数据文件路径
+router.use(authMiddleware);
+
 const DATA_FILE = path.join(__dirname, '../data/resumes.json');
 
-// 简易 ID 生成器 (不依赖外部库)
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 
-// 辅助函数：读取所有简历数据
 async function getResumesData() {
   try {
-    // 确保文件存在
     try {
       await fs.access(DATA_FILE);
     } catch {
-      // 文件不存在则初始化为空对象
       await fs.writeFile(DATA_FILE, '{}', 'utf8');
       return {};
     }
-
     const content = await fs.readFile(DATA_FILE, 'utf8');
     return content ? JSON.parse(content) : {};
   } catch (error) {
@@ -29,29 +26,25 @@ async function getResumesData() {
   }
 }
 
-// 辅助函数：保存所有简历数据
 async function saveResumesData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+function checkOwnership(resume, req) {
+  if (!resume) return false;
+  return String(resume.userId) === String(req.user.userId);
+}
+
 /**
  * GET /api/resumes
- * 获取简历列表 (支持 ?userId=xxx 过滤)
+ * 获取当前用户的简历列表
  */
 router.get('/', async (req, res) => {
   try {
-    const { userId } = req.query;
     const resumesMap = await getResumesData();
-    
-    // 1. 将 Map 对象转换为数组 (关键步骤：前端需要数组)
     let resumesList = Object.values(resumesMap);
 
-    // 2. 如果有 userId 参数，进行过滤
-    if (userId) {
-      resumesList = resumesList.filter(r => String(r.userId) === String(userId));
-    }
-
-    // 3. 按最后更新时间倒序排序 (最近的在前面)
+    resumesList = resumesList.filter(r => String(r.userId) === String(req.user.userId));
     resumesList.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     res.json(resumesList);
@@ -63,7 +56,6 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/resumes/:id
- * 获取单份简历详情
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -74,6 +66,9 @@ router.get('/:id', async (req, res) => {
     if (!resume) {
       return res.status(404).json({ error: '简历未找到' });
     }
+    if (!checkOwnership(resume, req)) {
+      return res.status(403).json({ error: '无权访问此简历' });
+    }
 
     res.json(resume);
   } catch (error) {
@@ -83,13 +78,12 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/resumes
- * 创建新简历
  */
 router.post('/', async (req, res) => {
   try {
-    const { userId, templateId, title, content } = req.body;
-    
-    if (!userId || !templateId) {
+    const { templateId, title, content } = req.body;
+
+    if (!templateId) {
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
@@ -98,13 +92,13 @@ router.post('/', async (req, res) => {
 
     const newResume = {
       id,
-      userId,
+      userId: req.user.userId,
       templateId,
       title: title || '未命名简历',
-      content: content || {}, // 存储表单数据
+      content: content || {},
       createdAt: now,
       updatedAt: now,
-      thumbnail: '' // 预留字段
+      thumbnail: ''
     };
 
     const resumesMap = await getResumesData();
@@ -120,21 +114,22 @@ router.post('/', async (req, res) => {
 
 /**
  * PUT /api/resumes/:id
- * 更新简历
  */
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    
+
     const resumesMap = await getResumesData();
     const resume = resumesMap[id];
 
     if (!resume) {
       return res.status(404).json({ error: '简历未找到' });
     }
+    if (!checkOwnership(resume, req)) {
+      return res.status(403).json({ error: '无权修改此简历' });
+    }
 
-    // 更新字段 (保护 id 和 userId 不被修改)
     const updatedResume = {
       ...resume,
       ...updates,
@@ -155,7 +150,6 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/resumes/:id
- * 删除简历
  */
 router.delete('/:id', async (req, res) => {
   try {
@@ -164,6 +158,9 @@ router.delete('/:id', async (req, res) => {
 
     if (!resumesMap[id]) {
       return res.status(404).json({ error: '简历未找到' });
+    }
+    if (!checkOwnership(resumesMap[id], req)) {
+      return res.status(403).json({ error: '无权删除此简历' });
     }
 
     delete resumesMap[id];

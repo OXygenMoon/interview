@@ -14,10 +14,10 @@ class Config:
     LLM_BASE_URL = "https://api.siliconflow.cn/v1"
 
     # 3. 模型名称 (注意：硅基流动的模型名是带厂商前缀的)
-    # 推荐使用 'deepseek-ai/DeepSeek-V3' (智能、强)
-    # 或者 'Qwen/Qwen2.5-72B-Instruct' (阿里通义千问，也很强)
+    # 推荐使用 'Qwen/Qwen2.5-72B-Instruct' (阿里通义千问，也很强)
     LLM_MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct"
-    LLM_REPORT = "deepseek-ai/DeepSeek-V3"
+    # 报告生成专用模型（逐句点评、单题评估等耗时任务，支持 json_object）
+    LLM_REPORT = os.environ.get('LLM_REPORT', 'Qwen/Qwen2.5-72B-Instruct')
     # 视觉模型 (VLM)
     VLM_MODEL_NAME = "Qwen/Qwen2-VL-72B-Instruct"
 

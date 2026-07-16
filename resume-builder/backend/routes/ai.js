@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { CozeAPI } = require('@coze/api');
+const config = require('../config');
+const authMiddleware = require('../middleware/auth');
 
-// 初始化 Coze 客户端 (使用您提供的 Token)
-// 注意：实际生产中 Token 应放在环境变量中，这里按要求直接写入
 const apiClient = new CozeAPI({
-  token: 'pat_9iOGYL7TROzEAbfjWPTDaqtkWipTrXVx6bZFi0b4CA9DjNmgrB2p9G7JdyVRGFm5',
+  token: config.COZE_API_TOKEN,
   baseURL: 'https://api.coze.cn'
 });
 
-const BOT_ID = '7594734352358047782';
+const BOT_ID = config.COZE_BOT_ID;
+
+router.use(authMiddleware);
 
 /**
  * POST /api/ai/optimize

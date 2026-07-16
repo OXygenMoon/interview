@@ -3,6 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const authMiddleware = require('../middleware/auth');
+
+router.use(authMiddleware);
 
 // 确保上传目录存在
 const UPLOAD_DIR = path.join(__dirname, '../uploads');

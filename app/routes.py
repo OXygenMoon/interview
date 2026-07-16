@@ -291,12 +291,30 @@ def leaderboard():
     # C. 勤奋度排名 (次数降序)
     count_rank_list = sorted(rank_data, key=lambda x: x['count'], reverse=True)
     count_rank_list = count_rank_list[:20]
-    
+
+    # D. 计算当前用户在完整列表中的排名位置
+    avg_rank_full = sorted(rank_data, key=lambda x: x['avg_score'], reverse=True)
+    max_rank_full = sorted(rank_data, key=lambda x: x['max_score'], reverse=True)
+    count_rank_full = sorted(rank_data, key=lambda x: x['count'], reverse=True)
+
+    def find_rank(sorted_list, user_id):
+        for i, item in enumerate(sorted_list):
+            if item['user'].id == user_id:
+                return i + 1
+        return None
+
+    my_avg_rank = find_rank(avg_rank_full, current_user.id)
+    my_max_rank = find_rank(max_rank_full, current_user.id)
+    my_count_rank = find_rank(count_rank_full, current_user.id)
+
     return render_template('leaderboard.html',
                            current_user=current_user,
                            avg_rank=avg_rank_list,
                            max_rank=max_rank_list,
-                           count_rank=count_rank_list)
+                           count_rank=count_rank_list,
+                           my_avg_rank=my_avg_rank,
+                           my_max_rank=my_max_rank,
+                           my_count_rank=my_count_rank)
 
 
 @bp.route('/history')
@@ -605,8 +623,8 @@ def admin_capability_profile():
     
     if scope == 'school':
         display_title = "全校能力画像"
-        # 此时 selected_dept 和 selected_class 应忽略或置空
-        pass
+        selected_dept = None
+        selected_class = None
         
     elif scope == 'department':
         if selected_dept:

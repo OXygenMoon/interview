@@ -6,8 +6,10 @@ const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
 
+const config = require('../config');
+
 const USERS_FILE = path.join(__dirname, '../data/users.json');
-const JWT_SECRET = 'resume-builder-secret-key-change-in-production';
+const JWT_SECRET = config.JWT_SECRET;
 
 // 注册用户
 router.post('/register', async (req, res) => {

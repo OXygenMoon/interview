@@ -30,7 +30,13 @@
         <div class="mt-6 md:mt-0 flex items-center gap-6 z-10">
             <div class="text-right hidden md:block">
                 <div class="text-xs text-white/50 uppercase tracking-widest font-bold">综合得分</div>
-                <div class="text-sm text-white/80">击败了同岗位 85% 的面试者</div>
+                {% if session.total_score >= 85 %}
+                <div class="text-sm text-white/80">优秀</div>
+                {% elif session.total_score >= 60 %}
+                <div class="text-sm text-white/80">良好</div>
+                {% else %}
+                <div class="text-sm text-white/80">继续加油</div>
+                {% endif %}
             </div>
             <div class="radial-progress text-orange-400 bg-slate-700/50 border-4 border-transparent text-xl font-black shadow-lg" style="--value:{{ session.total_score }}; --size:4.5rem; --thickness: 0.5rem;">
                 {{ session.total_score }}
@@ -82,7 +88,7 @@
                 <a href="/" class="btn btn-outline flex-1 border-stone-300 text-stone-600 hover:bg-stone-100 hover:text-stone-800">返回大厅</a>
                 <a href="{{ url_for('routes.interview_room', session_id=session.id) }}" class="btn btn-primary text-white flex-1 shadow-md shadow-orange-100">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    回听录音
+                    查看对话记录
                 </a>
             </div>
 
