@@ -1,7 +1,7 @@
 [Unit]
 Description=Gunicorn instance to serve interview
-After=network.target
-Wants=interview-worker.service
+After=network.target redis-server.service
+Wants=redis-server.service interview-worker.service
 
 [Service]
 User=root
@@ -10,7 +10,9 @@ WorkingDirectory=/root/projects/interview
 Environment="PATH=/root/projects/interview/venv/bin"
 EnvironmentFile=-/root/projects/interview/.env
 Environment="APP_ENV=production"
+Environment="REPORT_QUEUE_MODE=rq"
 Environment="LD_LIBRARY_PATH=/nix/store/dj06r96j515npcqi9d8af1d1c60bx2vn-gcc-14.3.0-lib/lib"
+ExecStartPre=/root/projects/interview/venv/bin/flask --app run.py bootstrap-db
 ExecStart=/root/projects/interview/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5001 run:app
 Restart=on-failure
 RestartSec=5

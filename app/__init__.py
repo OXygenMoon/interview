@@ -39,11 +39,13 @@ def create_app():
 
     @app.get('/readyz')
     def readyz():
-        """Readiness probe: database is reachable and schema is at migration head."""
+        """Readiness probe for database schema and the configured report queue."""
         from .database_migrations import get_migration_status
+        from .services.report_queue import get_queue_health
 
         try:
             status = get_migration_status()
+            queue = get_queue_health()
             app.extensions['database_migration_status'] = status
         except Exception:
             app.logger.exception('migration readiness check failed')
@@ -51,15 +53,26 @@ def create_app():
                 'status': 'error',
                 'database': 'unavailable',
                 'migration': 'unknown',
+                'queue': {'status': 'unknown', 'ready': False},
             }), 503
+        ready = status['is_current'] and queue['ready']
         response = {
-            'status': 'ok' if status['is_current'] else 'error',
+            'status': 'ok' if ready else 'error',
             'database': 'ok',
             'migration': 'current' if status['is_current'] else 'pending',
             'current_revision': status['current_revision'],
             'head_revision': status['head_revision'],
+            'queue': queue,
         }
-        return jsonify(response), 200 if status['is_current'] else 503
+        return jsonify(response), 200 if ready else 503
+
+    @app.get('/queuez')
+    def queuez():
+        """Non-sensitive report queue health and backlog metrics."""
+        from .services.report_queue import get_queue_health
+
+        queue = get_queue_health()
+        return jsonify(queue), 200 if queue['ready'] else 503
 
     from .security import init_csrf_protection
     init_csrf_protection(app)
@@ -109,6 +122,8 @@ def create_app():
 
     from .database_migrations import register_database_commands
     register_database_commands(app)
+    from .services.report_queue import register_queue_commands
+    register_queue_commands(app)
 
     # Startup maintenance may mutate data/files, but never the schema. Schema
     # changes are exclusively managed by Alembic.
@@ -125,7 +140,12 @@ def create_app():
 
     @app.before_request
     def require_current_database_schema():
-        if app.testing or request.endpoint in {'healthz', 'readyz', 'static'}:
+        if app.testing or request.endpoint in {
+            'healthz',
+            'readyz',
+            'queuez',
+            'static',
+        }:
             return None
         status = app.extensions['database_migration_status']
         if not status['is_current']:

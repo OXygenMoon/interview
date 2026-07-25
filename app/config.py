@@ -21,6 +21,33 @@ class Config:
     REMEMBER_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
+    # === Durable report queue ===
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
+    REPORT_QUEUE_MODE = os.environ.get(
+        'REPORT_QUEUE_MODE',
+        'rq' if APP_ENV == 'production' else 'auto',
+    ).lower()
+    REPORT_QUEUE_NAME = os.environ.get(
+        'REPORT_QUEUE_NAME',
+        'interview_reports',
+    )
+    REPORT_JOB_TIMEOUT_SECONDS = int(os.environ.get(
+        'REPORT_JOB_TIMEOUT_SECONDS',
+        '600',
+    ))
+    REPORT_JOB_RESULT_TTL_SECONDS = int(os.environ.get(
+        'REPORT_JOB_RESULT_TTL_SECONDS',
+        '86400',
+    ))
+    REPORT_JOB_FAILURE_TTL_SECONDS = int(os.environ.get(
+        'REPORT_JOB_FAILURE_TTL_SECONDS',
+        '604800',
+    ))
+    REPORT_RETRY_INTERVALS = os.environ.get(
+        'REPORT_RETRY_INTERVALS',
+        '30,120',
+    )
+
     # === 硅基流动 (SiliconFlow) 配置 ===
     # 密钥从环境变量读取（本地放 .env，生产用 systemd Environment=），勿硬编码进源码
     LLM_API_KEY = os.environ.get('LLM_API_KEY')

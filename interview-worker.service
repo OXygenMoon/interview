@@ -1,6 +1,7 @@
 [Unit]
 Description=RQ worker for interview report generation
-After=network.target interview.service
+After=network.target redis-server.service interview.service
+Wants=redis-server.service
 PartOf=interview.service
 
 [Service]
@@ -11,8 +12,9 @@ Environment="PATH=/root/projects/interview/venv/bin"
 Environment="PYTHONPATH=/root/projects/interview"
 EnvironmentFile=-/root/projects/interview/.env
 Environment="APP_ENV=production"
-ExecStart=/root/projects/interview/venv/bin/rq worker interview_reports
-Restart=always
+Environment="REPORT_QUEUE_MODE=rq"
+ExecStart=/root/projects/interview/venv/bin/python worker.py
+Restart=on-failure
 RestartSec=5
 
 [Install]

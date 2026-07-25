@@ -100,6 +100,24 @@ class InterviewSession(db.Model):
     report_model = db.Column(db.String(100))
     report_prompt_version = db.Column(db.String(50))
     report_error = db.Column(db.Text)
+    report_job_id = db.Column(db.String(100))
+    report_queue_backend = db.Column(db.String(20))
+    report_queue_status = db.Column(db.String(30))
+    report_submission_count = db.Column(
+        db.Integer,
+        default=0,
+        server_default='0',
+        nullable=False,
+    )
+    report_attempt_count = db.Column(
+        db.Integer,
+        default=0,
+        server_default='0',
+        nullable=False,
+    )
+    report_enqueued_at = db.Column(db.DateTime)
+    report_started_at = db.Column(db.DateTime)
+    report_finished_at = db.Column(db.DateTime)
     start_time = db.Column(db.DateTime, default=datetime.now)
     end_time = db.Column(db.DateTime)
 

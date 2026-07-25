@@ -3,7 +3,7 @@
 被 routes.py 与 api/interview.py 共用，避免循环导入（本模块只依赖 db/models）。
 """
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from .. import db
 from ..models import InterviewSession, SystemConfig
 
@@ -45,6 +45,10 @@ def reap_stuck_reports(user_id):
     stuck = InterviewSession.query.filter(
         InterviewSession.user_id == user_id,
         InterviewSession.status == 'processing',
+        or_(
+            InterviewSession.report_queue_backend.is_(None),
+            InterviewSession.report_queue_backend != 'rq',
+        ),
         func.coalesce(
             InterviewSession.end_time,
             InterviewSession.last_activity,
@@ -53,6 +57,8 @@ def reap_stuck_reports(user_id):
     ).all()
     for s in stuck:
         s.status = 'failed'
+        s.report_queue_status = 'timeout'
+        s.report_finished_at = datetime.now()
         s.report_error = '报告任务执行超时，可重新提交生成。'
     if stuck:
         db.session.commit()

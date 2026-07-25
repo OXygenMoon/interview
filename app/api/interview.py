@@ -426,7 +426,17 @@ def background_report_task(session_id):
             print(f"⏳ [后台任务] 开始为 Session {session_id} 生成报告...")
             session = db.session.get(InterviewSession, session_id)
             if not session:
-                return
+                return {'status': 'missing'}
+            if session.status == 'completed':
+                return {'status': 'already-completed'}
+
+            session.report_attempt_count = (
+                session.report_attempt_count or 0
+            ) + 1
+            session.report_started_at = datetime.now()
+            session.report_finished_at = None
+            session.report_queue_status = 'started'
+            db.session.commit()
 
             # (A) 获取聊天记录
             history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
@@ -440,7 +450,7 @@ def background_report_task(session_id):
             session.radar_data = overall['scores']
             session.summary_comment = overall['comment']
             session.evaluation_source = 'ai'
-            session.report_model = Config.LLM_MODEL_NAME
+            session.report_model = Config.LLM_REPORT
             session.report_prompt_version = REPORT_PROMPT_VERSION
             session.report_error = None
 
@@ -456,27 +466,44 @@ def background_report_task(session_id):
 
             # (D) 关键：更新状态为 completed
             session.status = 'completed'
+            session.report_queue_status = 'completed'
+            session.report_finished_at = datetime.now()
+            session.report_error = None
             db.session.commit()
             print(f"✅ [后台任务] Session {session_id} 报告生成完毕！")
+            return {'status': 'completed', 'session_id': session_id}
 
         except Exception as e:
             print(f"❌ [后台任务] 报告生成失败: {e}")
             db.session.rollback()
             try:
+                from rq import get_current_job
+                job = get_current_job()
+                will_retry = bool(
+                    job is not None
+                    and (job.retries_left or 0) > 0
+                )
                 session = db.session.get(InterviewSession, session_id)
                 if session:
-                    session.status = 'failed'
+                    session.status = 'processing' if will_retry else 'failed'
                     session.total_score = None
                     session.radar_data = None
                     session.summary_comment = None
                     session.evaluation_source = None
-                    session.report_model = Config.LLM_MODEL_NAME
+                    session.report_model = Config.LLM_REPORT
                     session.report_prompt_version = REPORT_PROMPT_VERSION
                     session.report_error = str(e)[:1000]
+                    session.report_queue_status = (
+                        'retrying' if will_retry else 'failed'
+                    )
+                    session.report_finished_at = (
+                        None if will_retry else datetime.now()
+                    )
                     db.session.commit()
             except Exception as e2:
                 print(f"❌ [后台任务] 状态回写失败: {e2}")
                 db.session.rollback()
+            raise
 
 
 # 3. 修改：结束面试接口
@@ -485,7 +512,7 @@ def background_report_task(session_id):
 def finish_session(session_id):
     """结束面试（异步版）"""
     try:
-        session = InterviewSession.query.get_or_404(session_id)
+        session = db.get_or_404(InterviewSession, session_id)
 
         # 鉴权：仅本人或管理员可结束
         if session.user_id != current_user.id and current_user.role != 'admin':
@@ -493,26 +520,75 @@ def finish_session(session_id):
 
         # 防止重复提交（failed 状态允许重试）
         if session.status in ['completed', 'processing']:
-            return jsonify({'status': 'already_finished'})
+            return jsonify({
+                'status': 'already_finished',
+                'report_backend': session.report_queue_backend,
+                'report_job_id': session.report_job_id,
+                'report_queue_status': session.report_queue_status,
+            })
+        if session.status not in {'ongoing', 'failed', 'expired'}:
+            return jsonify({'error': '当前面试状态不能生成报告'}), 409
 
         # 1. 立即更新状态为 "processing" (处理中)
         processing_started_at = datetime.now()
+        submission_count = (session.report_submission_count or 0) + 1
         session.status = 'processing'
         session.end_time = processing_started_at
         session.last_activity = processing_started_at
         session.report_error = None
+        session.report_job_id = None
+        session.report_queue_backend = None
+        session.report_queue_status = 'enqueueing'
+        session.report_submission_count = submission_count
+        session.report_attempt_count = 0
+        session.report_enqueued_at = processing_started_at
+        session.report_started_at = None
+        session.report_finished_at = None
         db.session.commit()
 
-        # 2. 入队报告生成任务（RQ 优先，无 Redis 回退 Thread）
-        from ..services.report_queue import enqueue_report
-        job = enqueue_report(session_id)
+        # 2. 入队报告生成任务。生产 rq 模式绝不静默退回线程。
+        from ..services.report_queue import ReportQueueError, enqueue_report
+        try:
+            job = enqueue_report(
+                session_id,
+                submission_count=submission_count,
+                defer_thread_start=True,
+            )
+        except ReportQueueError as queue_error:
+            db.session.expire_all()
+            session = db.session.get(InterviewSession, session_id)
+            session.status = 'failed'
+            session.report_queue_status = 'enqueue_failed'
+            session.report_finished_at = datetime.now()
+            session.report_error = str(queue_error)[:1000]
+            db.session.commit()
+            return jsonify({
+                'status': 'failed',
+                'error': '报告任务入队失败，请稍后重试。',
+            }), 503
+
+        # Refresh first so a very fast RQ worker cannot have its state
+        # overwritten by this request.
+        db.session.refresh(session)
+        session.report_job_id = job.get('job_id')
+        session.report_queue_backend = job.get('backend')
+        if session.report_queue_status == 'enqueueing':
+            session.report_queue_status = (
+                'queued' if job.get('backend') == 'rq' else 'starting'
+            )
+        db.session.commit()
+        starter = job.get('_start')
+        if starter:
+            starter()
 
         # 3. 立即响应前端，不等待 AI
         return jsonify({
             'status': 'processing',
             'message': '面试已结束，AI 正在后台生成报告，请稍后在列表中查看。',
             'report_backend': job.get('backend'),
-            'report_job_id': job.get('job_id')
+            'report_job_id': job.get('job_id'),
+            'worker_available': job.get('worker_available'),
+            'durable': job.get('durable'),
         })
 
     except Exception as e:
@@ -525,15 +601,23 @@ def finish_session(session_id):
 @login_required
 def report_status(session_id):
     """查询报告生成状态（前端轮询用）"""
-    session = InterviewSession.query.get_or_404(session_id)
+    session = db.get_or_404(InterviewSession, session_id)
     if session.user_id != current_user.id and current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
+    from ..services.report_queue import sync_report_job_state
+    if sync_report_job_state(session):
+        db.session.commit()
     return jsonify({
         'session_id': session.id,
         'status': session.status,  # processing / completed / failed / ...
         'total_score': session.total_score,
         'has_report': session.status == 'completed' and bool(session.summary_comment),
         'report_error': session.report_error if session.status == 'failed' else None,
+        'report_job_id': session.report_job_id,
+        'report_backend': session.report_queue_backend,
+        'report_queue_status': session.report_queue_status,
+        'report_submission_count': session.report_submission_count,
+        'report_attempt_count': session.report_attempt_count,
     })
 
 
@@ -627,8 +711,21 @@ def processing_statuses():
     expire_stale_sessions(current_user.id)
     sessions = InterviewSession.query.filter_by(
         user_id=current_user.id, status='processing'
-    ).with_entities(InterviewSession.id).all()
-    return jsonify({'processing': [s.id for s in sessions]})
+    ).all()
+    from ..services.report_queue import sync_report_job_state
+    state_changes = [
+        sync_report_job_state(session)
+        for session in sessions
+    ]
+    if any(state_changes):
+        db.session.commit()
+    return jsonify({
+        'processing': [
+            session.id
+            for session in sessions
+            if session.status == 'processing'
+        ],
+    })
 
 
 @api_bp.route('/random/question', methods=['GET'])

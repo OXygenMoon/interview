@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 os.environ.setdefault('APP_ENV', 'testing')
@@ -535,6 +536,65 @@ class BusinessRegressionTests(unittest.TestCase):
         with self.app.app_context():
             self.assertEqual(db.session.get(InterviewSession, report_id).status, 'processing')
 
+    def test_queued_durable_report_is_not_reaped_by_thread_timeout(self):
+        old = datetime.now() - timedelta(hours=1)
+        with self.app.app_context():
+            report = InterviewSession(
+                user_id=self.student_id,
+                status='processing',
+                target_role='Python 工程师',
+                start_time=old,
+                last_activity=old,
+                end_time=old,
+                report_queue_backend='rq',
+                report_queue_status='queued',
+                report_enqueued_at=old,
+            )
+            db.session.add(report)
+            db.session.commit()
+            report_id = report.id
+
+            from app.utils.session_state import reap_stuck_reports
+            reaped = reap_stuck_reports(self.student_id)
+
+        self.assertEqual(reaped, 0)
+        with self.app.app_context():
+            self.assertEqual(
+                db.session.get(InterviewSession, report_id).status,
+                'processing',
+            )
+
+    @patch(
+        'app.services.report_queue.get_job_status',
+        return_value='failed',
+    )
+    def test_report_status_reconciles_terminal_rq_job(self, _job_status):
+        with self.app.app_context():
+            report = InterviewSession(
+                user_id=self.student_id,
+                status='processing',
+                target_role='Python 工程师',
+                report_queue_backend='rq',
+                report_queue_status='queued',
+                report_job_id='job-terminal',
+                report_enqueued_at=datetime.now(),
+            )
+            db.session.add(report)
+            db.session.commit()
+            report_id = report.id
+
+        with self.app.test_client() as client:
+            login(client, self.student_id)
+            response = client.get(
+                f'/api/interview/{report_id}/report-status',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()['status'], 'failed')
+        with self.app.app_context():
+            report = db.session.get(InterviewSession, report_id)
+            self.assertEqual(report.report_queue_status, 'failed')
+
     @patch('app.services.report_queue.Thread')
     @patch('app.services.report_queue._has_active_worker', return_value=False)
     @patch('app.services.report_queue._get_redis', return_value=object())
@@ -551,6 +611,134 @@ class BusinessRegressionTests(unittest.TestCase):
         self.assertEqual(result['backend'], 'thread')
         thread_class.assert_called_once()
         thread_class.return_value.start.assert_called_once()
+
+    @patch('app.services.report_queue._get_redis', return_value=None)
+    def test_required_rq_mode_never_falls_back_to_thread(self, _redis):
+        from app.services.report_queue import (
+            ReportQueueUnavailable,
+            enqueue_report,
+        )
+
+        previous_mode = Config.REPORT_QUEUE_MODE
+        Config.REPORT_QUEUE_MODE = 'rq'
+        try:
+            with self.assertRaises(ReportQueueUnavailable):
+                enqueue_report(123)
+        finally:
+            Config.REPORT_QUEUE_MODE = previous_mode
+
+    @patch('app.services.report_queue._has_active_worker', return_value=False)
+    @patch('app.services.report_queue._get_redis', return_value=object())
+    @patch('app.services.report_queue._queue')
+    def test_required_rq_mode_persists_job_without_worker(
+        self,
+        queue_factory,
+        _redis,
+        _worker,
+    ):
+        from app.services.report_queue import enqueue_report
+
+        queue_factory.return_value.enqueue_call.return_value = SimpleNamespace(
+            id='interview-report-123-2',
+        )
+        previous_mode = Config.REPORT_QUEUE_MODE
+        Config.REPORT_QUEUE_MODE = 'rq'
+        try:
+            result = enqueue_report(123, submission_count=2)
+        finally:
+            Config.REPORT_QUEUE_MODE = previous_mode
+
+        self.assertEqual(result['backend'], 'rq')
+        self.assertTrue(result['durable'])
+        self.assertFalse(result['worker_available'])
+        queue_factory.return_value.enqueue_call.assert_called_once()
+
+    def test_enqueue_failure_is_persisted_and_returned_as_503(self):
+        with self.app.app_context():
+            interview = InterviewSession(
+                user_id=self.student_id,
+                status='ongoing',
+                last_activity=datetime.now(),
+            )
+            db.session.add(interview)
+            db.session.commit()
+            interview_id = interview.id
+
+        from app.services.report_queue import ReportQueueUnavailable
+
+        with patch(
+            'app.services.report_queue.enqueue_report',
+            side_effect=ReportQueueUnavailable('redis down'),
+        ):
+            with self.app.test_client() as client:
+                login(client, self.student_id)
+                response = client.post(
+                    f'/api/interview/{interview_id}/finish',
+                )
+
+        self.assertEqual(response.status_code, 503)
+        with self.app.app_context():
+            interview = db.session.get(InterviewSession, interview_id)
+            self.assertEqual(interview.status, 'failed')
+            self.assertEqual(
+                interview.report_queue_status,
+                'enqueue_failed',
+            )
+            self.assertEqual(interview.report_submission_count, 1)
+
+    def test_report_task_retries_before_terminal_failure(self):
+        with self.app.app_context():
+            interview = InterviewSession(
+                user_id=self.student_id,
+                status='processing',
+                target_role='Python 工程师',
+                report_queue_status='queued',
+            )
+            db.session.add(interview)
+            db.session.commit()
+            interview_id = interview.id
+
+        with (
+            patch('app.create_app', return_value=self.app),
+            patch(
+                'app.api.interview.generate_interview_report',
+                side_effect=RuntimeError('provider unavailable'),
+            ),
+            patch(
+                'rq.get_current_job',
+                return_value=SimpleNamespace(retries_left=1),
+            ),
+        ):
+            from app.api.interview import background_report_task
+
+            with self.assertRaises(RuntimeError):
+                background_report_task(interview_id)
+
+        with self.app.app_context():
+            interview = db.session.get(InterviewSession, interview_id)
+            self.assertEqual(interview.status, 'processing')
+            self.assertEqual(interview.report_queue_status, 'retrying')
+            self.assertEqual(interview.report_attempt_count, 1)
+
+        with (
+            patch('app.create_app', return_value=self.app),
+            patch(
+                'app.api.interview.generate_interview_report',
+                side_effect=RuntimeError('provider unavailable'),
+            ),
+            patch(
+                'rq.get_current_job',
+                return_value=SimpleNamespace(retries_left=0),
+            ),
+        ):
+            with self.assertRaises(RuntimeError):
+                background_report_task(interview_id)
+
+        with self.app.app_context():
+            interview = db.session.get(InterviewSession, interview_id)
+            self.assertEqual(interview.status, 'failed')
+            self.assertEqual(interview.report_queue_status, 'failed')
+            self.assertEqual(interview.report_attempt_count, 2)
 
 
 class SchemaMigrationTests(unittest.TestCase):
@@ -583,18 +771,30 @@ class SchemaMigrationTests(unittest.TestCase):
                         'SELECT count(*) FROM system_configs '
                         "WHERE key='random_interview_questions'"
                     ).fetchone()[0]
+                    session_columns = {
+                        row[1]
+                        for row in inspector.execute(
+                            'PRAGMA table_info(interview_sessions)'
+                        )
+                    }
                     inspector.close()
                 with app.test_client() as client:
                     readiness = client.get('/readyz')
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, 'fe4dca63a7ad')
+        self.assertEqual(revision, '755f763692a5')
         self.assertTrue(
             {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
             <= tables
         )
         self.assertEqual(question_configs, 1)
+        self.assertTrue({
+            'report_job_id',
+            'report_queue_status',
+            'report_submission_count',
+            'report_attempt_count',
+        } <= session_columns)
         self.assertEqual(readiness.status_code, 200)
         self.assertEqual(readiness.get_json()['migration'], 'current')
 
@@ -661,7 +861,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, 'fe4dca63a7ad')
+        self.assertEqual(revision, '755f763692a5')
         self.assertEqual((username, truename), ('legacy-user', '需要保留'))
         self.assertIn('active', user_columns)
         self.assertIn('report_error', session_columns)
