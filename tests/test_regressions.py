@@ -461,7 +461,13 @@ class BusinessRegressionTests(unittest.TestCase):
 
     def test_csrf_rejects_missing_token(self):
         previous_testing = self.app.config['TESTING']
+        previous_migration_status = self.app.extensions[
+            'database_migration_status'
+        ]
         self.app.config.update(TESTING=False, CSRF_ENABLED=True)
+        self.app.extensions['database_migration_status'] = {
+            'is_current': True,
+        }
         try:
             with self.app.test_client() as client:
                 client.get('/login')
@@ -478,6 +484,9 @@ class BusinessRegressionTests(unittest.TestCase):
                 })
         finally:
             self.app.config['TESTING'] = previous_testing
+            self.app.extensions[
+                'database_migration_status'
+            ] = previous_migration_status
 
         self.assertEqual(missing.status_code, 400)
         self.assertEqual(valid.status_code, 200)
@@ -485,10 +494,22 @@ class BusinessRegressionTests(unittest.TestCase):
     def test_health_probe_and_security_headers(self):
         with self.app.test_client() as client:
             response = client.get('/healthz')
+            readiness = client.get('/readyz')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['database'], 'ok')
         self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
         self.assertEqual(response.headers['X-Frame-Options'], 'SAMEORIGIN')
+        self.assertEqual(readiness.status_code, 503)
+        self.assertEqual(readiness.get_json()['migration'], 'pending')
+
+        previous_testing = self.app.config['TESTING']
+        self.app.config['TESTING'] = False
+        try:
+            with self.app.test_client() as client:
+                gated = client.get('/login')
+        finally:
+            self.app.config['TESTING'] = previous_testing
+        self.assertEqual(gated.status_code, 503)
 
     def test_fresh_processing_report_is_not_reaped_from_old_chat_activity(self):
         old = datetime.now() - timedelta(hours=1)
@@ -533,75 +554,118 @@ class BusinessRegressionTests(unittest.TestCase):
 
 
 class SchemaMigrationTests(unittest.TestCase):
-    def test_existing_database_receives_new_columns_and_unique_index(self):
+    def test_fresh_database_is_created_at_migration_head(self):
         with tempfile.TemporaryDirectory() as directory:
-            database = Path(directory) / 'legacy.db'
-            connection = sqlite3.connect(database)
-            connection.executescript(
-                """
-                CREATE TABLE interview_sessions (
-                    id INTEGER PRIMARY KEY,
-                    user_id INTEGER,
-                    status VARCHAR(20),
-                    start_time DATETIME
-                );
-                CREATE TABLE chat_messages (
-                    id INTEGER PRIMARY KEY,
-                    session_id INTEGER,
-                    audio_urls TEXT
-                );
-                INSERT INTO chat_messages (id, session_id, audio_urls)
-                VALUES (1, 1, 'null');
-                CREATE TABLE system_configs (
-                    id INTEGER PRIMARY KEY,
-                    "key" VARCHAR(50) UNIQUE NOT NULL,
-                    value VARCHAR(255),
-                    description VARCHAR(255),
-                    updated_at DATETIME
-                );
-                """
-            )
-            connection.commit()
-            connection.close()
+            database = Path(directory) / 'fresh.db'
 
             original_uri = Config.SQLALCHEMY_DATABASE_URI
             Config.SQLALCHEMY_DATABASE_URI = f'sqlite:///{database}'
             try:
                 app = create_app()
                 app.config.update(TESTING=True)
+                runner = app.test_cli_runner()
+                result = runner.invoke(args=['bootstrap-db'])
+                self.assertEqual(result.exit_code, 0, result.output)
+                drift = runner.invoke(args=['db', 'check'])
+                self.assertEqual(drift.exit_code, 0, drift.output)
                 with app.app_context():
                     inspector = sqlite3.connect(database)
-                    session_columns = {
-                        row[1]
+                    revision = inspector.execute(
+                        'SELECT version_num FROM alembic_version'
+                    ).fetchone()[0]
+                    tables = {
+                        row[0]
                         for row in inspector.execute(
-                            'PRAGMA table_info(interview_sessions)'
+                            "SELECT name FROM sqlite_master WHERE type='table'"
                         )
                     }
-                    message_columns = {
-                        row[1]
-                        for row in inspector.execute('PRAGMA table_info(chat_messages)')
-                    }
-                    indexes = {
-                        row[1]
-                        for row in inspector.execute(
-                            'PRAGMA index_list(interview_sessions)'
-                        )
-                    }
-                    null_audio_rows = inspector.execute(
-                        'SELECT count(*) FROM chat_messages '
-                        'WHERE audio_urls IS NOT NULL'
+                    question_configs = inspector.execute(
+                        'SELECT count(*) FROM system_configs '
+                        "WHERE key='random_interview_questions'"
                     ).fetchone()[0]
                     inspector.close()
+                with app.test_client() as client:
+                    readiness = client.get('/readyz')
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
+        self.assertEqual(revision, 'fe4dca63a7ad')
         self.assertTrue(
-            {'last_activity', 'reviewed', 'abandoned', 'round', 'parent_session_id'}
-            <= session_columns
+            {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
+            <= tables
         )
-        self.assertIn('audio_urls', message_columns)
-        self.assertIn('uq_interview_sessions_parent_session_id', indexes)
-        self.assertEqual(null_audio_rows, 0)
+        self.assertEqual(question_configs, 1)
+        self.assertEqual(readiness.status_code, 200)
+        self.assertEqual(readiness.get_json()['migration'], 'current')
+
+    def test_unversioned_database_is_repaired_preserved_and_adopted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'legacy.db'
+            original_uri = Config.SQLALCHEMY_DATABASE_URI
+            Config.SQLALCHEMY_DATABASE_URI = f'sqlite:///{database}'
+            try:
+                app = create_app()
+                app.config.update(TESTING=True)
+                runner = app.test_cli_runner()
+                with app.app_context():
+                    db.create_all()
+                    db.session.add(User(
+                        username='legacy-user',
+                        truename='需要保留',
+                    ))
+                    db.session.commit()
+
+                connection = sqlite3.connect(database)
+                connection.executescript(
+                    """
+                    ALTER TABLE users DROP COLUMN active;
+                    ALTER TABLE interview_sessions DROP COLUMN report_error;
+                    ALTER TABLE chat_messages DROP COLUMN generation_status;
+                    UPDATE chat_messages SET audio_urls = 'null'
+                    WHERE audio_urls IS NOT NULL;
+                    """
+                )
+                connection.commit()
+                connection.close()
+
+                result = runner.invoke(args=['bootstrap-db'])
+                self.assertEqual(result.exit_code, 0, result.output)
+                drift = runner.invoke(args=['db', 'check'])
+                self.assertEqual(drift.exit_code, 0, drift.output)
+
+                connection = sqlite3.connect(database)
+                revision = connection.execute(
+                    'SELECT version_num FROM alembic_version'
+                ).fetchone()[0]
+                username, truename = connection.execute(
+                    "SELECT username, truename FROM users "
+                    "WHERE username='legacy-user'"
+                ).fetchone()
+                user_columns = {
+                    row[1]
+                    for row in connection.execute('PRAGMA table_info(users)')
+                }
+                session_columns = {
+                    row[1]
+                    for row in connection.execute(
+                        'PRAGMA table_info(interview_sessions)'
+                    )
+                }
+                message_columns = {
+                    row[1]
+                    for row in connection.execute(
+                        'PRAGMA table_info(chat_messages)'
+                    )
+                }
+                connection.close()
+            finally:
+                Config.SQLALCHEMY_DATABASE_URI = original_uri
+
+        self.assertEqual(revision, 'fe4dca63a7ad')
+        self.assertEqual((username, truename), ('legacy-user', '需要保留'))
+        self.assertIn('active', user_columns)
+        self.assertIn('report_error', session_columns)
+        self.assertIn('generation_status', message_columns)
 
 
 if __name__ == '__main__':

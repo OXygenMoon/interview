@@ -1,9 +1,8 @@
-"""Small, idempotent compatibility migrations for the existing SQLite deployment.
+"""One-time compatibility bridge for databases created before Alembic.
 
-The project historically used ``db.create_all()`` without a migration history.
-That creates fresh databases correctly but cannot add columns to an existing
-database. Run these migrations immediately after ``create_all`` so both fresh
-and upgraded installations have the schema expected by the ORM.
+Only ``flask --app run.py bootstrap-db`` calls this module when adopting an
+existing unversioned SQLite database. New and already-versioned databases use
+the migrations in ``migrations/`` exclusively.
 """
 
 from datetime import datetime

@@ -110,12 +110,19 @@ class InterviewSession(db.Model):
 
     # Phase 4：面试进阶链（初面→复面→终面）
     round = db.Column(db.Integer, default=1)  # 当前轮次 1/2/3
-    parent_session_id = db.Column(db.Integer, nullable=True, unique=True)  # 每轮最多只能有一个下一轮
+    parent_session_id = db.Column(db.Integer, nullable=True)  # 每轮最多只能有一个下一轮
     deleted_at = db.Column(db.DateTime)
     deleted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     deletion_reason = db.Column(db.String(255))
     status_before_delete = db.Column(db.String(20))
     deleted_by = db.relationship('User', foreign_keys=[deleted_by_id])
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'parent_session_id',
+            name='uq_interview_sessions_parent_session_id',
+        ),
+    )
 
 
 class ChatMessage(db.Model):

@@ -5,7 +5,10 @@ class Config:
     APP_ENV = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'production')).lower()
     SECRET_KEY = os.environ.get('SECRET_KEY')
     CSRF_ENABLED = os.environ.get('CSRF_ENABLED', 'true').lower() == 'true'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:///app.db',
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 8 * 1024 * 1024))
     SESSION_COOKIE_HTTPONLY = True
