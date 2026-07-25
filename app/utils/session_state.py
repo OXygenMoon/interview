@@ -3,6 +3,7 @@
 被 routes.py 与 api/interview.py 共用，避免循环导入（本模块只依赖 db/models）。
 """
 from datetime import datetime, timedelta
+from sqlalchemy import func
 from .. import db
 from ..models import InterviewSession, SystemConfig
 
@@ -44,7 +45,11 @@ def reap_stuck_reports(user_id):
     stuck = InterviewSession.query.filter(
         InterviewSession.user_id == user_id,
         InterviewSession.status == 'processing',
-        InterviewSession.last_activity < cutoff,
+        func.coalesce(
+            InterviewSession.end_time,
+            InterviewSession.last_activity,
+            InterviewSession.start_time,
+        ) < cutoff,
     ).all()
     for s in stuck:
         s.status = 'failed'

@@ -97,7 +97,7 @@ async function loadCompare() {
     wl.innerHTML = wk.weak.map((w, i) => `
         <div class="p-3 rounded-xl border border-slate-100 bg-slate-50">
             <div class="flex justify-between items-start gap-2">
-                <span class="text-sm font-bold text-slate-700">#${i+1} · ${escapeHtml(w.answer_snippet)}</span>
+                <span class="text-sm font-bold text-slate-700">#${i+1} · ${escapeHtml(w.question || w.answer_snippet)}</span>
                 <span class="badge ${w.bad_rate >= 0.6 ? 'badge-error' : 'badge-warning'} badge-sm">${Math.round(w.bad_rate*100)}% 不合格</span>
             </div>
             <p class="text-xs text-slate-500 mt-1">样本 ${w.total} · ${w.sample_suggestion ? '点评: ' + escapeHtml(w.sample_suggestion) : ''}</p>

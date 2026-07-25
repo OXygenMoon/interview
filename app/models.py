@@ -93,7 +93,7 @@ class InterviewSession(db.Model):
 
     # Phase 4：面试进阶链（初面→复面→终面）
     round = db.Column(db.Integer, default=1)  # 当前轮次 1/2/3
-    parent_session_id = db.Column(db.Integer, nullable=True)  # 关联上一轮 session（首轮为 None）
+    parent_session_id = db.Column(db.Integer, nullable=True, unique=True)  # 每轮最多只能有一个下一轮
 
 
 class ChatMessage(db.Model):
@@ -233,4 +233,3 @@ class SystemConfig(db.Model):
             config = SystemConfig(key=key, value=str(value), description=description)
             db.session.add(config)
         db.session.commit()
-

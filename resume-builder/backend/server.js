@@ -22,7 +22,8 @@ app.use(limiter);
 // 定义目录路径
 const dataDir = path.join(__dirname, 'data');
 const templatesDir = path.join(__dirname, 'templates');
-const uploadsDir = path.join(__dirname, 'uploads'); // [新增]
+const uploadsDir = path.join(__dirname, 'uploads');
+const publicDir = path.join(__dirname, 'public');
 
 // 安全中间件配置
 // 注意：Helmet 默认会阻止加载外部图片，这里需要放宽 CSP 或者暂时禁用 CSP 以便加载本地图片
@@ -39,8 +40,6 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' })); // 调大 JSON 限制
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// [新增] 静态文件服务：将 /api/uploads 映射到本地 uploads 目录
-// 这样前端访问 /api/uploads/xxx.jpg 就能拿到图片
 app.use('/api/uploads', express.static(uploadsDir));
 
 // 导入路由
@@ -62,13 +61,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
+// Docker 最终镜像将 Vue 构建产物放在 /app/public。
+app.use(express.static(publicDir));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  return res.sendFile(path.join(publicDir, 'index.html'));
+});
+
 // 初始化服务器
 async function initializeServer() {
   try {
     // 确保目录存在
     await fs.mkdir(dataDir, { recursive: true });
     await fs.mkdir(templatesDir, { recursive: true });
-    await fs.mkdir(uploadsDir, { recursive: true }); // [新增]
+    await fs.mkdir(uploadsDir, { recursive: true });
     
     // 初始化数据文件
     const defaultFiles = [

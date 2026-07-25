@@ -12,6 +12,15 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    if not app.config.get('SECRET_KEY'):
+        if app.config.get('APP_ENV') in {'development', 'testing'}:
+            app.config['SECRET_KEY'] = 'development-only-secret-key'
+        else:
+            raise RuntimeError(
+                'SECRET_KEY is required outside development/testing. '
+                'Set it through the environment or the project .env file.'
+            )
+
     db.init_app(app)
 
     from .filters import register_filters
@@ -60,5 +69,7 @@ def create_app():
     # 自动创建数据库表
     with app.app_context():
         db.create_all()
+        from .schema_migrations import ensure_schema_compatibility
+        ensure_schema_compatibility()
 
     return app

@@ -1,0 +1,19 @@
+[Unit]
+Description=RQ worker for interview report generation
+After=network.target interview.service
+PartOf=interview.service
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/projects/interview
+Environment="PATH=/root/projects/interview/venv/bin"
+Environment="PYTHONPATH=/root/projects/interview"
+EnvironmentFile=-/root/projects/interview/.env
+Environment="APP_ENV=production"
+ExecStart=/root/projects/interview/venv/bin/rq worker interview_reports
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -35,8 +35,20 @@ def _get_redis():
 
 
 def is_rq_available():
-    """探测 Redis/RQ 是否可用（会触发首次连接检查）。"""
-    return _get_redis() is not None
+    """仅当 Redis 可用且目标队列有活跃 worker 时返回 True。"""
+    client = _get_redis()
+    return client is not None and _has_active_worker(client)
+
+
+def _has_active_worker(client):
+    """避免 Redis 存活但无人消费时把报告永久留在队列中。"""
+    try:
+        from rq import Queue, Worker
+        queue = Queue(QUEUE_NAME, connection=client)
+        return Worker.count(connection=client, queue=queue) > 0
+    except Exception as e:
+        print(f"[queue] 无法确认 RQ worker 状态，将回退到 Thread: {e}")
+        return False
 
 
 def reset_check():
@@ -62,7 +74,7 @@ def enqueue_report(session_id):
         return {'job_id': None, 'backend': 'none', 'error': str(e)}
 
     client = _get_redis()
-    if client is not None:
+    if client is not None and _has_active_worker(client):
         try:
             from rq import Queue
             q = Queue(QUEUE_NAME, connection=client)
@@ -76,6 +88,8 @@ def enqueue_report(session_id):
             return {'job_id': job.id, 'backend': 'rq'}
         except Exception as e:
             print(f"[queue] RQ 入队失败，回退 Thread: {e}")
+    elif client is not None:
+        print("[queue] Redis 可用但 interview_reports 无活跃 worker，将回退到 Thread")
 
     # 回退：daemon 线程（进程重启会丢，但本地无 Redis 时可用）
     t = Thread(target=_thread_runner, args=(background_report_task, session_id), daemon=True)

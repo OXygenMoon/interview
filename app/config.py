@@ -2,7 +2,8 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-very-secret'
+    APP_ENV = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'production')).lower()
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -41,5 +42,4 @@ class Config:
     }
 
     VOLC_DEFAULT_VOICE = "zh_male_dayi_saturn_bigtts"
-
 

@@ -1,9 +1,11 @@
 """
-Phase 0 一次性迁移：
+Phase 0 手动迁移工具（兼容旧部署）：
 1. 给 interview_sessions 表增加 last_activity / reviewed / abandoned 列
 2. 向 system_configs 表写入冷却系统默认配置
 
-用法：在项目根目录执行  .venv/bin/python migrate_phase0.py
+正常启动时 app.create_app 会自动执行同等的幂等迁移。此脚本仅用于
+应用无法启动时的手动恢复：
+    .venv/bin/python migrate_phase0.py
 SQLite 支持 ALTER TABLE ADD COLUMN，安全且保留现有数据。
 """
 import sqlite3
@@ -56,6 +58,20 @@ def main():
     # 旧数据回填 last_activity = start_time，避免立即被判过期
     cur.execute("UPDATE interview_sessions SET last_activity = start_time WHERE last_activity IS NULL")
     print(f"  ~ 回填 last_activity = start_time，影响 {cur.rowcount} 行")
+
+    duplicate_parent = cur.execute(
+        "SELECT parent_session_id FROM interview_sessions "
+        "WHERE parent_session_id IS NOT NULL "
+        "GROUP BY parent_session_id HAVING COUNT(*) > 1 LIMIT 1"
+    ).fetchone()
+    if duplicate_parent is None:
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_interview_sessions_parent_session_id "
+            "ON interview_sessions(parent_session_id) "
+            "WHERE parent_session_id IS NOT NULL"
+        )
+    else:
+        print("  ! 检测到重复 parent_session_id，未创建唯一索引；请先人工核对重复场次")
 
     print("[2/2] 写入冷却系统默认配置...")
     seed_config(cur, "session_ttl_minutes", "10", "ongoing 面试无活动多久后判为 expired（分钟）")

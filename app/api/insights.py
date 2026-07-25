@@ -136,44 +136,59 @@ def weak_questions():
     if current_user.role not in ('teacher', 'dept_head', 'admin'):
         return jsonify({'error': '仅教师及以上可见'}), 403
 
-    # 取所有已点评的 user 消息（is_good_response 非 None 的）
-    msgs = db.session.query(
-        ChatMessage.content,
-        ChatMessage.is_good_response,
-        ChatMessage.suggestion,
-    ).join(InterviewSession, ChatMessage.session_id == InterviewSession.id) \
-     .join(User, InterviewSession.user_id == User.id) \
-     .filter(ChatMessage.is_good_response.isnot(None),
-             InterviewSession.status == 'completed')
+    # 同时取问题和已点评回答，在 Python 端按 session 顺序配对。
+    # suggestion 非 NULL 表示该 user 消息确实经过报告点评，避免把默认 False
+    # 的未点评消息或 AI 消息误判为不合格回答。
+    msgs = ChatMessage.query \
+        .join(InterviewSession, ChatMessage.session_id == InterviewSession.id) \
+        .join(User, InterviewSession.user_id == User.id) \
+        .filter(InterviewSession.status == 'completed')
 
     if current_user.role == 'teacher':
         msgs = msgs.filter(User.class_name == current_user.class_name)
     elif current_user.role == 'dept_head':
         msgs = msgs.filter(User.department == current_user.department)
 
-    rows = msgs.all()
-    # 用对应 AI 提问作为 key（取该 user 消息前的 ai 消息）— 这里简化：按 user 回答内容前 20 字聚合
+    rows = msgs.order_by(
+        ChatMessage.session_id,
+        ChatMessage.timestamp,
+        ChatMessage.id,
+    ).all()
+
     bucket = defaultdict(lambda: {'total': 0, 'bad': 0, 'suggestions': []})
-    for content, is_good, suggestion in rows:
-        key = (content[:30] + '…') if len(content) > 30 else content
+    current_question = {}
+    for msg in rows:
+        content = (msg.content or '').strip()
+        if msg.sender == 'ai':
+            current_question[msg.session_id] = content
+            continue
+        if msg.sender != 'user' or msg.suggestion is None:
+            continue
+
+        question = current_question.get(msg.session_id, '').strip()
+        if not question:
+            continue
+        key = ' '.join(question.split())
         bucket[key]['total'] += 1
-        if not is_good:
+        if not msg.is_good_response:
             bucket[key]['bad'] += 1
-        if suggestion:
-            bucket[key]['suggestions'].append(suggestion)
+        if msg.suggestion:
+            bucket[key]['suggestions'].append(msg.suggestion)
 
     result = []
-    for key, v in bucket.items():
+    for question, v in bucket.items():
         if v['total'] < 1:
             continue
         bad_rate = round(v['bad'] / v['total'], 2)
+        snippet = (question[:60] + '…') if len(question) > 60 else question
         result.append({
-            'answer_snippet': key,
+            'question': snippet,
+            'answer_snippet': snippet,
             'total': v['total'],
             'bad_rate': bad_rate,
             'sample_suggestion': v['suggestions'][0] if v['suggestions'] else '',
         })
-    result.sort(key=lambda x: x['bad_rate'], reverse=True)
+    result.sort(key=lambda x: (x['bad_rate'], x['total']), reverse=True)
     return jsonify({'weak': result[:20]})
 
 

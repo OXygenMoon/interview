@@ -488,8 +488,10 @@ def finish_session(session_id):
             return jsonify({'status': 'already_finished'})
 
         # 1. 立即更新状态为 "processing" (处理中)
+        processing_started_at = datetime.now()
         session.status = 'processing'
-        session.end_time = datetime.now()
+        session.end_time = processing_started_at
+        session.last_activity = processing_started_at
         db.session.commit()
 
         # 2. 入队报告生成任务（RQ 优先，无 Redis 回退 Thread）
@@ -529,17 +531,27 @@ def report_status(session_id):
 @login_required
 def next_round(session_id):
     """面试进阶链：基于上一轮 completed session 创建下一轮（复面/终面）。"""
+    from sqlalchemy.exc import IntegrityError
+
     prev = InterviewSession.query.get_or_404(session_id)
-    if prev.user_id != current_user.id and current_user.role != 'admin':
+    if prev.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
     if prev.status != 'completed':
         return jsonify({'error': '上一轮面试尚未完成，无法进入下一轮'}), 400
     if (prev.round or 1) >= 3:
         return jsonify({'error': '已是终面，无下一轮'}), 400
 
+    existing = InterviewSession.query.filter_by(parent_session_id=prev.id).first()
+    if existing:
+        return jsonify({
+            'status': 'already_created',
+            'session_id': existing.id,
+            'round': existing.round,
+        }), 409
+
     # 冷却系统守卫（复用 create_session 同款）
     cd = get_cooldown_status(current_user.id)
-    if not cd['can_start'] and cd['reason'] != 'has_ongoing':
+    if not cd['can_start']:
         return jsonify({'error': 'cooldown', 'cooldown': cd}), 423
 
     next_round_num = (prev.round or 1) + 1
@@ -557,7 +569,19 @@ def next_round(session_id):
         parent_session_id=prev.id,
     )
     db.session.add(session)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        # 并发双击时由数据库唯一索引保证只创建一个子场次。
+        db.session.rollback()
+        existing = InterviewSession.query.filter_by(parent_session_id=prev.id).first()
+        if existing:
+            return jsonify({
+                'status': 'already_created',
+                'session_id': existing.id,
+                'round': existing.round,
+            }), 409
+        raise
 
     round_name = {2: "复面（技术面）", 3: "终面（高管面）"}.get(next_round_num, f"第{next_round_num}轮")
     first_msg = f"你好，我是本轮的面试官。这是你的{round_name}。我们将重点考察与上一轮不同的方面。请先做一个简短的自我介绍，并说说你希望在本轮展示什么。"
