@@ -11,6 +11,15 @@ client = OpenAI(
 import re
 
 
+class AIServiceError(RuntimeError):
+    """AI output is unavailable or invalid and must not become a score."""
+
+
+REPORT_PROMPT_VERSION = 'interview-report-v2'
+CHAT_PROMPT_VERSION = 'interview-chat-v2'
+REQUIRED_SCORE_DIMENSIONS = ("专业技能", "逻辑思维", "语言表达", "抗压能力", "礼仪态度")
+
+
 def parse_json_safely(text):
     """
     清洗 AI 返回的文本，确保能被 json.loads 解析
@@ -79,6 +88,8 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
 
     messages = [{"role": "system", "content": system_prompt}]
     for msg in history_messages:
+        if getattr(msg, 'generation_status', 'completed') != 'completed':
+            continue
         role = "assistant" if msg.sender == "ai" else "user"
         messages.append({"role": role, "content": msg.content})
     return messages
@@ -157,21 +168,23 @@ def evaluate_random_answer(question, answer):
         )
 
         parsed = parse_json_safely(response.choices[0].message.content)
-        score = int(parsed.get('score', 0))
+        if not isinstance(parsed, dict) or 'score' not in parsed:
+            raise ValueError('missing score')
+        score = int(parsed['score'])
         score = max(0, min(100, score))
+        evaluation = str(parsed.get('evaluation') or '').strip()
+        suggestion = str(parsed.get('suggestion') or '').strip()
+        if not evaluation or not suggestion:
+            raise ValueError('missing evaluation or suggestion')
 
         return {
             "score": score,
-            "evaluation": (parsed.get('evaluation') or "").strip(),
-            "suggestion": (parsed.get('suggestion') or "").strip()
+            "evaluation": evaluation,
+            "suggestion": suggestion,
         }
     except Exception as e:
         print(f"❌ 单题评估失败: {e}")
-        return {
-            "score": 60,
-            "evaluation": "回答有一定基础，但论据和细节不足，结构还可以更清晰。",
-            "suggestion": "建议按“观点-依据-案例-结果”组织回答，并补充可量化成果。"
-        }
+        raise AIServiceError('单题评估服务暂时不可用') from e
 
 
 def generate_interview_report(history_messages, target_role):
@@ -190,6 +203,8 @@ def generate_interview_report(history_messages, target_role):
     temp_question = "（面试官开场白/未记录的问题）"  # 默认值
 
     for msg in history_messages:
+        if getattr(msg, 'generation_status', 'completed') != 'completed':
+            continue
         role = "面试官" if msg.sender == "ai" else "求职者"
         full_text += f"{role}: {msg.content}\n"
 
@@ -268,21 +283,32 @@ def _get_overall_score(full_text, target_role, round_count=0):
             response_format={"type": "json_object"}
         )
         result = parse_json_safely(response.choices[0].message.content)
-        # 后校准兜底：防 LLM 不守 prompt 越界
-        try:
-            t = int(result.get("total_score", 0))
-            if t > cap:
-                result["total_score"] = cap
-        except Exception:
-            result["total_score"] = cap
+        if not isinstance(result, dict):
+            raise ValueError('overall result is not an object')
+        scores = result.get('scores')
+        if not isinstance(scores, dict):
+            raise ValueError('missing scores')
+        clean_scores = {}
+        for dimension in REQUIRED_SCORE_DIMENSIONS:
+            value = int(scores[dimension])
+            if not 0 <= value <= 100:
+                raise ValueError(f'invalid score for {dimension}')
+            clean_scores[dimension] = value
+        total_score = int(result['total_score'])
+        if not 0 <= total_score <= 100:
+            raise ValueError('invalid total score')
+        comment = str(result.get('comment') or '').strip()
+        if not comment:
+            raise ValueError('missing report comment')
+        result = {
+            'scores': clean_scores,
+            'total_score': min(total_score, cap),
+            'comment': comment,
+        }
         return result
     except Exception as e:
         print(f"❌ 整体打分失败: {e}")
-        return {
-            "scores": {"专业技能": 60, "逻辑思维": 60, "语言表达": 60, "抗压能力": 60, "礼仪态度": 60},
-            "total_score": min(60, cap),
-            "comment": "（系统繁忙，暂无评语）"
-        }
+        raise AIServiceError('整体报告评分失败') from e
 
 
 def _get_details_feedback(user_answers, target_role):
@@ -339,18 +365,28 @@ def _get_details_feedback(user_answers, target_role):
         # 使用安全解析器
         result = parse_json_safely(response.choices[0].message.content)
 
-        # 获取列表，如果解析失败返回空列表
         reviews = result.get('reviews', [])
-
-        # 安全性校验：确保长度一致，如果不一致，截断或补齐
-        if len(reviews) != len(user_answers):
-            print(f"⚠️ 警告：AI 返回数量({len(reviews)})与输入({len(user_answers)})不一致，正在自动对齐...")
-
-        return reviews
+        if not isinstance(reviews, list) or len(reviews) != len(user_answers):
+            raise ValueError('review count does not match answer count')
+        clean_reviews = []
+        for review in reviews:
+            if not isinstance(review, dict):
+                raise ValueError('review is not an object')
+            suggestion = str(review.get('suggestion') or '').strip()
+            reference = str(review.get('reference') or '').strip()
+            is_good = review.get('is_good')
+            if not suggestion or not reference or not isinstance(is_good, bool):
+                raise ValueError('review fields are incomplete')
+            clean_reviews.append({
+                'suggestion': suggestion,
+                'reference': reference,
+                'is_good': is_good,
+            })
+        return clean_reviews
 
     except Exception as e:
         print(f"❌ 逐句点评失败: {e}")
-        return []
+        raise AIServiceError('逐题点评失败') from e
 def transcribe_audio(audio_file_path):
     """
     将音频文件转换为文字 (ASR)
@@ -491,4 +527,3 @@ def analyze_image(image_base64):
     except Exception as e:
         print(f"❌ 视觉分析失败: {e}")
         return ""
-

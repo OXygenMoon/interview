@@ -154,6 +154,7 @@
                         </div>
 
                         <form action="{{ url_for('routes.submit_quiz', material_id=lesson.id) }}" method="POST" class="max-w-3xl mx-auto space-y-8">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             {% for q in questions %}
                             <div class="card bg-slate-50 border border-slate-100 p-6 rounded-2xl">
                                 <h3 class="font-bold text-lg text-slate-800 mb-5 flex gap-3 leading-snug">

@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 import os
 import time
-import uuid
 
 from .. import db
 from ..utils.file_parser import extract_text_from_file

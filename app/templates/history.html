@@ -157,11 +157,16 @@
                             <td>
                                 {% if s.status == 'processing' %}
                                     <span class="loading loading-dots loading-xs text-warning"></span>
+                                {% elif s.status == 'failed' %}
+                                    <span class="text-error text-xs font-bold">报告失败</span>
                                 {% elif s.total_score is not none %}
                                     {% if s.total_score >= 85 %}
                                         <span class="text-emerald-600 font-bold">{{ s.total_score }}</span>
                                     {% elif s.total_score >= 60 %}
                                         <span class="text-amber-500 font-bold">{{ s.total_score }}</span>
+                                    {% elif s.status == 'failed' %}
+                                        <button onclick="retryReport({{ s.id }}, this)" class="btn btn-xs btn-error text-white" title="重试报告">重试</button>
+
                                     {% else %}
                                         <span class="text-slate-300 font-bold">{{ s.total_score }}</span>
                                     {% endif %}
@@ -188,9 +193,11 @@
                                         </a>
                                     {% endif %}
 
-                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="删除">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
+                                    {% if s.status not in ['ongoing', 'processing'] and (s.status != 'completed' or s.reviewed) %}
+                                        <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="隐藏记录">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -344,7 +351,7 @@
 
     // === 4. 删除逻辑 ===
     async function deleteSession(sid) {
-        if(!confirm("⚠️ 确定要删除这条面试记录吗？\n删除后将无法恢复，且相关统计数据也会被移除。")) return;
+        if(!confirm("确定隐藏这条面试记录吗？\n原始记录会保留，管理员仍可审计。")) return;
 
         try {
             const res = await fetch(`/api/interview/${sid}/delete`, {
@@ -360,6 +367,20 @@
         } catch (e) {
             console.error(e);
             alert("网络请求失败");
+        }
+    }
+
+    async function retryReport(sid, button) {
+        if (!confirm('重新提交这场面试的报告生成任务吗？')) return;
+        button.disabled = true;
+        try {
+            const res = await fetch(`/api/interview/${sid}/finish`, {method: 'POST'});
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '提交失败');
+            location.reload();
+        } catch (error) {
+            alert(error.message);
+            button.disabled = false;
         }
     }
 </script>

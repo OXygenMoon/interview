@@ -10,7 +10,7 @@
     'bg-rose-50 text-rose-700 border border-rose-100',
     'bg-violet-50 text-violet-700 border border-violet-100'
 ] %}
-{% set best_session = top_students[0] if top_students else none %}
+{% set best_student = top_students[0] if top_students else none %}
 
 <div class="dashboard-shell space-y-6 pb-12">
     <section class="dashboard-hero overflow-hidden rounded-[1.35rem] border border-white/70 bg-white/70 shadow-[0_22px_45px_-34px_rgba(15,23,42,0.55)] backdrop-blur-xl">
@@ -86,9 +86,9 @@
                 </svg>
             </div>
             <div class="min-w-0">
-                <p class="metric-label">当前最高分</p>
-                <p class="metric-value text-amber-700">{{ (best_session.total_score or 0) if best_session else 0 }}</p>
-                <p class="metric-desc truncate">{{ best_session.user.truename if best_session else '暂无数据' }}</p>
+                <p class="metric-label">学生最高均分</p>
+                <p class="metric-value text-amber-700">{{ best_student.avg_score if best_student else 0 }}</p>
+                <p class="metric-desc truncate">{{ best_student.user.truename if best_student else '暂无数据' }}</p>
             </div>
         </div>
 
@@ -209,14 +209,13 @@
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">优秀表现 Top 5</h2>
-                        <p class="panel-subtitle">按单场得分排序</p>
+                        <p class="panel-subtitle">按学生平均分排序，每人只出现一次</p>
                     </div>
                 </div>
 
                 <div class="divide-y divide-slate-100">
                     {% for s in top_students %}
-                    {% set score = s.total_score or 0 %}
-                    <a href="/interview/summary/{{ s.id }}" class="top-row group">
+                    <a href="{{ url_for('routes.teacher_student_detail', user_id=s.user.id) }}" class="top-row group">
                         <div class="rank-badge
                             {% if loop.index == 1 %}bg-amber-50 text-amber-700 border-amber-100
                             {% elif loop.index == 2 %}bg-slate-100 text-slate-600 border-slate-200
@@ -232,11 +231,11 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="truncate text-sm font-extrabold text-slate-700 group-hover:text-teal-700">{{ s.user.truename }}</div>
-                            <div class="truncate text-xs text-slate-400">{{ s.target_role or '通用面试' }}</div>
+                            <div class="truncate text-xs text-slate-400">已完成 {{ s.count }} 场</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-lg font-black text-slate-800">{{ score }}</div>
-                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Score</div>
+                            <div class="text-lg font-black text-slate-800">{{ s.avg_score }}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">平均分</div>
                         </div>
                     </a>
                     {% else %}

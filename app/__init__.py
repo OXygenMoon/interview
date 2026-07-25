@@ -1,5 +1,6 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, jsonify
+from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from .config import Config
@@ -23,6 +24,19 @@ def create_app():
 
     db.init_app(app)
 
+    @app.get('/healthz')
+    def healthz():
+        """Minimal process/database health probe for deployments."""
+        try:
+            db.session.execute(text('SELECT 1'))
+            return jsonify({'status': 'ok', 'database': 'ok'})
+        except Exception:
+            app.logger.exception('health check failed')
+            return jsonify({'status': 'error', 'database': 'unavailable'}), 503
+
+    from .security import init_csrf_protection
+    init_csrf_protection(app)
+
     from .filters import register_filters
     register_filters(app)
 
@@ -35,7 +49,7 @@ def create_app():
     from .models import User
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     # =========================================================
     # 注册蓝图
@@ -71,5 +85,9 @@ def create_app():
         db.create_all()
         from .schema_migrations import ensure_schema_compatibility
         ensure_schema_compatibility()
+        from .services.question_bank import repair_question_bank
+        repair_question_bank()
+        from .services.storage_cleanup import cleanup_runtime_files
+        cleanup_runtime_files(app)
 
     return app

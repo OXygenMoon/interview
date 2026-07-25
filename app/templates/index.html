@@ -168,6 +168,8 @@
                                         <span class="loading loading-ring loading-sm"></span>
                                         <span class="text-xs font-bold">计算中...</span>
                                     </div>
+                                {% elif s.status == 'failed' %}
+                                    <span class="text-error text-xs font-bold">生成失败</span>
                                 {% elif s.total_score is not none %}
                                     {% if s.total_score >= 85 %}
                                         <span class="text-emerald-600 font-black text-xl">{{ s.total_score }}</span>
@@ -191,6 +193,8 @@
                                     <span class="badge badge-xs bg-amber-500 border-none text-white gap-1 py-2 px-2">
                                         <span class="loading loading-spinner loading-xs h-3 w-3"></span> 生成中
                                     </span>
+                                {% elif s.status == 'failed' %}
+                                    <span class="badge badge-xs badge-error border-none text-white py-2 px-2">报告失败</span>
                                 {% else %}
                                     <span class="badge badge-xs bg-blue-500 border-none text-white gap-1 py-2 px-2">
                                         <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> 进行中
@@ -207,6 +211,8 @@
                                     <a href="{{ url_for('routes.interview_summary', session_id=s.id) }}" class="btn btn-sm btn-outline border-slate-200 text-slate-600 hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all shadow-sm">
                                         查看报告
                                     </a>
+                                {% elif s.status == 'failed' %}
+                                    <button onclick="retryReport({{ s.id }}, this)" class="btn btn-sm btn-error text-white">重试报告</button>
                                 {% else %}
                                     <a href="{{ url_for('routes.interview_room', session_id=s.id) }}" class="btn btn-sm bg-indigo-600 text-white border-none hover:bg-indigo-700 shadow-md shadow-indigo-100">
                                         继续面试
@@ -656,6 +662,22 @@ function handleCooldownBlock(cd, btn) {
 })();
 
 // 页面加载：在首页顶部显示冷却/复盘倒计时横幅
+async function retryReport(sessionId, button) {
+    if (!confirm('重新提交这场面试的报告生成任务吗？')) return;
+    button.disabled = true;
+    button.innerHTML = '<span class="loading loading-spinner loading-xs"></span>';
+    try {
+        const response = await fetch(`/api/interview/${sessionId}/finish`, {method: 'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '提交失败');
+        location.reload();
+    } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+        button.innerText = '重试报告';
+    }
+}
+
 let _cooldownTimer = null;
 function fmtTime(sec) {
     sec = Math.max(0, Math.floor(sec));

@@ -3,10 +3,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}{% endblock %} - 教师管理后台</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (() => {
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = (resource, options = {}) => {
+                const request = resource instanceof Request ? resource : null;
+                const url = new URL(request ? request.url : resource, window.location.href);
+                const method = String(options.method || (request && request.method) || 'GET').toUpperCase();
+                if (url.origin === window.location.origin && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+                    const headers = new Headers(options.headers || (request && request.headers) || {});
+                    headers.set('X-CSRF-Token', document.querySelector('meta[name="csrf-token"]').content);
+                    options = {...options, headers};
+                }
+                return originalFetch(resource, options);
+            };
+        })();
+    </script>
 
     <style>
         :root {
@@ -382,9 +399,12 @@
                     <p class="text-sm font-extrabold text-slate-700 truncate">{{ current_user.truename }}</p>
                     <p class="text-xs text-slate-400 truncate uppercase">{{ current_user.role }}</p>
                 </div>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-xs btn-square text-slate-400 hover:text-error" title="退出登录">
+                <form method="POST" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-ghost btn-xs btn-square text-slate-400 hover:text-error" title="退出登录">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                </a>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>

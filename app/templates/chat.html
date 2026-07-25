@@ -319,38 +319,11 @@
     window.addEventListener('load', () => {
         {% if enable_video %}
         initCamera();
-        // 启动定时视觉分析任务 (每 8 秒一次，避免过于频繁)
-        {% if not is_read_only %}
-        setInterval(performVisualAnalysis, 5000);
-        {% endif %}
         {% endif %}
     });
 
     // 自动滚动
     scrollToBottom();
-
-    // =========================================================
-    // 1.8 异步视觉分析逻辑 (新增)
-    // =========================================================
-    async function performVisualAnalysis() {
-        const imageBase64 = captureFrame();
-        if (!imageBase64) return;
-
-        try {
-            const res = await fetch(`/api/interview/${sessionId}/visual_feedback`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ image: imageBase64 })
-            });
-            const data = await res.json();
-
-            if (data.status === 'success' && data.feedback) {
-                updateVisualFeedbackUI(data.feedback);
-            }
-        } catch (e) {
-            console.warn("Visual analysis failed:", e);
-        }
-    }
 
     function updateVisualFeedbackUI(feedback) {
         const card = document.getElementById('visual-feedback-card');
@@ -601,8 +574,14 @@
                     } else if (evt.type === 'audio') {
                         audioUrls.push(evt.url);
                         enqueueAudio(evt.url);
+                    } else if (evt.type === 'visual') {
+                        updateVisualFeedbackUI(evt.feedback);
                     } else if (evt.type === 'error') {
                         console.warn('SSE error:', evt.message);
+                        if (!fullText) {
+                            contentEl.textContent = evt.message || 'AI 响应失败，请重试。';
+                            bubbleEl.classList.add('border-error', 'text-error');
+                        }
                     }
                 }
             }

@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app.models import db, Resume
-import json
 import requests
 import re
 
@@ -100,7 +99,7 @@ def save_resume():
     template_id = data.get('template_id', 'modern')
 
     if resume_id:
-        resume = Resume.query.get(resume_id)
+        resume = db.session.get(Resume, resume_id)
         if resume and resume.user_id == current_user.id:
             resume.content = content
             resume.title = title

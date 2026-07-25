@@ -1,42 +1,26 @@
 import json
+import secrets
 
 import pandas as pd
 from io import BytesIO
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, abort
 from flask_login import login_required, current_user
 from collections import Counter
-from sqlalchemy import func
 from datetime import datetime
 from . import db  # 确保导入 db 实例，用于 db.session.add/commit
-from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress, Company, Position, Resume, SystemConfig
+from .models import InterviewSession, ChatMessage, User, Department, SchoolClass, LearningCategory, LearningMaterial, UserLearningProgress, LearningAttempt, Company, Resume, SystemConfig
 from .config import Config
-from .decorators import teacher_required, dept_head_required, admin_required
-from .utils.session_state import mark_reviewed, expire_stale_sessions, reap_stuck_reports
+from .decorators import teacher_required, admin_required
+from .services.question_bank import get_random_interview_questions, sanitize_questions
+from .utils.session_state import (
+    mark_reviewed,
+    expire_stale_sessions,
+    reap_stuck_reports,
+    soft_delete_session,
+    restore_soft_deleted_session,
+)
 
 bp = Blueprint('routes', __name__)
-
-DEFAULT_RANDOM_INTERVIEW_QUESTIONS = [
-    "请你做一个 1 分钟的自我介绍，并突出与岗位相关的优势。",
-    "请分享一个你遇到困难并最终解决的问题，重点说说你的思考过程。",
-    "如果你和同事在方案上意见不一致，你会如何推进沟通并达成结果？",
-    "请举例说明你如何在压力下保证任务质量和交付时间。",
-    "你为什么想加入我们公司？你最看重的是什么？"
-]
-
-
-def get_random_interview_questions():
-    """读取随机问题题库，若未配置则返回默认题库"""
-    raw_value = SystemConfig.get('random_interview_questions', '[]')
-    questions = []
-
-    try:
-        parsed = json.loads(raw_value) if raw_value else []
-        if isinstance(parsed, list):
-            questions = [str(item).strip() for item in parsed if str(item).strip()]
-    except Exception:
-        questions = []
-
-    return questions if questions else DEFAULT_RANDOM_INTERVIEW_QUESTIONS
 
 
 # ===============================================================
@@ -87,14 +71,19 @@ def admin_settings():
             ttl = int(request.form.get('session_ttl_minutes', 10))
             abandon_cd = int(request.form.get('cooldown_abandon_minutes', 10))
             complete_cd = int(request.form.get('cooldown_complete_minutes', 30))
+            audio_retention_days = int(request.form.get('audio_retention_days', 30))
+            temp_retention_hours = int(request.form.get('temp_retention_hours', 24))
         except ValueError:
             ttl, abandon_cd, complete_cd = 10, 10, 30
+            audio_retention_days, temp_retention_hours = 30, 24
         requires_review = request.form.get('cooldown_requires_review') == 'on'
 
         SystemConfig.set('session_ttl_minutes', str(max(1, ttl)), 'ongoing 面试无活动多久后判为 expired（分钟）')
         SystemConfig.set('cooldown_abandon_minutes', str(max(0, abandon_cd)), '中途放弃后再次开始面试的冷却罚时（分钟）')
         SystemConfig.set('cooldown_complete_minutes', str(max(0, complete_cd)), '完成一次面试后再次开始的冷却时长（分钟）')
         SystemConfig.set('cooldown_requires_review', 'true' if requires_review else 'false', '完成后是否强制复盘上次报告才能开始下一次')
+        SystemConfig.set('audio_retention_days', str(max(0, audio_retention_days)), 'TTS 音频保留天数')
+        SystemConfig.set('temp_retention_hours', str(max(1, temp_retention_hours)), '临时文件保留小时数')
 
         flash('系统设置已更新', 'success')
         return redirect(url_for('routes.admin_settings'))
@@ -107,6 +96,8 @@ def admin_settings():
         'cooldown_abandon_minutes': SystemConfig.get('cooldown_abandon_minutes', '10'),
         'cooldown_complete_minutes': SystemConfig.get('cooldown_complete_minutes', '30'),
         'cooldown_requires_review': SystemConfig.get('cooldown_requires_review', 'true') == 'true',
+        'audio_retention_days': SystemConfig.get('audio_retention_days', '30'),
+        'temp_retention_hours': SystemConfig.get('temp_retention_hours', '24'),
     }
 
     return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video, cooldown=cooldown)
@@ -120,10 +111,10 @@ def admin_random_questions():
     if request.method == 'POST':
         raw_text = request.form.get('questions_text', '')
         lines = [line.strip() for line in raw_text.splitlines()]
-        questions = [line for line in lines if line]
-
-        if not questions:
-            questions = DEFAULT_RANDOM_INTERVIEW_QUESTIONS
+        questions = sanitize_questions(lines)
+        if len(questions) < 3:
+            flash('请至少提供 3 道有效且不重复的问题（每题至少 8 个字符）。', 'error')
+            return render_template('admin_random_questions.html', questions=lines), 400
 
         SystemConfig.set(
             'random_interview_questions',
@@ -162,7 +153,7 @@ def admin_resumes():
 def admin_resume_preview(resume_id):
     """管理员：只读预览指定简历"""
     resume = Resume.query.get_or_404(resume_id)
-    student = User.query.get(resume.user_id)
+    student = db.session.get(User, resume.user_id)
     return render_template('admin_resume_preview.html', resume=resume, student=student)
 
 
@@ -184,7 +175,7 @@ def home():
     history_sessions = InterviewSession.query \
         .filter(
         InterviewSession.user_id == current_user.id,
-        InterviewSession.status.in_(['completed', 'processing'])
+        InterviewSession.status.in_(['completed', 'processing', 'failed'])
     ) \
         .order_by(InterviewSession.start_time.desc()) \
         .all()
@@ -247,7 +238,12 @@ def leaderboard():
         return redirect(url_for('routes.dashboard'))
     
     # 1. 获取同班同学
-    classmates = User.query.filter_by(class_name=current_user.class_name, role='student').all()
+    classmates = User.query.filter_by(
+        department=current_user.department,
+        class_name=current_user.class_name,
+        role='student',
+        active=True,
+    ).all()
     
     # 2. 准备数据容器
     rank_data = []
@@ -327,7 +323,7 @@ def history():
     sessions = InterviewSession.query \
         .filter(
         InterviewSession.user_id == current_user.id,
-        InterviewSession.status.in_(['completed', 'processing'])
+        InterviewSession.status.in_(['completed', 'processing', 'failed'])
     ) \
         .order_by(InterviewSession.start_time.asc()) \
         .all()
@@ -343,9 +339,9 @@ def history():
     role_dist = {}
 
     if total_count > 0:
-        scores = [s.total_score if s.total_score else 0 for s in finished_sessions]
-        avg_score = round(sum(scores) / total_count, 1)
-        max_score = max(scores)
+        scores = [s.total_score for s in finished_sessions if s.total_score is not None]
+        avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+        max_score = max(scores) if scores else 0
         recent_trend = scores
         date_labels = [s.start_time.strftime('%m-%d') for s in finished_sessions]
         roles = [s.target_role for s in finished_sessions]
@@ -377,7 +373,9 @@ def history():
 def interview_room(session_id):
     """面试聊天室 / 历史回顾"""
     session = InterviewSession.query.get_or_404(session_id)
-    student = User.query.get(session.user_id)
+    if session.status == 'deleted':
+        abort(404)
+    student = db.session.get(User, session.user_id)
 
     # === 1. 权限检查 ===
     is_owner = (current_user.id == student.id)
@@ -388,7 +386,11 @@ def interview_room(session_id):
             is_teacher_allowed = True
         elif current_user.role == 'dept_head' and current_user.department == student.department:
             is_teacher_allowed = True
-        elif current_user.role == 'teacher' and current_user.class_name == student.class_name:
+        elif (
+            current_user.role == 'teacher'
+            and current_user.department == student.department
+            and current_user.class_name == student.class_name
+        ):
             is_teacher_allowed = True
 
     if not (is_owner or is_teacher_allowed):
@@ -425,7 +427,9 @@ def interview_room(session_id):
 def interview_summary(session_id):
     """面试结果总结页"""
     session = InterviewSession.query.get_or_404(session_id)
-    student = User.query.get(session.user_id)
+    if session.status == 'deleted':
+        abort(404)
+    student = db.session.get(User, session.user_id)
 
     # === 1. 权限检查 ===
     is_owner = (current_user.id == student.id)
@@ -436,7 +440,11 @@ def interview_summary(session_id):
             is_teacher_allowed = True
         elif current_user.role == 'dept_head' and current_user.department == student.department:
             is_teacher_allowed = True
-        elif current_user.role == 'teacher' and current_user.class_name == student.class_name:
+        elif (
+            current_user.role == 'teacher'
+            and current_user.department == student.department
+            and current_user.class_name == student.class_name
+        ):
             is_teacher_allowed = True
 
     if not (is_owner or is_teacher_allowed):
@@ -551,7 +559,10 @@ def dashboard():
     title = "管理后台"
 
     if current_user.role == 'teacher':
-        query = query.filter(User.class_name == current_user.class_name)
+        query = query.filter(
+            User.department == current_user.department,
+            User.class_name == current_user.class_name,
+        )
         title = f"{current_user.class_name} - 班级概况"
     elif current_user.role == 'dept_head':
         query = query.filter(User.department == current_user.department)
@@ -562,12 +573,29 @@ def dashboard():
     sessions = query.order_by(InterviewSession.start_time.desc()).all()
 
     total_interviews = len(sessions)
-    if total_interviews > 0:
-        avg_score = round(sum([s.total_score for s in sessions if s.total_score]) / total_interviews, 1)
-    else:
-        avg_score = 0
+    scores = [s.total_score for s in sessions if s.total_score is not None]
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
 
-    top_students = query.order_by(InterviewSession.total_score.desc()).limit(5).all()
+    student_stats = {}
+    for interview in sessions:
+        if interview.total_score is None or not interview.user:
+            continue
+        row = student_stats.setdefault(interview.user_id, {
+            'user': interview.user,
+            'scores': [],
+            'latest_session_id': interview.id,
+        })
+        row['scores'].append(interview.total_score)
+    top_students = []
+    for row in student_stats.values():
+        top_students.append({
+            'user': row['user'],
+            'avg_score': round(sum(row['scores']) / len(row['scores']), 1),
+            'count': len(row['scores']),
+            'latest_session_id': row['latest_session_id'],
+        })
+    top_students.sort(key=lambda row: (row['avg_score'], row['count']), reverse=True)
+    top_students = top_students[:5]
 
     return render_template('dashboard.html',
                            title=title,
@@ -611,6 +639,7 @@ def admin_capability_profile():
     if current_user.role == 'teacher':
         scope = 'class'
         selected_class = current_user.class_name
+        selected_dept = current_user.department
     elif current_user.role == 'dept_head':
         # 系主任只能看本系，不能看全校
         if scope == 'school': 
@@ -636,11 +665,14 @@ def admin_capability_profile():
             
     elif scope == 'class':
         if selected_class:
-            query = query.filter_by(class_name=selected_class)
-            display_title = f"{selected_class} - 能力画像"
-            # 如果同时选了系，也可以加校验，但 class_name 理论上唯一或足以定位
-            if selected_dept:
-                query = query.filter_by(department=selected_dept)
+            if current_user.role == 'admin' and not selected_dept:
+                query = query.filter(False)
+                display_title = "请先选择系部，再选择班级"
+            else:
+                query = query.filter_by(class_name=selected_class)
+                display_title = f"{selected_class} - 能力画像"
+                if selected_dept:
+                    query = query.filter_by(department=selected_dept)
         else:
             # 如果没选班级，不显示数据
             query = query.filter(False)
@@ -795,22 +827,29 @@ def teacher_students():
     query = User.query.filter_by(role='student')
 
     if current_user.role == 'teacher':
-        query = query.filter_by(class_name=current_user.class_name)
+        query = query.filter_by(
+            department=current_user.department,
+            class_name=current_user.class_name,
+            active=True,
+        )
     elif current_user.role == 'dept_head':
-        query = query.filter_by(department=current_user.department)
+        query = query.filter_by(department=current_user.department, active=True)
 
     students_db = query.all()
     student_list = []
 
     for s in students_db:
         finished_sessions = [sess for sess in s.sessions if sess.status == 'completed']
+        valid_scores = [
+            sess.total_score for sess in finished_sessions
+            if sess.total_score is not None
+        ]
         count = len(finished_sessions)
         avg_score = 0
         last_active = None
 
         if count > 0:
-            total = sum(sess.total_score for sess in finished_sessions if sess.total_score)
-            avg_score = round(total / count, 1)
+            avg_score = round(sum(valid_scores) / len(valid_scores), 1) if valid_scores else 0
             last_active = max(sess.start_time for sess in finished_sessions)
 
         student_list.append({
@@ -831,7 +870,13 @@ def teacher_student_detail(user_id):
     """教师查看单个学生的详细档案"""
     student = User.query.get_or_404(user_id)
 
-    if current_user.role == 'teacher' and student.class_name != current_user.class_name:
+    if (
+        current_user.role == 'teacher'
+        and (
+            student.department != current_user.department
+            or student.class_name != current_user.class_name
+        )
+    ):
         flash('您只能查看本班学生', 'error')
         return redirect(url_for('routes.teacher_students'))
 
@@ -850,8 +895,8 @@ def teacher_student_detail(user_id):
     date_labels = []
 
     if total_count > 0:
-        scores = [s.total_score if s.total_score else 0 for s in sessions]
-        avg_score = round(sum(scores) / total_count, 1)
+        scores = [s.total_score for s in sessions if s.total_score is not None]
+        avg_score = round(sum(scores) / len(scores), 1) if scores else 0
         recent_trend = scores[::-1]
         date_labels = [s.start_time.strftime('%m-%d') for s in sessions[::-1]]
 
@@ -939,7 +984,7 @@ def add_class():
     if not dept_id or not class_names_str:
         return jsonify({'error': '参数不完整'}), 400
 
-    dept = Department.query.get(dept_id)
+    dept = db.session.get(Department, dept_id)
     if not dept: return jsonify({'error': '系部不存在'}), 404
 
     # 兼容中文逗号和英文逗号
@@ -962,35 +1007,20 @@ def add_class():
 @login_required
 @admin_required
 def delete_class(class_id):
-    """API: 删除班级 (级联删除学生和面试记录)"""
+    """API: 仅删除空班级，绝不级联删除学生或业务记录。"""
     cls = SchoolClass.query.get_or_404(class_id)
-    dept = Department.query.get(cls.department_id)
-    
-    # 1. 查找该班级下的所有学生
-    # 注意：User 表中 department 和 class_name 是字符串字段
-    students = User.query.filter_by(
-        department=dept.name, 
-        class_name=cls.name, 
-        role='student'
-    ).all()
+    dept = db.session.get(Department, cls.department_id)
 
-    for student in students:
-        # 2. 删除学生的所有面试记录
-        sessions = InterviewSession.query.filter_by(user_id=student.id).all()
-        for session in sessions:
-            # 删除聊天记录
-            ChatMessage.query.filter_by(session_id=session.id).delete()
-            # 删除 Session
-            db.session.delete(session)
+    student_count = User.query.filter_by(
+        department=dept.name,
+        class_name=cls.name,
+        role='student',
+    ).count()
+    if student_count:
+        return jsonify({
+            'error': f'无法删除：该班级仍有 {student_count} 名学生，请先调整其班级归属'
+        }), 400
 
-        # 3. 删除学生的简历与学习进度（避免外键孤儿）
-        Resume.query.filter_by(user_id=student.id).delete()
-        UserLearningProgress.query.filter_by(user_id=student.id).delete()
-
-        # 4. 删除学生账号
-        db.session.delete(student)
-
-    # 4. 删除班级
     db.session.delete(cls)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -1035,6 +1065,7 @@ def import_students():
                 return jsonify({'error': f'模板缺少列: {col}'}), 400
 
         success_count = 0
+        credentials = []
 
         for _, row in df.iterrows():
             truename = str(row['姓名']).strip()
@@ -1042,10 +1073,13 @@ def import_students():
             dept_name = str(row['系部']).strip()
             class_name = str(row['班级']).strip()
 
-            # 默认密码
-            password = '123456'
+            supplied_password = None
             if '初始密码(选填)' in df.columns and pd.notna(row['初始密码(选填)']):
-                password = str(row['初始密码(选填)']).strip()
+                supplied_password = str(row['初始密码(选填)']).strip() or None
+                if supplied_password and len(supplied_password) < 10:
+                    return jsonify({
+                        'error': f'学号 {student_id} 的初始密码少于 10 个字符'
+                    }), 400
 
             if not student_id or not truename:
                 continue
@@ -1068,8 +1102,23 @@ def import_students():
             if not user:
                 # 新建用户 (username 默认为学号)
                 user = User(username=student_id, student_id=student_id, role='student')
-                user.set_password(password)
+                initial_password = supplied_password or secrets.token_urlsafe(12)
+                user.set_password(initial_password)
+                user.must_change_password = True
                 db.session.add(user)
+                credentials.append({
+                    'name': truename,
+                    'student_id': student_id,
+                    'password': initial_password,
+                })
+            elif supplied_password:
+                user.set_password(supplied_password)
+                user.must_change_password = True
+                credentials.append({
+                    'name': truename,
+                    'student_id': student_id,
+                    'password': supplied_password,
+                })
 
             # 更新用户信息
             user.truename = truename
@@ -1079,7 +1128,11 @@ def import_students():
             success_count += 1
 
         db.session.commit()
-        return jsonify({'status': 'success', 'count': success_count})
+        return jsonify({
+            'status': 'success',
+            'count': success_count,
+            'credentials': credentials,
+        })
 
     except Exception as e:
         db.session.rollback()
@@ -1090,32 +1143,51 @@ def import_students():
 @login_required
 @admin_required
 def delete_student_api(user_id):
-    """API: 删除单个学生 (级联删除面试记录)"""
+    """API: 停用学生账号，保留其面试、简历和学习记录。"""
     student = User.query.get_or_404(user_id)
     
     if student.role != 'student':
         return jsonify({'error': '只能删除学生账号'}), 400
 
     try:
-        # 1. 删除学生的所有面试记录
-        sessions = InterviewSession.query.filter_by(user_id=student.id).all()
-        for session in sessions:
-            # 删除聊天记录
-            ChatMessage.query.filter_by(session_id=session.id).delete()
-            # 删除 Session
-            db.session.delete(session)
-
-        # 2. 删除简历与学习进度（避免外键孤儿）
-        Resume.query.filter_by(user_id=student.id).delete()
-        UserLearningProgress.query.filter_by(user_id=student.id).delete()
-
-        # 3. 删除学生账号
-        db.session.delete(student)
+        student.active = False
+        student.deactivated_at = datetime.now()
         db.session.commit()
-        return jsonify({'status': 'success'})
+        return jsonify({'status': 'deactivated'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/api/admin/student/reactivate/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def reactivate_student_api(user_id):
+    student = User.query.get_or_404(user_id)
+    if student.role != 'student':
+        return jsonify({'error': '只能重新启用学生账号'}), 400
+    student.active = True
+    student.deactivated_at = None
+    db.session.commit()
+    return jsonify({'status': 'active'})
+
+
+@bp.route('/api/admin/student/reset-password/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def reset_student_password_api(user_id):
+    student = User.query.get_or_404(user_id)
+    if student.role != 'student':
+        return jsonify({'error': '只能重置学生账号密码'}), 400
+    temporary_password = secrets.token_urlsafe(12)
+    student.set_password(temporary_password)
+    student.must_change_password = True
+    db.session.commit()
+    return jsonify({
+        'status': 'success',
+        'username': student.username,
+        'temporary_password': temporary_password,
+    })
 
 
 @bp.route('/radar')
@@ -1141,7 +1213,7 @@ def ability_radar():
     # 维度顺序固定，方便前端绘图
     dimensions = ["专业技能", "逻辑思维", "语言表达", "抗压能力", "礼仪态度"]
     my_totals = {dim: 0 for dim in dimensions}
-    valid_radar_count = 0
+    my_counts = {dim: 0 for dim in dimensions}
 
     # 趋势图数据
     trend_labels = []
@@ -1149,28 +1221,34 @@ def ability_radar():
 
     for s in my_sessions:
         # 趋势图：最近 10 次
-        trend_labels.append(s.start_time.strftime('%m-%d'))
-        trend_data.append(s.total_score if s.total_score is not None else 0)
+        if s.total_score is not None:
+            trend_labels.append(s.start_time.strftime('%m-%d'))
+            trend_data.append(s.total_score)
 
         # 雷达图聚合
         if s.radar_data:
-            valid_radar_count += 1
             for dim in dimensions:
-                # 累加分数 (兼容 JSON 里的 key)
-                my_totals[dim] += s.radar_data.get(dim, 0)
+                value = s.radar_data.get(dim)
+                if isinstance(value, (int, float)):
+                    my_totals[dim] += value
+                    my_counts[dim] += 1
 
     # 计算我的平均分
     my_avg_data = []
-    if valid_radar_count > 0:
-        my_avg_data = [round(my_totals[dim] / valid_radar_count, 1) for dim in dimensions]
-    else:
-        my_avg_data = [0] * 5
+    my_avg_data = [
+        round(my_totals[dim] / my_counts[dim], 1) if my_counts[dim] else 0
+        for dim in dimensions
+    ]
 
     # 3. 数据聚合：班级平均水平 (Benchmark)
     # 找到同班同学的所有 Session
     class_avg_data = [0] * 5
     try:
-        class_users = User.query.filter_by(class_name=current_user.class_name).with_entities(User.id).all()
+        class_users = User.query.filter_by(
+            department=current_user.department,
+            class_name=current_user.class_name,
+            role='student',
+        ).with_entities(User.id).all()
         class_user_ids = [u.id for u in class_users]
 
         if class_user_ids:
@@ -1180,15 +1258,20 @@ def ability_radar():
 
             if class_sessions:
                 class_totals = {dim: 0 for dim in dimensions}
-                class_count = 0
+                class_counts = {dim: 0 for dim in dimensions}
                 for cs in class_sessions:
                     if cs.radar_data:
-                        class_count += 1
                         for dim in dimensions:
-                            class_totals[dim] += cs.radar_data.get(dim, 0)
+                            value = cs.radar_data.get(dim)
+                            if isinstance(value, (int, float)):
+                                class_totals[dim] += value
+                                class_counts[dim] += 1
 
-                if class_count > 0:
-                    class_avg_data = [round(class_totals[dim] / class_count, 1) for dim in dimensions]
+                class_avg_data = [
+                    round(class_totals[dim] / class_counts[dim], 1)
+                    if class_counts[dim] else 0
+                    for dim in dimensions
+                ]
     except Exception as e:
         print(f"Error calculating class stats: {e}")
         # 出错则默认为 0，不影响页面崩溃
@@ -1220,15 +1303,26 @@ def analyze_radar_ai():
     """
     API: 调用 AI 对雷达图数据进行深度诊断
     """
-    data = request.get_json(silent=True) or {}
-    my_scores = data.get('my_scores', [])  # [70, 80, ...]
-    dimensions = data.get('dimensions', [])  # ["专业技能", ...]
-
-    if not my_scores or not dimensions:
+    dimensions = ["专业技能", "逻辑思维", "语言表达", "抗压能力", "礼仪态度"]
+    sessions = InterviewSession.query.filter_by(
+        user_id=current_user.id,
+        status='completed',
+    ).all()
+    totals = {dimension: 0 for dimension in dimensions}
+    counts = {dimension: 0 for dimension in dimensions}
+    for interview in sessions:
+        for dimension in dimensions:
+            value = (interview.radar_data or {}).get(dimension)
+            if isinstance(value, (int, float)):
+                totals[dimension] += value
+                counts[dimension] += 1
+    score_map = {
+        dimension: round(totals[dimension] / counts[dimension], 1)
+        for dimension in dimensions
+        if counts[dimension]
+    }
+    if len(score_map) != len(dimensions):
         return jsonify({'error': '无数据'}), 400
-
-    # 构造 Prompt
-    score_map = dict(zip(dimensions, my_scores))
 
     system_prompt = """
     你是一位资深的职业生涯规划导师。
@@ -1263,46 +1357,37 @@ def analyze_radar_ai():
         return jsonify({'error': str(e)}), 500
 
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 @bp.route('/admin/interviews')
 @login_required
 @teacher_required
 def admin_interviews():
     """面试记录流水页面"""
-    
-    # 1. 清理过期的 ongoing 记录 (超过24小时未结束)
-    try:
-        cutoff_time = datetime.now() - timedelta(hours=24)
-        stale_sessions = InterviewSession.query.filter(
-            InterviewSession.status == 'ongoing',
-            InterviewSession.start_time < cutoff_time
-        ).all()
-        
-        if stale_sessions:
-            for s in stale_sessions:
-                # 删除关联的聊天记录
-                ChatMessage.query.filter_by(session_id=s.id).delete()
-                # 删除 Session
-                db.session.delete(s)
-            db.session.commit()
-    except Exception as e:
-        print(f"Cleanup failed: {e}")
-        db.session.rollback()
-
-    # 2. 获取所有有效面试记录 (只获取已完成)
+    # 读取页面不得触发数据删除。过期状态由会话状态服务负责转换。
+    # 获取所有有效面试记录（只获取已完成）
     # 按时间倒序
-    query = InterviewSession.query.join(User).filter(InterviewSession.status == 'completed').order_by(InterviewSession.start_time.desc())
+    include_deleted = (
+        current_user.role == 'admin'
+        and request.args.get('include_deleted') == '1'
+    )
+    visible_statuses = ['completed', 'deleted'] if include_deleted else ['completed']
+    query = InterviewSession.query.join(User).filter(
+        InterviewSession.status.in_(visible_statuses)
+    ).order_by(InterviewSession.start_time.desc())
     
     # 根据权限过滤
     if current_user.role == 'teacher':
-        query = query.filter(User.class_name == current_user.class_name)
+        query = query.filter(
+            User.department == current_user.department,
+            User.class_name == current_user.class_name,
+        )
     elif current_user.role == 'dept_head':
         query = query.filter(User.department == current_user.department)
         
     sessions = query.all()
     
-    # 3. 统计数据
+    # 统计数据
     now = datetime.now()
     stats = {
         '1h': 0,
@@ -1326,7 +1411,12 @@ def admin_interviews():
         if delta <= timedelta(days=365):
             stats['1year'] += 1
 
-    return render_template('admin_interviews.html', sessions=sessions, stats=stats)
+    return render_template(
+        'admin_interviews.html',
+        sessions=sessions,
+        stats=stats,
+        include_deleted=include_deleted,
+    )
 
 
 @bp.route('/api/admin/interview/delete/<int:session_id>', methods=['POST'])
@@ -1335,7 +1425,7 @@ def admin_interviews():
 def delete_interview_session(session_id):
     """API: 删除单条面试记录"""
     session = InterviewSession.query.get_or_404(session_id)
-    student = User.query.get(session.user_id)
+    student = db.session.get(User, session.user_id)
     
     # 权限检查
     has_permission = False
@@ -1343,22 +1433,40 @@ def delete_interview_session(session_id):
         has_permission = True
     elif current_user.role == 'dept_head' and current_user.department == student.department:
         has_permission = True
-    elif current_user.role == 'teacher' and current_user.class_name == student.class_name:
+    elif (
+        current_user.role == 'teacher'
+        and current_user.department == student.department
+        and current_user.class_name == student.class_name
+    ):
         has_permission = True
         
     if not has_permission:
         return jsonify({'error': '无权删除此记录'}), 403
 
     try:
-        # 删除关联的聊天记录
-        ChatMessage.query.filter_by(session_id=session.id).delete()
-        # 删除 Session
-        db.session.delete(session)
-        db.session.commit()
+        soft_delete_session(
+            session,
+            current_user.id,
+            reason='admin_requested',
+        )
         return jsonify({'status': 'success'})
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 409
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/api/admin/interview/restore/<int:session_id>', methods=['POST'])
+@login_required
+@admin_required
+def restore_interview_session(session_id):
+    session = InterviewSession.query.get_or_404(session_id)
+    if session.status != 'deleted':
+        return jsonify({'error': '该记录未被隐藏'}), 400
+    restore_soft_deleted_session(session)
+    return jsonify({'status': 'restored'})
 
 
 # ===============================================================
@@ -1405,10 +1513,20 @@ def add_learning_category():
 @teacher_required
 def delete_learning_category(cat_id):
     cat = LearningCategory.query.get_or_404(cat_id)
-    # 清理分类下所有材料的学习进度（避免外键孤儿）
     material_ids = [m.id for m in cat.materials]
     if material_ids:
-        UserLearningProgress.query.filter(UserLearningProgress.material_id.in_(material_ids)).delete(synchronize_session=False)
+        record_count = (
+            UserLearningProgress.query.filter(
+                UserLearningProgress.material_id.in_(material_ids)
+            ).count()
+            + LearningAttempt.query.filter(
+                LearningAttempt.material_id.in_(material_ids)
+            ).count()
+        )
+        if record_count:
+            return jsonify({
+                'error': f'该分类已有 {record_count} 条学习记录，不能删除'
+            }), 400
     db.session.delete(cat)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -1450,8 +1568,12 @@ def add_learning_material():
 @teacher_required
 def delete_learning_material(m_id):
     mat = LearningMaterial.query.get_or_404(m_id)
-    # 清理学生的学习进度（避免外键孤儿）
-    UserLearningProgress.query.filter_by(material_id=mat.id).delete()
+    record_count = (
+        UserLearningProgress.query.filter_by(material_id=mat.id).count()
+        + LearningAttempt.query.filter_by(material_id=mat.id).count()
+    )
+    if record_count:
+        return jsonify({'error': f'已有 {record_count} 条学习记录，不能删除该材料'}), 400
     db.session.delete(mat)
     db.session.commit()
     return jsonify({'status': 'success'})
@@ -1460,6 +1582,58 @@ def delete_learning_material(m_id):
 # ===============================================================
 #  学习模块 (Learning Hub) - 学生端
 # ===============================================================
+
+def _load_quiz_questions(material):
+    if material.material_type != 'quiz':
+        raise ValueError('该材料不是测验')
+    questions = json.loads(material.content)
+    if not isinstance(questions, list) or not questions:
+        raise ValueError('题库为空或格式错误')
+    return questions
+
+
+def _grade_quiz(material, answers):
+    """Grade both HTML and JSON submissions through one canonical path."""
+    questions = _load_quiz_questions(material)
+    normalized_answers = {}
+    correct_count = 0
+    for index, question in enumerate(questions):
+        question_id = str(question.get('id', index))
+        answer = answers.get(question_id)
+        if answer is None:
+            answer = answers.get(str(index))
+        normalized_answers[question_id] = answer
+        if answer is not None and str(answer) == str(question.get('answer')):
+            correct_count += 1
+    score = int((correct_count / len(questions)) * 100)
+    return score, score >= 80, normalized_answers
+
+
+def _record_quiz_attempt(material, answers):
+    score, passed, normalized_answers = _grade_quiz(material, answers)
+    db.session.add(LearningAttempt(
+        user_id=current_user.id,
+        material_id=material.id,
+        score=score,
+        passed=passed,
+        answers=normalized_answers,
+    ))
+    if passed:
+        progress = UserLearningProgress.query.filter_by(
+            user_id=current_user.id,
+            material_id=material.id,
+        ).first()
+        if progress is None:
+            progress = UserLearningProgress(
+                user_id=current_user.id,
+                material_id=material.id,
+            )
+            db.session.add(progress)
+        progress.score = max(progress.score or 0, score)
+        progress.status = 'completed'
+        progress.completed_at = datetime.now()
+    db.session.commit()
+    return score, passed
 
 @bp.route('/learning')
 @login_required
@@ -1538,13 +1712,12 @@ def complete_learning_material(material_id):
     """API: 标记完成 (文章) 或 提交答案 (测验)"""
     material = LearningMaterial.query.get_or_404(material_id)
 
-    # 检查是否已完成
     existing = UserLearningProgress.query.filter_by(user_id=current_user.id, material_id=material.id).first()
-    if existing:
-        return jsonify({'status': 'already_completed'})
 
     # 1. 文章类型：直接完成
     if material.material_type == 'article':
+        if existing:
+            return jsonify({'status': 'already_completed', 'score': existing.score})
         prog = UserLearningProgress(user_id=current_user.id, material_id=material.id, score=100)
         db.session.add(prog)
         db.session.commit()
@@ -1552,31 +1725,18 @@ def complete_learning_material(material_id):
 
     # 2. 测验类型：需要判分
     elif material.material_type == 'quiz':
-        user_answers = (request.get_json(silent=True) or {}).get('answers', {})  # {'0': 'A', '1': 'B'}
-        questions = json.loads(material.content)
-
-        correct_count = 0
-        total_count = len(questions)
-
-        for idx, q in enumerate(questions):
-            # 比对答案 (注意 index 转字符串)
-            user_ans = user_answers.get(str(idx))
-            if user_ans and user_ans == q.get('answer'):
-                correct_count += 1
-
-        # 计算得分
-        score = int((correct_count / total_count) * 100) if total_count > 0 else 0
-
-        # 达标线：80分
-        passed = score >= 80
-
-        if passed:
-            prog = UserLearningProgress(user_id=current_user.id, material_id=material.id, score=score)
-            db.session.add(prog)
-            db.session.commit()
-            return jsonify({'status': 'success', 'score': score, 'passed': True})
-        else:
-            return jsonify({'status': 'failed', 'score': score, 'passed': False})
+        if existing:
+            return jsonify({'status': 'already_completed', 'score': existing.score, 'passed': True})
+        try:
+            answers = (request.get_json(silent=True) or {}).get('answers', {})
+            score, passed = _record_quiz_attempt(material, answers)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return jsonify({'error': '题库数据错误'}), 400
+        return jsonify({
+            'status': 'success' if passed else 'failed',
+            'score': score,
+            'passed': passed,
+        })
 
     return jsonify({'error': 'unknown type'}), 400
 
@@ -1584,58 +1744,30 @@ def complete_learning_material(material_id):
 @bp.route('/learning/submit_quiz/<int:material_id>', methods=['POST'])
 @login_required
 def submit_quiz(material_id):
-    # 1. 获取课程内容
     material = LearningMaterial.query.get_or_404(material_id)
-
-    # 2. 解析正确答案 (JSON)
-    # 假设 content 存的是 [{"key":"A", "val":"...", "answer":"A"}, ...]
-    try:
-        questions = json.loads(material.content)
-    except:
-        flash("题库数据错误", "error")
+    existing = UserLearningProgress.query.filter_by(
+        user_id=current_user.id,
+        material_id=material_id,
+    ).first()
+    if existing:
+        flash(f"该测验已经通过，最高得分：{existing.score} 分", "info")
         return redirect(url_for('routes.learning_detail', material_id=material_id))
 
-    # 3. 计算分数
-    correct_count = 0
-    total_count = len(questions)
-
-    for q in questions:
-        # 我们在模板里定义的 name 是 "q_{{ q.id }}"
-        # 比如 q.id 是 501，那么表单项就是 "q_501"
-        qid = str(q.get('id'))
-        user_choice = request.form.get(f"q_{qid}")  # 获取用户选了什么
-
-        # 获取正确答案字段 (假设JSON里叫 'answer'，或者是题目里定义的正确项)
-        # 这里假设你的JSON结构里直接有 "answer": "A"
-        # 如果没有，你需要根据你的数据结构调整
-        correct_answer = q.get('answer')
-
-        if user_choice and user_choice == correct_answer:
-            correct_count += 1
-
-    # 计算百分制得分
-    score = int((correct_count / total_count) * 100) if total_count > 0 else 0
-
-    # 4. 保存或更新进度
-    progress = UserLearningProgress.query.filter_by(
-        user_id=current_user.id,
-        material_id=material_id
-    ).first()
-
-    if not progress:
-        progress = UserLearningProgress(user_id=current_user.id, material_id=material_id)
-        db.session.add(progress)
-
-    progress.score = score
-    progress.status = 'completed'
-    progress.completed_at = datetime.now()
-
-    db.session.commit()
-
-    # 5. 反馈并跳转回去
-    if score >= 80:
+    try:
+        questions = _load_quiz_questions(material)
+        answers = {
+            str(question.get('id', index)): request.form.get(
+                f"q_{question.get('id', index)}"
+            )
+            for index, question in enumerate(questions)
+        }
+        score, passed = _record_quiz_attempt(material, answers)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        flash("题库数据错误", "error")
+        return redirect(url_for('routes.learning_detail', material_id=material_id))
+    if passed:
         flash(f"恭喜！通过测验，得分：{score} 分", "success")
     else:
-        flash(f"很遗憾，得分：{score} 分，请再接再厉", "warning")
+        flash(f"本次得分：{score} 分，尚未通过，可以立即重试。", "warning")
 
     return redirect(url_for('routes.learning_detail', material_id=material_id))

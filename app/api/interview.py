@@ -4,23 +4,29 @@ from datetime import datetime
 import json
 import os
 import random
-import time
+import tempfile
 import uuid
 
 
 # 使用相对导入，引用上一级 app 目录下的 db 和 models
 from .. import db
-from ..models import InterviewSession, ChatMessage, User, SystemConfig
+from ..models import InterviewSession, ChatMessage, SystemConfig, RandomPracticeAttempt
 from ..config import Config
 
 # 引入 AI 服务
-from ..services.ai_agent import get_ai_response, generate_interview_report, transcribe_audio, analyze_image, evaluate_random_answer
+from ..services.ai_agent import AIServiceError, CHAT_PROMPT_VERSION, REPORT_PROMPT_VERSION, generate_interview_report, transcribe_audio, analyze_image, evaluate_random_answer
+from ..services.question_bank import get_random_interview_questions
 # 引入 TTS 服务
 from ..services.tts_service import text_to_speech
 # 引入文件解析服务 (解析简历用)
 from ..utils.file_parser import extract_text_from_file
 # 面试会话状态：10min TTL 续接 / 冷却系统 / 复盘门槛
-from ..utils.session_state import get_resumable_session, mark_abandoned, get_cooldown_status
+from ..utils.session_state import (
+    get_resumable_session,
+    mark_abandoned,
+    get_cooldown_status,
+    soft_delete_session,
+)
 
 def resume_json_to_text(data):
     """将结构化简历转换为文本"""
@@ -108,30 +114,6 @@ def resume_json_to_text(data):
 
 api_bp = Blueprint('interview_api', __name__)
 
-DEFAULT_RANDOM_INTERVIEW_QUESTIONS = [
-    "请你做一个 1 分钟的自我介绍，并突出与岗位相关的优势。",
-    "请分享一个你遇到困难并最终解决的问题，重点说说你的思考过程。",
-    "如果你和同事在方案上意见不一致，你会如何推进沟通并达成结果？",
-    "请举例说明你如何在压力下保证任务质量和交付时间。",
-    "你为什么想加入我们公司？你最看重的是什么？"
-]
-
-
-def get_random_interview_questions():
-    """读取随机问题题库，若为空则返回默认题库"""
-    raw_value = SystemConfig.get('random_interview_questions', '[]')
-    questions = []
-
-    try:
-        parsed = json.loads(raw_value) if raw_value else []
-        if isinstance(parsed, list):
-            questions = [str(item).strip() for item in parsed if str(item).strip()]
-    except Exception:
-        questions = []
-
-    return questions if questions else DEFAULT_RANDOM_INTERVIEW_QUESTIONS
-
-
 @api_bp.route('/create', methods=['POST'])
 @login_required  # <--- 1. 加上这把锁，确保只有登录用户能创建
 def create_session():
@@ -145,47 +127,76 @@ def create_session():
             return jsonify({'error': 'cooldown', 'cooldown': cd}), 423
 
         # 1. 获取表单数据
-        target_role = request.form.get('target_role', 'Python工程师')
-        # 如果前端没传音色，默认用配置里的默认值，或者这里写死一个兜底
+        target_role = (request.form.get('target_role') or 'Python工程师').strip()[:100]
         voice_type = request.form.get('voice_type', 'zh_male_dayi_saturn_bigtts')
         difficulty = request.form.get('difficulty', '标准模式')
         position_id = request.form.get('position_id', type=int)
+        if voice_type not in Config.VOLC_AVAILABLE_VOICES.values():
+            voice_type = Config.VOLC_DEFAULT_VOICE
+        if difficulty not in {'新手模式', '标准模式', '压力模式'}:
+            return jsonify({'error': 'invalid difficulty'}), 400
+
+        from ..models import Position, Resume
+        position = None
+        position_snapshot = None
+        if position_id:
+            position = db.session.get(Position, position_id)
+            if position is None:
+                return jsonify({'error': 'position not found'}), 404
+            target_role = position.name
+            position_snapshot = {
+                'position_id': position.id,
+                'position_name': position.name,
+                'position_description': position.description or '',
+                'company_id': position.company.id if position.company else None,
+                'company_name': position.company.name if position.company else '',
+                'company_description': position.company.description if position.company else '',
+            }
         
         # 处理简历选择
         resume_id = request.form.get('resume_id', type=int)
         use_resume = False
         resume_text = ""
         
-        # 情况 A: 选择了已有的在线简历
         if resume_id:
-            from ..models import Resume
-            resume_obj = Resume.query.get(resume_id)
-            if resume_obj and resume_obj.user_id == current_user.id:
-                resume_text = resume_json_to_text(resume_obj.content)
-                current_user.resume_text = resume_text
-                db.session.commit()
-                use_resume = True
+            resume_obj = db.session.get(Resume, resume_id)
+            if not resume_obj or resume_obj.user_id != current_user.id:
+                return jsonify({'error': 'resume not found'}), 404
+            resume_text = resume_json_to_text(resume_obj.content)
+            if not resume_text:
+                return jsonify({'error': 'selected resume is empty'}), 400
+            use_resume = True
 
         # 情况 B: 处理简历文件上传 (可选，优先级高于在线简历)
+        temporary_resume_path = None
         if 'resume' in request.files:
             file = request.files['resume']
             if file.filename != '':
-                # 保存临时文件
-                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'resumes')
-                os.makedirs(upload_folder, exist_ok=True)
-
-                # 生成安全的文件名
-                safe_filename = f"resume_{int(time.time())}_{uuid.uuid4().hex[:8]}.{file.filename.split('.')[-1]}"
-                filepath = os.path.join(upload_folder, safe_filename)
-                file.save(filepath)
-
-                # 解析文本
-                uploaded_text = extract_text_from_file(filepath)
-                if uploaded_text:
-                    resume_text = uploaded_text
-                    current_user.resume_text = resume_text
-                    db.session.commit()
-                    use_resume = True
+                extension = os.path.splitext(file.filename)[1].lower()
+                if extension not in {'.pdf', '.docx'}:
+                    return jsonify({'error': 'resume must be a PDF or DOCX file'}), 400
+                temp_dir = os.path.join(current_app.instance_path, 'uploads', 'temp')
+                os.makedirs(temp_dir, exist_ok=True)
+                with tempfile.NamedTemporaryFile(
+                    prefix='resume_',
+                    suffix=extension,
+                    dir=temp_dir,
+                    delete=False,
+                ) as temporary_file:
+                    temporary_resume_path = temporary_file.name
+                try:
+                    file.save(temporary_resume_path)
+                    uploaded_text = extract_text_from_file(temporary_resume_path)
+                finally:
+                    try:
+                        os.remove(temporary_resume_path)
+                    except OSError:
+                        pass
+                if not uploaded_text:
+                    return jsonify({'error': 'resume could not be parsed or is empty'}), 400
+                resume_text = uploaded_text
+                resume_id = None
+                use_resume = True
 
         # 4. 创建面试会话
         # === 关键点：使用 current_user.id 而不是写死 1 ===
@@ -193,6 +204,11 @@ def create_session():
             user_id=current_user.id,
             target_role=target_role,
             position_id=position_id if position_id else None,
+            resume_id=resume_id if use_resume else None,
+            resume_snapshot=resume_text[:50000] if use_resume else None,
+            position_snapshot=position_snapshot,
+            llm_model=Config.LLM_MODEL_NAME,
+            prompt_version=CHAT_PROMPT_VERSION,
             voice_type=voice_type,
             difficulty=difficulty,
             status="ongoing",
@@ -200,15 +216,10 @@ def create_session():
             use_resume=use_resume
         )
         db.session.add(session)
-        db.session.commit()
-
-        # 5. 生成智能开场白
-        # 如果用户刚才传了简历，或者用户数据库里本来就有简历
-        user_resume = resume_text if resume_text else current_user.resume_text
-
+        db.session.flush()
         first_msg_content = f"你好，我是今天的面试官。我看你申请的是【{target_role}】岗位。"
 
-        if use_resume and (user_resume or current_user.resume_text):
+        if use_resume and resume_text:
             first_msg_content += " 我已经阅读了你的简历，对你的经历很感兴趣。请先做一个简单的自我介绍。"
         else:
             first_msg_content += " 请先做一个简单的自我介绍。"
@@ -315,15 +326,30 @@ def chat(session_id):
     difficulty = getattr(session, 'difficulty', '标准模式')
 
     context_info = ""
-    if session.position_id:
+    if session.position_snapshot:
+        snapshot = session.position_snapshot
+        context_info += (
+            f"### 公司介绍：{snapshot.get('company_name', '')}\n"
+            f"{snapshot.get('company_description', '')}\n\n"
+            f"### 岗位介绍：{snapshot.get('position_name', role)}\n"
+            f"{snapshot.get('position_description', '')}"
+        )
+    elif session.position_id:
         from ..models import Position
-        pos = Position.query.get(session.position_id)
+        pos = db.session.get(Position, session.position_id)
         if pos:
             if pos.company:
                 context_info += f"### 公司介绍：{pos.company.name}\n{pos.company.description}\n\n"
             context_info += f"### 岗位介绍：{pos.name}\n{pos.description}"
-    if getattr(session, 'use_resume', False) and session.user.resume_text:
-        context_info += f"\n\n### 求职者简历\n{session.user.resume_text}"
+    if getattr(session, 'use_resume', False):
+        resume_context = session.resume_snapshot or session.user.resume_text
+        if resume_context:
+            context_info += f"\n\n### 求职者简历\n{resume_context}"
+    if session.prior_round_summary:
+        context_info += (
+            "\n\n### 上一轮面试复盘（请针对短板继续追问，避免重复原题）\n"
+            + json.dumps(session.prior_round_summary, ensure_ascii=False)
+        )
 
     enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
     audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
@@ -334,7 +360,10 @@ def chat(session_id):
     def generate():
         full_text = ""
         audio_urls = []
+        generation_error = None
         try:
+            if visual_context_str:
+                yield sse({'type': 'visual', 'feedback': visual_context_str})
             # ① 流式输出 AI token（打字机效果）
             try:
                 for token in stream_ai_response(
@@ -346,13 +375,14 @@ def chat(session_id):
                     yield sse({'type': 'token', 'content': token})
             except Exception as e:
                 print(f"❌ Stream AI Error: {e}")
+                generation_error = str(e)
                 if not full_text:
-                    full_text = "抱歉，我刚才走神了，能再说一遍吗？"
-                    yield sse({'type': 'token', 'content': full_text})
-                yield sse({'type': 'error', 'message': 'AI 响应中断，已兜底'})
+                    yield sse({'type': 'error', 'message': 'AI 响应中断，请重试'})
+                else:
+                    yield sse({'type': 'error', 'message': 'AI 响应不完整，请重试'})
 
             # ② 流式 TTS：分句生成，逐片返回 URL，前端排队播放
-            if enable_tts and full_text:
+            if enable_tts and full_text and not generation_error:
                 try:
                     for idx, fn in text_to_speech_chunks(full_text, audio_dir, specific_voice=session.voice_type):
                         url = url_for('static', filename=f'uploads/audio/{fn}')
@@ -368,7 +398,10 @@ def chat(session_id):
                 content=full_text,
                 audio_url=audio_urls[0] if audio_urls else None,
                 audio_urls=audio_urls if audio_urls else None,
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
+                generation_status='failed' if generation_error else 'completed',
+                model_name=Config.LLM_MODEL_NAME,
+                error_message=generation_error,
             )
             db.session.add(ai_msg)
             session.last_activity = datetime.now()
@@ -384,42 +417,6 @@ def chat(session_id):
         mimetype='text/event-stream',
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
     )
-
-
-
-@api_bp.route('/<int:session_id>/visual_feedback', methods=['POST'])
-@login_required
-def visual_feedback(session_id):
-    """处理纯视觉分析请求 (不产生对话)"""
-    try:
-        session = InterviewSession.query.get_or_404(session_id)
-        if session.user_id != current_user.id and current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
-
-        data = request.get_json(silent=True) or {}
-        image_base64 = data.get('image')
-
-        if not image_base64:
-            return jsonify({'status': 'ignored'})
-
-        feedback_str = analyze_image(image_base64)
-
-        if not feedback_str:
-            return jsonify({'status': 'ignored'})
-
-        # 可选：将分析结果异步保存到最新的 ChatMessage 中？
-        # 或者仅仅返回给前端显示？这里选择仅仅返回给前端
-        
-        return jsonify({
-            'status': 'success',
-            'feedback': feedback_str
-        })
-
-    except Exception as e:
-        print(f"Visual Feedback Error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
 def background_report_task(session_id):
     """生成面试报告（RQ 任务 / Thread 通用入口，自建 app 上下文）。"""
     from .. import create_app
@@ -427,7 +424,7 @@ def background_report_task(session_id):
     with app.app_context():  # 独立上下文，RQ worker 进程与 Thread 回退都适用
         try:
             print(f"⏳ [后台任务] 开始为 Session {session_id} 生成报告...")
-            session = InterviewSession.query.get(session_id)
+            session = db.session.get(InterviewSession, session_id)
             if not session:
                 return
 
@@ -439,9 +436,13 @@ def background_report_task(session_id):
 
             # (C) 保存数据
             overall = full_report.get('overall', {})
-            session.total_score = overall.get('total_score', 0)
-            session.radar_data = overall.get('scores', {})
-            session.summary_comment = overall.get('comment', "无评语")
+            session.total_score = overall['total_score']
+            session.radar_data = overall['scores']
+            session.summary_comment = overall['comment']
+            session.evaluation_source = 'ai'
+            session.report_model = Config.LLM_MODEL_NAME
+            session.report_prompt_version = REPORT_PROMPT_VERSION
+            session.report_error = None
 
             # 保存逐句点评
             reviews_list = full_report.get('details', []) or full_report.get('details_list', [])
@@ -462,9 +463,16 @@ def background_report_task(session_id):
             print(f"❌ [后台任务] 报告生成失败: {e}")
             db.session.rollback()
             try:
-                session = InterviewSession.query.get(session_id)
+                session = db.session.get(InterviewSession, session_id)
                 if session:
                     session.status = 'failed'
+                    session.total_score = None
+                    session.radar_data = None
+                    session.summary_comment = None
+                    session.evaluation_source = None
+                    session.report_model = Config.LLM_MODEL_NAME
+                    session.report_prompt_version = REPORT_PROMPT_VERSION
+                    session.report_error = str(e)[:1000]
                     db.session.commit()
             except Exception as e2:
                 print(f"❌ [后台任务] 状态回写失败: {e2}")
@@ -492,6 +500,7 @@ def finish_session(session_id):
         session.status = 'processing'
         session.end_time = processing_started_at
         session.last_activity = processing_started_at
+        session.report_error = None
         db.session.commit()
 
         # 2. 入队报告生成任务（RQ 优先，无 Redis 回退 Thread）
@@ -524,6 +533,7 @@ def report_status(session_id):
         'status': session.status,  # processing / completed / failed / ...
         'total_score': session.total_score,
         'has_report': session.status == 'completed' and bool(session.summary_comment),
+        'report_error': session.report_error if session.status == 'failed' else None,
     })
 
 
@@ -565,6 +575,17 @@ def next_round(session_id):
         start_time=datetime.now(),
         last_activity=datetime.now(),
         use_resume=prev.use_resume,
+        resume_id=prev.resume_id,
+        resume_snapshot=prev.resume_snapshot,
+        position_snapshot=prev.position_snapshot,
+        prior_round_summary={
+            'round': prev.round or 1,
+            'total_score': prev.total_score,
+            'radar_data': prev.radar_data,
+            'summary_comment': prev.summary_comment,
+        },
+        llm_model=prev.llm_model or Config.LLM_MODEL_NAME,
+        prompt_version=prev.prompt_version or CHAT_PROMPT_VERSION,
         round=next_round_num,
         parent_session_id=prev.id,
     )
@@ -636,18 +657,51 @@ def evaluate_random_question():
     data = request.get_json(silent=True) or {}
     question = (data.get('question') or '').strip()
     answer = (data.get('answer') or '').strip()
+    image = (data.get('image') or '').strip()
 
     if not answer:
         return jsonify({'error': 'answer is required'}), 400
 
+    questions = get_random_interview_questions()
     if not question:
-        question = random.choice(get_random_interview_questions())
+        question = random.choice(questions)
+    elif question not in questions:
+        return jsonify({'error': 'question is not in the active question bank'}), 400
 
-    result = evaluate_random_answer(question, answer)
+    visual_feedback = ''
+    if image and SystemConfig.get('enable_video', 'true') == 'true':
+        visual_feedback = analyze_image(image)
+
+    attempt = RandomPracticeAttempt(
+        user_id=current_user.id,
+        question=question,
+        answer=answer,
+        visual_feedback=visual_feedback or None,
+        status='evaluation_failed',
+        model_name=Config.LLM_REPORT,
+    )
+    db.session.add(attempt)
+    try:
+        result = evaluate_random_answer(question, answer)
+    except AIServiceError as exc:
+        attempt.error_message = str(exc)
+        db.session.commit()
+        return jsonify({
+            'status': 'evaluation_failed',
+            'attempt_id': attempt.id,
+            'error': 'AI 评估暂时不可用，本次回答已保存，可稍后重试。',
+        }), 503
+
     score = int(result.get('score', 0))
     score = max(0, min(100, score))
-    evaluation = (result.get('evaluation') or '').strip() or "表达较完整，建议继续强化结构化表达。"
-    suggestion = (result.get('suggestion') or '').strip() or "建议使用 STAR 法则组织答案：情境-任务-行动-结果。"
+    evaluation = result['evaluation'].strip()
+    suggestion = result['suggestion'].strip()
+    attempt.score = score
+    attempt.evaluation = evaluation
+    attempt.suggestion = suggestion
+    attempt.status = 'completed'
+    attempt.error_message = None
+    db.session.commit()
 
     evaluation_audio_url = None
     suggestion_audio_url = None
@@ -655,29 +709,32 @@ def evaluate_random_question():
     audio_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'audio')
     dayi_voice = Config.VOLC_AVAILABLE_VOICES.get('大壹老师', 'zh_male_dayi_saturn_bigtts')
 
-    try:
-        evaluation_audio = text_to_speech(evaluation, audio_dir, specific_voice=dayi_voice)
-        if evaluation_audio:
-            evaluation_audio_url = url_for('static', filename=f'uploads/audio/{evaluation_audio}')
-    except Exception as e:
-        print(f"⚠️ 评价语音生成失败: {e}")
+    if SystemConfig.get('enable_tts', 'true') == 'true':
+        try:
+            evaluation_audio = text_to_speech(evaluation, audio_dir, specific_voice=dayi_voice)
+            if evaluation_audio:
+                evaluation_audio_url = url_for('static', filename=f'uploads/audio/{evaluation_audio}')
+        except Exception as e:
+            print(f"⚠️ 评价语音生成失败: {e}")
 
-    try:
-        suggestion_audio = text_to_speech(suggestion, audio_dir, specific_voice=dayi_voice)
-        if suggestion_audio:
-            suggestion_audio_url = url_for('static', filename=f'uploads/audio/{suggestion_audio}')
-    except Exception as e:
-        print(f"⚠️ 建议语音生成失败: {e}")
+        try:
+            suggestion_audio = text_to_speech(suggestion, audio_dir, specific_voice=dayi_voice)
+            if suggestion_audio:
+                suggestion_audio_url = url_for('static', filename=f'uploads/audio/{suggestion_audio}')
+        except Exception as e:
+            print(f"⚠️ 建议语音生成失败: {e}")
 
     return jsonify({
         'status': 'success',
+        'attempt_id': attempt.id,
         'question': question,
         'answer': answer,
         'score': score,
         'evaluation': evaluation,
         'suggestion': suggestion,
         'evaluation_audio_url': evaluation_audio_url,
-        'suggestion_audio_url': suggestion_audio_url
+        'suggestion_audio_url': suggestion_audio_url,
+        'visual_feedback': visual_feedback,
     })
 
 
@@ -692,15 +749,24 @@ def delete_session(session_id):
         if session.user_id != current_user.id and current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        # 1. 先删除关联的聊天记录
-        ChatMessage.query.filter_by(session_id=session.id).delete()
+        if (
+            session.user_id == current_user.id
+            and session.status == 'completed'
+            and not session.reviewed
+        ):
+            return jsonify({'error': '请先查看复盘报告，再隐藏该记录'}), 409
 
-        # 2. 再删除会话本身
-        db.session.delete(session)
-        db.session.commit()
+        soft_delete_session(
+            session,
+            current_user.id,
+            reason='student_requested' if session.user_id == current_user.id else 'admin_requested',
+        )
 
         return jsonify({'status': 'success'})
 
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 409
     except Exception as e:
         print(f"Delete Error: {e}")
         db.session.rollback()
@@ -713,6 +779,8 @@ def transcribe_audio_only():
     """
     【新增】轻量级接口：仅将语音转换为文字，不生成AI回复
     """
+    filepath = None
+    wav_path = None
     try:
         if 'audio' not in request.files:
             return jsonify({'error': 'No audio file'}), 400
@@ -730,7 +798,6 @@ def transcribe_audio_only():
 
         # 1.5 webm → wav 转码（SenseVoiceSmall 对 wav 兼容最好；无 ffmpeg 则降级直传）
         transcribe_path = filepath
-        converted = False
         try:
             from pydub import AudioSegment
             AudioSegment.converter = "ffmpeg"  # 依赖系统 ffmpeg
@@ -739,7 +806,6 @@ def transcribe_audio_only():
             audio = audio.set_frame_rate(16000).set_channels(1)  # ASR 友好参数
             audio.export(wav_path, format='wav')
             transcribe_path = wav_path
-            converted = True
             print(f"🎤 [STT] 已转码 webm→wav: {wav_path}")
         except Exception as conv_e:
             print(f"🎤 [STT] 转码跳过（无 ffmpeg 或解码失败），直传原文件: {conv_e}")
@@ -749,14 +815,7 @@ def transcribe_audio_only():
         user_text = transcribe_audio(transcribe_path)
         print(f"🎤 [STT] 转录结果: {user_text}")
 
-        # 3. 删除临时文件 (用完即焚)
-        for p in ({transcribe_path, filepath} if converted else {filepath}):
-            try:
-                os.remove(p)
-            except Exception as e:
-                print(f"⚠️ 删除临时文件失败: {e}")
-
-        # 4. 处理空语音
+        # 3. 处理空语音
         if not user_text or len(user_text.strip()) == 0:
             return jsonify({'status': 'empty'})
 
@@ -765,3 +824,13 @@ def transcribe_audio_only():
     except Exception as e:
         print(f"❌ Transcription Error: {e}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        for path in {filepath, wav_path}:
+            if not path:
+                continue
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+            except OSError as cleanup_error:
+                print(f"⚠️ 删除临时文件失败: {cleanup_error}")

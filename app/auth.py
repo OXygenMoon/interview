@@ -6,29 +6,45 @@ from . import db
 auth_bp = Blueprint('auth', __name__)
 
 
+def _redirect_for_role(user):
+    if user.must_change_password:
+        return redirect(url_for('auth.change_password'))
+    if user.role == 'student':
+        return redirect(url_for('routes.home'))
+    return redirect(url_for('routes.dashboard'))
+
+
+@auth_bp.before_app_request
+def require_password_change():
+    """Imported/reset accounts may only visit the password-change flow."""
+    if not current_user.is_authenticated:
+        return None
+    if not current_user.active:
+        logout_user()
+        flash('该账号已停用，请联系管理员。', 'error')
+        return redirect(url_for('auth.login'))
+    if not current_user.must_change_password:
+        return None
+    allowed_endpoints = {'auth.change_password', 'auth.logout', 'static'}
+    if request.endpoint not in allowed_endpoints:
+        return redirect(url_for('auth.change_password'))
+
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        # 如果已经登录，根据角色智能跳转
-        if current_user.role == 'student':
-            return redirect(url_for('routes.home'))
-        else:
-            return redirect(url_for('routes.dashboard'))
+        return _redirect_for_role(current_user)
 
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            if not user.active:
+                flash('该账号已停用，请联系管理员。', 'error')
+                return render_template('login.html')
             login_user(user)
-            # 登录后跳转首页
-            # === 核心修改：登录成功后的分流逻辑 ===
-            if user.role == 'student':
-                # 学生 -> 去面试大厅
-                return redirect(url_for('routes.home'))
-            else:
-                # 老师/领导 -> 去管理后台
-                return redirect(url_for('routes.dashboard'))
+            return _redirect_for_role(user)
         else:
             flash('账号或密码错误')
 
@@ -43,7 +59,33 @@ def register():
     return redirect(url_for('auth.login'))
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not current_user.check_password(current_password):
+            flash('当前密码不正确。', 'error')
+        elif len(new_password) < 10:
+            flash('新密码至少需要 10 个字符。', 'error')
+        elif new_password != confirm_password:
+            flash('两次输入的新密码不一致。', 'error')
+        elif new_password == current_password:
+            flash('新密码不能与当前密码相同。', 'error')
+        else:
+            current_user.set_password(new_password)
+            current_user.must_change_password = False
+            db.session.commit()
+            flash('密码已更新。', 'success')
+            return _redirect_for_role(current_user)
+
+    return render_template('change_password.html')
+
+
+@auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()

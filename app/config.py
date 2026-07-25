@@ -4,8 +4,19 @@ import os
 class Config:
     APP_ENV = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'production')).lower()
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    CSRF_ENABLED = os.environ.get('CSRF_ENABLED', 'true').lower() == 'true'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 8 * 1024 * 1024))
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = os.environ.get(
+        'SESSION_COOKIE_SECURE',
+        'true' if APP_ENV == 'production' else 'false',
+    ).lower() == 'true'
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
     # === 硅基流动 (SiliconFlow) 配置 ===
     # 密钥从环境变量读取（本地放 .env，生产用 systemd Environment=），勿硬编码进源码
@@ -42,4 +53,3 @@ class Config:
     }
 
     VOLC_DEFAULT_VOICE = "zh_male_dayi_saturn_bigtts"
-

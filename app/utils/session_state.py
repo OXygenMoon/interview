@@ -53,6 +53,7 @@ def reap_stuck_reports(user_id):
     ).all()
     for s in stuck:
         s.status = 'failed'
+        s.report_error = '报告任务执行超时，可重新提交生成。'
     if stuck:
         db.session.commit()
     return len(stuck)
@@ -73,6 +74,34 @@ def mark_abandoned(session):
     session.abandoned = True
     session.end_time = datetime.now()
     db.session.commit()
+
+
+def soft_delete_session(session, actor_id, reason='user_requested'):
+    """Hide a session while retaining its report and transcript for recovery/audit."""
+    if session.status == 'deleted':
+        return False
+    if session.status in ('ongoing', 'processing'):
+        raise ValueError('进行中或正在生成报告的面试不能隐藏')
+    session.status_before_delete = session.status
+    session.status = 'deleted'
+    session.deleted_at = datetime.now()
+    session.deleted_by_id = actor_id
+    session.deletion_reason = reason
+    db.session.commit()
+    return True
+
+
+def restore_soft_deleted_session(session):
+    """Restore a soft-deleted session to its prior state."""
+    if session.status != 'deleted':
+        return False
+    session.status = session.status_before_delete or 'completed'
+    session.deleted_at = None
+    session.deleted_by_id = None
+    session.deletion_reason = None
+    session.status_before_delete = None
+    db.session.commit()
+    return True
 
 
 def mark_reviewed(session):
@@ -98,7 +127,12 @@ def get_cooldown_status(user_id):
     if not last:
         return base
     base['last_session_id'] = last.id
-    base['last_session_status'] = last.status
+    effective_status = (
+        last.status_before_delete
+        if last.status == 'deleted' and last.status_before_delete
+        else last.status
+    )
+    base['last_session_status'] = effective_status
 
     now = datetime.now()
     ref_time = last.end_time or last.last_activity or last.start_time
@@ -109,7 +143,7 @@ def get_cooldown_status(user_id):
         return base
 
     # 放弃 / 过期：放弃罚时
-    if last.abandoned or last.status == 'expired':
+    if last.abandoned or effective_status == 'expired':
         cd = _cfg_int('cooldown_abandon_minutes', 10)
         deadline = ref_time + timedelta(minutes=cd)
         if now < deadline:
@@ -118,8 +152,9 @@ def get_cooldown_status(user_id):
         return base
 
     # 已完成：先复盘，再冷却
-    if last.status in ('completed', 'processing'):
-        if (last.status == 'completed' and _cfg_bool('cooldown_requires_review', True)
+    if effective_status in ('completed', 'processing'):
+        if (last.status != 'deleted' and effective_status == 'completed'
+                and _cfg_bool('cooldown_requires_review', True)
                 and not last.reviewed):
             base.update(can_start=False, reason='review_required')
             return base

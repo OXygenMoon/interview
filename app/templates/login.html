@@ -375,6 +375,7 @@
                             {% endwith %}
 
                             <form method="POST" class="login-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="field">
                                     <label for="username">账号</label>
                                     <input id="username" type="text" name="username" placeholder="请输入用户名" class="input input-bordered w-full" required />

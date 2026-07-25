@@ -63,7 +63,7 @@ async function loadCompare() {
     new Chart(barCtx, {
         type: 'bar',
         data: {
-            labels: classes.map(c => c.class_name),
+            labels: classes.map(c => c.label),
             datasets: [{
                 label: '平均总分',
                 data: classes.map(c => c.avg_total),
@@ -84,7 +84,7 @@ async function loadCompare() {
     const body = document.getElementById('heatBody');
     body.innerHTML = classes.map(c => {
         const tds = dims.map(d => `<td class="text-center font-bold" style="background:${heatColor(c.dims[d]||0)}">${c.dims[d]||0}</td>`).join('');
-        return `<tr><td class="font-bold text-slate-700">${c.class_name}</td>${tds}<td class="text-center font-extrabold">${c.avg_total}</td></tr>`;
+        return `<tr><td class="font-bold text-slate-700">${c.label}</td>${tds}<td class="text-center font-extrabold">${c.avg_total}</td></tr>`;
     }).join('');
 
     // 3. 薄弱题
@@ -97,7 +97,7 @@ async function loadCompare() {
     wl.innerHTML = wk.weak.map((w, i) => `
         <div class="p-3 rounded-xl border border-slate-100 bg-slate-50">
             <div class="flex justify-between items-start gap-2">
-                <span class="text-sm font-bold text-slate-700">#${i+1} · ${escapeHtml(w.question || w.answer_snippet)}</span>
+                <span class="text-sm font-bold text-slate-700">#${i+1} · ${escapeHtml(w.topic || w.question || w.answer_snippet)}</span>
                 <span class="badge ${w.bad_rate >= 0.6 ? 'badge-error' : 'badge-warning'} badge-sm">${Math.round(w.bad_rate*100)}% 不合格</span>
             </div>
             <p class="text-xs text-slate-500 mt-1">样本 ${w.total} · ${w.sample_suggestion ? '点评: ' + escapeHtml(w.sample_suggestion) : ''}</p>

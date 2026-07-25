@@ -74,7 +74,12 @@
                                         </div>
                                         <div>
                                             <div class="font-bold text-base-content js-name">{{ item.info.truename }}</div>
-                                            <div class="text-xs text-base-content/50 js-id">{{ item.info.student_id or '' }}</div>
+                                            <div class="text-xs text-base-content/50 js-id">
+                                                {{ item.info.student_id or '' }}
+                                                {% if not item.info.active %}
+                                                <span class="badge badge-error badge-xs ml-1">已停用</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -131,9 +136,18 @@
                                             查看详情
                                         </a>
                                         {% if current_user.role == 'admin' %}
-                                        <button onclick="deleteStudent({{ item.info.id }}, '{{ item.info.truename }}')" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
-                                            删除
+                                        <button onclick="resetPassword({{ item.info.id }}, {{ item.info.truename|tojson }})" class="btn btn-ghost btn-xs">
+                                            重置密码
                                         </button>
+                                            {% if item.info.active %}
+                                            <button onclick="deactivateStudent({{ item.info.id }}, {{ item.info.truename|tojson }})" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                                                停用
+                                            </button>
+                                            {% else %}
+                                            <button onclick="reactivateStudent({{ item.info.id }}, {{ item.info.truename|tojson }})" class="btn btn-ghost btn-xs text-success hover:bg-success/10">
+                                                重新启用
+                                            </button>
+                                            {% endif %}
                                         {% endif %}
                                     </div>
                                 </td>
@@ -259,8 +273,8 @@
         filterDept(); // 初始化班级列表
     });
 
-    async function deleteStudent(id, name) {
-        if (!confirm(`⚠️ 危险操作！\n\n确定删除学生【${name}】吗？\n\n该学生的所有面试记录将被一并删除且无法恢复！`)) return;
+    async function deactivateStudent(id, name) {
+        if (!confirm(`确定停用学生【${name}】吗？\n\n账号将无法登录，但历史记录会完整保留。`)) return;
 
         try {
             const res = await fetch(`/api/admin/student/delete/${id}`, {
@@ -268,15 +282,31 @@
             });
             
             if (res.ok) {
-                alert('删除成功');
+                alert('账号已停用');
                 location.reload();
             } else {
                 const data = await res.json();
-                alert('删除失败: ' + (data.error || '未知错误'));
+                alert('停用失败: ' + (data.error || '未知错误'));
             }
         } catch (e) {
             alert('网络错误');
         }
+    }
+
+    async function reactivateStudent(id, name) {
+        if (!confirm(`确定重新启用学生【${name}】吗？`)) return;
+        const res = await fetch(`/api/admin/student/reactivate/${id}`, {method: 'POST'});
+        const data = await res.json();
+        if (!res.ok) return alert('启用失败: ' + (data.error || '未知错误'));
+        location.reload();
+    }
+
+    async function resetPassword(id, name) {
+        if (!confirm(`确定为学生【${name}】生成一次性临时密码吗？`)) return;
+        const res = await fetch(`/api/admin/student/reset-password/${id}`, {method: 'POST'});
+        const data = await res.json();
+        if (!res.ok) return alert('重置失败: ' + (data.error || '未知错误'));
+        prompt('请立即复制临时密码（关闭后无法再次查看）：', data.temporary_password);
     }
 </script>
 {% endblock %}

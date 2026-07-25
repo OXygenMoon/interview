@@ -9,10 +9,15 @@ node_modules/
 .env.*
 !.env.example
 
-# resume-builder 的环境文件
-resume-builder/frontend/.env*
-resume-builder/frontend/src/.env*
-
 # 本地运行态
 .local/
 server.log
+/temp/
+app/static/uploads/audio/*
+app/static/uploads/temp/*
+app/static/uploads/resumes/*
+!app/static/uploads/audio/.gitkeep
+!app/static/uploads/temp/.gitkeep
+!app/static/uploads/resumes/.gitkeep
+instance/uploads/
+instance/*.bak

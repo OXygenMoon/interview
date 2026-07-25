@@ -13,6 +13,9 @@
         </div>
         <div class="flex gap-2">
             {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('routes.admin_interviews', include_deleted=0 if include_deleted else 1) }}" class="btn btn-outline btn-sm">
+                {{ '仅看有效记录' if include_deleted else '查看已隐藏记录' }}
+            </a>
             <a href="{{ url_for('routes.admin_random_questions') }}" class="btn btn-outline btn-sm">
                 随机题库配置
             </a>
@@ -83,7 +86,7 @@
                                 <div class="badge badge-ghost badge-sm">{{ s.target_role }}</div>
                             </td>
                             <td>
-                                {% if s.total_score %}
+                                {% if s.total_score is not none %}
                                     <span class="font-bold {{ 'text-success' if s.total_score >= 80 else 'text-warning' }}">{{ s.total_score }}</span>
                                 {% else %}
                                     <span class="text-base-content/30">-</span>
@@ -111,8 +114,12 @@
                             </td>
                             <td>
                                 <div class="flex gap-2">
+                                    {% if s.status == 'deleted' %}
+                                    <button onclick="restoreSession({{ s.id }})" class="btn btn-xs btn-ghost text-success">恢复</button>
+                                    {% else %}
                                     <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-ghost text-primary" target="_blank">查看</a>
-                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">删除</button>
+                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">隐藏</button>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -185,7 +192,7 @@
     });
 
     async function deleteSession(id) {
-        if (!confirm("确定删除这条面试记录吗？此操作不可恢复。")) return;
+        if (!confirm("确定隐藏这条面试记录吗？记录仍会保留，可由管理员恢复。")) return;
         
         try {
             const res = await fetch(`/api/admin/interview/delete/${id}`, { method: 'POST' });
@@ -198,6 +205,14 @@
         } catch (e) {
             alert("网络错误");
         }
+    }
+
+    async function restoreSession(id) {
+        if (!confirm("确定恢复这条面试记录吗？")) return;
+        const res = await fetch(`/api/admin/interview/restore/${id}`, {method: 'POST'});
+        const data = await res.json();
+        if (!res.ok) return alert("恢复失败: " + (data.error || "未知错误"));
+        location.reload();
     }
 </script>
 {% endblock %}

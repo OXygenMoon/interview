@@ -14,15 +14,37 @@ from . import db
 
 
 SQLITE_COLUMNS = {
+    'users': {
+        'active': 'BOOLEAN NOT NULL DEFAULT 1',
+        'must_change_password': 'BOOLEAN NOT NULL DEFAULT 0',
+        'deactivated_at': 'DATETIME',
+    },
     'interview_sessions': {
         'last_activity': 'DATETIME',
         'reviewed': 'BOOLEAN DEFAULT 0',
         'abandoned': 'BOOLEAN DEFAULT 0',
         'round': 'INTEGER DEFAULT 1',
         'parent_session_id': 'INTEGER',
+        'deleted_at': 'DATETIME',
+        'deleted_by_id': 'INTEGER',
+        'deletion_reason': 'VARCHAR(255)',
+        'status_before_delete': 'VARCHAR(20)',
+        'evaluation_source': 'VARCHAR(30)',
+        'report_model': 'VARCHAR(100)',
+        'report_prompt_version': 'VARCHAR(50)',
+        'report_error': 'TEXT',
+        'resume_id': 'INTEGER',
+        'resume_snapshot': 'TEXT',
+        'position_snapshot': 'TEXT',
+        'prior_round_summary': 'TEXT',
+        'llm_model': 'VARCHAR(100)',
+        'prompt_version': 'VARCHAR(50)',
     },
     'chat_messages': {
         'audio_urls': 'TEXT',
+        'generation_status': "VARCHAR(30) NOT NULL DEFAULT 'completed'",
+        'model_name': 'VARCHAR(100)',
+        'error_message': 'TEXT',
     },
 }
 
@@ -32,6 +54,8 @@ DEFAULT_CONFIGS = {
     'cooldown_complete_minutes': ('30', '完成一次面试后再次开始的冷却时长（分钟）'),
     'cooldown_requires_review': ('true', '完成后是否强制复盘上次报告才能开始下一次'),
     'report_timeout_minutes': ('15', '报告生成卡在 processing 多久后判为 failed（分钟）'),
+    'audio_retention_days': ('30', 'TTS 音频保留天数，到期后清空数据库引用并删除文件'),
+    'temp_retention_hours': ('24', '临时上传文件最大保留小时数'),
 }
 
 
@@ -96,6 +120,20 @@ def ensure_schema_compatibility():
                     'skipping the unique index until they are reviewed.'
                 )
 
+        if 'chat_messages' in table_names:
+            # SQLAlchemy's historical JSON default stored Python None as the
+            # text literal "null". Normalize it to SQL NULL so retention
+            # queries and database audits do not treat it as a live link.
+            chat_columns = {
+                column['name']
+                for column in inspect(conn).get_columns('chat_messages')
+            }
+            if 'audio_urls' in chat_columns:
+                conn.execute(text(
+                    'UPDATE chat_messages SET audio_urls = NULL '
+                    'WHERE lower(trim(audio_urls)) = \'null\''
+                ))
+
         if 'system_configs' in table_names:
             for key, (value, description) in DEFAULT_CONFIGS.items():
                 conn.execute(text(
@@ -111,5 +149,25 @@ def ensure_schema_compatibility():
                     'description': description,
                     'updated_at': datetime.now(),
                 })
+
+        # Older form submissions incorrectly marked failed quizzes as completed.
+        # Preserve those scores as attempts, then reopen the lesson for retry.
+        if {'learning_attempts', 'user_learning_progress', 'learning_materials'} <= table_names:
+            conn.execute(text(
+                'INSERT INTO learning_attempts '
+                '(user_id, material_id, score, passed, answers, attempted_at) '
+                'SELECT p.user_id, p.material_id, p.score, 0, NULL, p.completed_at '
+                'FROM user_learning_progress p '
+                'JOIN learning_materials m ON m.id = p.material_id '
+                'WHERE m.material_type = \'quiz\' AND p.score < 80'
+            ))
+            conn.execute(text(
+                'DELETE FROM user_learning_progress '
+                'WHERE id IN ('
+                'SELECT p.id FROM user_learning_progress p '
+                'JOIN learning_materials m ON m.id = p.material_id '
+                'WHERE m.material_type = \'quiz\' AND p.score < 80'
+                ')'
+            ))
 
         conn.commit()

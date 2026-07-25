@@ -15,6 +15,7 @@
     <div class="card bg-base-100 shadow-sm border border-base-200">
         <div class="card-body space-y-4">
             <form method="POST" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label class="form-control">
                     <div class="label">
                         <span class="label-text font-bold">题目列表（每行一个问题）</span>

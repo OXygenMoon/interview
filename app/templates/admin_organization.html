@@ -183,7 +183,7 @@
 
     // 5. 删除班级
     async function deleteClass(id) {
-        if (!confirm("⚠️ 高风险操作警告！\n\n确定删除该班级吗？\n\n这将【永久删除】该班级下的所有学生及其面试记录，且不可恢复！\n\n请再次确认是否继续？")) return;
+        if (!confirm("确定删除这个空班级吗？班级中仍有学生时，系统会拒绝删除。")) return;
         
         const res = await fetch(`/api/admin/class/delete/${id}`, {method: 'POST'});
         if (res.ok) {
@@ -216,6 +216,19 @@
             
             if (res.ok) {
                 alert(`导入成功！共处理 ${data.count} 名学生。`);
+                if (data.credentials && data.credentials.length) {
+                    const rows = ['姓名,学号,一次性初始密码'];
+                    data.credentials.forEach(item => rows.push(
+                        [item.name, item.student_id, item.password]
+                            .map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')
+                    ));
+                    const blob = new Blob(['\uFEFF' + rows.join('\n')], {type: 'text/csv;charset=utf-8'});
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `学生一次性密码_${new Date().toISOString().slice(0, 10)}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }
                 location.reload();
             } else {
                 alert("导入失败: " + data.error);
