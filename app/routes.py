@@ -555,7 +555,10 @@ def resume_builder():
 @teacher_required
 def dashboard():
     """根据角色自动展示不同的管理数据"""
-    query = InterviewSession.query.join(User).filter(InterviewSession.status == 'completed')
+    query = InterviewSession.query.join(
+        User,
+        InterviewSession.user_id == User.id,
+    ).filter(InterviewSession.status == 'completed')
     title = "管理后台"
 
     if current_user.role == 'teacher':
@@ -1372,7 +1375,10 @@ def admin_interviews():
         and request.args.get('include_deleted') == '1'
     )
     visible_statuses = ['completed', 'deleted'] if include_deleted else ['completed']
-    query = InterviewSession.query.join(User).filter(
+    query = InterviewSession.query.join(
+        User,
+        InterviewSession.user_id == User.id,
+    ).filter(
         InterviewSession.status.in_(visible_statuses)
     ).order_by(InterviewSession.start_time.desc())
     

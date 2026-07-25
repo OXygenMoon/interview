@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<div class="space-y-8 pb-10">
+<div class="space-y-8 pb-10" data-testid="student-home">
 
     <!-- 冷却/复盘状态横幅（JS 注入显示） -->
     <div id="cooldown_banner" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-center gap-4">
@@ -31,7 +31,7 @@
                     AI 面试官已就位。选择心仪岗位，开启模拟实战，<br>让每一次练习都成为 Offer 的垫脚石。
                 </p>
                 <div class="mt-6 flex flex-wrap justify-center md:justify-end gap-3">
-                    <button onclick="document.getElementById('setup_modal').showModal()" class="btn btn-lg bg-white text-orange-600 border-none hover:bg-orange-50 px-10 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group-hover:ring-4 ring-white/30">
+                    <button data-testid="open-interview-setup" onclick="document.getElementById('setup_modal').showModal()" class="btn btn-lg bg-white text-orange-600 border-none hover:bg-orange-50 px-10 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group-hover:ring-4 ring-white/30">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         立即开始面试
                     </button>
@@ -243,7 +243,7 @@
     </div>
 </div>
 
-<dialog id="setup_modal" class="modal modal-bottom sm:modal-middle">
+<dialog id="setup_modal" class="modal modal-bottom sm:modal-middle" data-testid="interview-setup">
     <div class="modal-box w-11/12 max-w-5xl bg-white p-0 overflow-hidden rounded-3xl">
         <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 class="font-bold text-lg text-slate-800">创建新的面试</h3>
@@ -337,7 +337,7 @@
                     </div>
 
                     <div class="pt-4">
-                        <button type="button" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
+                        <button type="button" data-testid="start-interview" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
                     </div>
                 </form>
             </div>

@@ -7,7 +7,8 @@
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
+playwright install chromium
 cp .env.example .env
 flask --app run.py bootstrap-db
 python run.py
@@ -68,8 +69,14 @@ Alembic 基线版本；不会删除业务数据。生产发布应先备份数据
 
 ```bash
 python -m compileall -q app tests
-pytest -q
+flake8 app tests run.py worker.py --select=E9,F63,F7,F82
+pytest -q tests/test_regressions.py
+pytest -q tests/e2e -m e2e
 ```
+
+端到端测试会自动创建临时 SQLite 数据库、固定测试账号和随机本地端口，
+并启动无头 Chromium。它不会读取或修改 `instance/app.db`。失败时截图和
+可回放 trace 会保存在 `test-results/`；该目录不提交到 Git。
 
 启动时不会执行隐式数据库结构变更；版本迁移必须通过 Alembic 命令完成。
 题库修复和存储保留策略只会在数据库版本到达 head 后运行。生成的 TTS

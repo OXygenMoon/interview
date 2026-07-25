@@ -21,3 +21,6 @@ app/static/uploads/resumes/*
 !app/static/uploads/resumes/.gitkeep
 instance/uploads/
 instance/*.bak
+
+# 浏览器端到端测试产物
+test-results/

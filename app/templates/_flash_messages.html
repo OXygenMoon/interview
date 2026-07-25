@@ -1,0 +1,16 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="mb-5 space-y-2" aria-live="polite" data-testid="flash-messages">
+            {% for category, message in messages %}
+                <div role="alert"
+                     class="alert text-sm shadow-sm
+                            {% if category == 'success' %}alert-success
+                            {% elif category in ['warning', 'info'] %}alert-warning
+                            {% elif category == 'error' %}alert-error
+                            {% else %}alert-info{% endif %}">
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
