@@ -1,0 +1,77 @@
+{% set endpoint = request.endpoint or '' %}
+{% set signed_in = current_user.is_authenticated %}
+{% set teaching = signed_in and current_user.role in ['teacher', 'dept_head', 'admin'] %}
+{% macro nav_link(label, destination, active=false) -%}
+<a href="{{ url_for(destination) }}" class="app-nav-link {{ 'is-active' if active else '' }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+{%- endmacro %}
+<header class="app-navbar" id="app-navbar" data-testid="app-navbar">
+    <a class="app-brand" href="{{ url_for('routes.dashboard' if teaching else 'routes.home') }}" aria-label="AI 智聘平台首页">
+        <span class="app-brand-mark" aria-hidden="true">✳</span>
+        <span>AI 智聘<span class="app-brand-caption">{{ '教学工作空间' if teaching else '你的成长练习站' }}</span></span>
+    </a>
+    <button class="app-menu-toggle" type="button" id="app-menu-toggle" aria-label="打开导航菜单" aria-controls="app-navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <nav class="app-navigation" id="app-navigation" aria-label="主导航">
+        {% if signed_in and not current_user.must_change_password %}
+            {% if teaching %}
+                {{ nav_link('教学概览', 'routes.dashboard', endpoint == 'routes.dashboard') }}
+                {{ nav_link('学生名册', 'routes.teacher_students', endpoint in ['routes.teacher_students', 'routes.teacher_student_detail']) }}
+                {{ nav_link('面试记录', 'routes.admin_interviews', endpoint in ['routes.admin_interviews', 'routes.interview_summary', 'routes.interview_room']) }}
+                {{ nav_link('能力画像', 'routes.admin_capability_profile', endpoint == 'routes.admin_capability_profile') }}
+                <details class="app-nav-more">
+                    <summary class="app-nav-link {{ 'is-active' if endpoint in ['routes.dashboard_compare', 'routes.admin_resumes', 'routes.admin_resume_preview', 'routes.admin_learning', 'routes.admin_organization', 'routes.admin_company', 'routes.admin_random_questions', 'routes.admin_settings'] else '' }}">{{ '教学管理' if current_user.role == 'admin' else '更多分析' }} <span aria-hidden="true">⌄</span></summary>
+                    <div class="app-nav-dropdown">
+                        {{ nav_link('班级对比看板', 'routes.dashboard_compare', endpoint == 'routes.dashboard_compare') }}
+                        {% if current_user.role == 'admin' %}
+                            {{ nav_link('学生简历预览', 'routes.admin_resumes', endpoint in ['routes.admin_resumes', 'routes.admin_resume_preview']) }}
+                            {{ nav_link('课程内容管理', 'routes.admin_learning', endpoint == 'routes.admin_learning') }}
+                            {{ nav_link('组织与学生管理', 'routes.admin_organization', endpoint == 'routes.admin_organization') }}
+                            {{ nav_link('企业与岗位管理', 'routes.admin_company', endpoint == 'routes.admin_company') }}
+                            {{ nav_link('随机问题题库', 'routes.admin_random_questions', endpoint == 'routes.admin_random_questions') }}
+                            {{ nav_link('系统设置', 'routes.admin_settings', endpoint == 'routes.admin_settings') }}
+                        {% endif %}
+                    </div>
+                </details>
+            {% else %}
+                {{ nav_link('面试大厅', 'routes.home', endpoint in ['routes.home', 'routes.random_interview_page', 'routes.interview_room']) }}
+                {{ nav_link('学习资料', 'routes.learning_index', endpoint in ['routes.learning_index', 'routes.learning_detail', 'routes.submit_quiz']) }}
+                {{ nav_link('能力成长', 'routes.ability_radar', endpoint == 'routes.ability_radar') }}
+                {{ nav_link('练习记录', 'routes.history', endpoint in ['routes.history', 'routes.interview_summary']) }}
+                {{ nav_link('智能简历中心', 'routes.resume_dashboard', endpoint in ['routes.resume_dashboard', 'routes.resume_edit', 'routes.resume_builder']) }}
+                {{ nav_link('基本资料', 'routes.profile_basic', endpoint == 'routes.profile_basic') }}
+                {{ nav_link('班级风云榜', 'routes.leaderboard', endpoint == 'routes.leaderboard') }}
+            {% endif %}
+        {% elif not signed_in %}
+            <span class="app-nav-note">练习一次，多一点底气。</span>
+            {{ nav_link('返回登录', 'auth.login', endpoint == 'auth.login') }}
+        {% else %}
+            <span class="app-nav-note">完成密码更新，继续你的练习。</span>
+        {% endif %}
+    </nav>
+    <div class="app-account">
+        {% include "_theme_switcher.html" %}
+        {% if signed_in %}
+        <details class="app-profile-menu" id="app-profile-menu">
+            <summary class="app-profile-toggle" id="app-account-toggle" aria-label="打开个人账号菜单" aria-controls="app-account-menu" aria-expanded="false">
+                <span class="app-account-avatar" aria-hidden="true">{{ (current_user.truename or current_user.username or '我')[0] }}</span>
+                <span class="app-account-name">{{ current_user.truename or current_user.username }}</span>
+                <svg class="app-profile-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="app-profile-dropdown" id="app-account-menu" role="group" aria-label="个人账号菜单">
+                <div class="app-profile-identity"><strong>{{ current_user.truename or current_user.username }}</strong><span>@{{ current_user.username }}</span></div>
+                {% if not current_user.must_change_password %}
+                <p class="app-profile-status" data-link-status role="status">正在读取关联状态…</p>
+                <button class="app-profile-action" type="button" data-link-start disabled>关联 WikiBook 账号</button>
+                <button class="app-profile-action" type="button" data-account-switch hidden>切换 WikiBook</button>
+                <a class="app-profile-action" href="{{ url_for('routes.account_links') }}">账号关联设置</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('auth.logout') }}" class="app-profile-logout">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="app-profile-action" title="退出登录" aria-label="退出登录">退出登录</button>
+                </form>
+            </div>
+        </details>
+    {% endif %}
+    </div>
+</header>

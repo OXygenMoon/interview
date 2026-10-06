@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台设计参考：柔彩创意，本地示例数据与交互。">
+    <title>柔彩创意 · 面试平台设计参考</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="common.css">
+    <script src="common.js" defer></script>
+  </head>
+  <body class="playful">
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <div class="lab-back">
+      <a href="index.html" target="_top">← 返回十套设计方案</a><span>柔彩创意 / 设计预览 · 示例数据</span>
+    </div>
+    <div class="playful-shell">
+      <header class="top-nav">
+        <a class="brand" href="index.html" target="_top"><span class="brand-symbol">✳</span>练习俱乐部</a>
+        <nav aria-label="主导航">
+          <button class="nav-link active" data-scroll="overview" aria-current=location>面试大厅</button><button class="nav-link " data-scroll="growth" >能力成长</button><button class="nav-link " data-scroll="learning" >学习资料</button><button class="nav-link " data-scroll="records" >练习记录</button>
+        </nav>
+        <button class="button" data-resume>我的简历 ↗</button>
+      </header>
+      <main id="main">
+        <section class="playful-hero" id="overview">
+          <div class="playful-intro">
+            <p class="eyebrow">
+              嗨，林同学 / 你的成长小站
+            </p>
+            <h1>
+              把紧张放一边，<br>把经验说出来。
+            </h1>
+            <p>
+              今天也给自己一次尝试的机会。<br>练习不是考试，每次都可以重新开始。
+            </p>
+            <button class="button primary" data-start>和面试官聊聊<i data-icon="arrow"></i></button>
+          </div>
+          <div class="playful-art" role="img" aria-label="一张项目笔记和完成徽章，象征把经历整理成自己的故事">
+            <div class="art-circle">
+            </div>
+            <div class="art-sheet">
+              <span></span>
+              <div class="art-line">
+              </div>
+              <div class="art-line short">
+              </div>
+              <div class="art-line">
+              </div>
+              <div class="art-seal">
+                ✓
+              </div>
+            </div>
+            <span class="art-star">✳</span><span class="art-bubble">你的进步，值得被看见 ↗</span>
+          </div>
+        </section>
+        <div class="playful-cards">
+          <article class="metric panel">
+            <p>
+              一起练过的次数
+            </p>
+            <strong class="stat-number">24<small>场</small></strong>
+            <footer>
+              再练一次，就多一份底气
+            </footer>
+          </article>
+          <article class="metric panel">
+            <p>
+              最近的平均表现
+            </p>
+            <strong class="stat-number">82.6</strong>
+            <footer>
+              比上月提升了 6.8 分
+            </footer>
+          </article>
+          <article class="metric panel">
+            <p>
+              最闪亮的一次
+            </p>
+            <strong class="stat-number">93.0</strong>
+            <footer>
+              是努力，也是你的实力
+            </footer>
+          </article>
+        </div>
+        <div class="playful-lower">
+          <section class="panel" id="growth">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  成长有起伏，也有惊喜
+                </h2>
+                <p>
+                  看看最近几次，你是怎么进步的。
+                </p>
+              </div>
+              <span class="pill">越来越好 ↗</span>
+            </div>
+            <div data-chart>
+            </div>
+          </section>
+          <section class="panel" id="learning">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  给自己的小约定
+                </h2>
+                <p>
+                  本周已经练习 4 天啦。
+                </p>
+              </div>
+            </div>
+            <div class="week" data-week>
+            </div>
+            <button class="resource-link" style="margin-top:22px" data-resource="把项目经历讲清楚"><span><strong>让项目故事，有一个好开头</strong><small>8 分钟阅读 · 今日灵感</small></span><i data-icon="arrow"></i></button>
+          </section>
+        </div>
+        <section class="panel playful-records" id="records">
+          <div class="panel-heading">
+            <div>
+              <h2>
+                最近的练习
+              </h2>
+              <p>
+                每一次复盘，都是下一次进步的起点。
+              </p>
+            </div>
+            <span class=pill>最近 3 场</span>
+          </div>
+          <div data-records>
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>练习俱乐部 / 慢慢积累，也慢慢发光。</span><span>设计预览 · 示例数据</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

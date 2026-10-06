@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User
 from . import db
@@ -9,6 +9,8 @@ auth_bp = Blueprint('auth', __name__)
 def _redirect_for_role(user):
     if user.must_change_password:
         return redirect(url_for('auth.change_password'))
+    if session.get('account_link_pending'):
+        return redirect(url_for('account_link.authorize'))
     if user.role == 'student':
         return redirect(url_for('routes.home'))
     return redirect(url_for('routes.dashboard'))
@@ -25,7 +27,7 @@ def require_password_change():
         return redirect(url_for('auth.login'))
     if not current_user.must_change_password:
         return None
-    allowed_endpoints = {'auth.change_password', 'auth.logout', 'static'}
+    allowed_endpoints = {'auth.change_password', 'auth.logout', 'static', 'account_link.prepare', 'account_link.callback'}
     if request.endpoint not in allowed_endpoints:
         return redirect(url_for('auth.change_password'))
 

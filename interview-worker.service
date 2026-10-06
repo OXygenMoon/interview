@@ -8,7 +8,7 @@ PartOf=interview.service
 User=root
 Group=root
 WorkingDirectory=/root/projects/interview
-Environment="PATH=/root/projects/interview/venv/bin"
+Environment="PATH=/root/projects/interview/venv/bin:/usr/local/bin:/usr/bin:/bin"
 Environment="PYTHONPATH=/root/projects/interview"
 EnvironmentFile=-/root/projects/interview/.env
 Environment="APP_ENV=production"

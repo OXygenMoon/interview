@@ -2,7 +2,7 @@
 from flask import Flask, abort, jsonify, request
 from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from .config import Config
 
@@ -103,6 +103,16 @@ def create_app():
     # === 注册认证蓝图 ===
     from .auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    from .integrations.account_link import init_account_link
+    from .integrations.account_link_authority import operate
+    from flask import url_for
+    init_account_link(
+        app, 'interview', lambda user_id: db.session.get(User, user_id),
+        lambda: url_for('routes.home' if not current_user.is_authenticated or current_user.role == 'student' else 'routes.dashboard'),
+        lambda: url_for('auth.login'), authority=operate,
+        manage_url=lambda: url_for('routes.account_links'),
+    )
 
     # === 新增：注册用户 API ===
     from .api.user import user_bp

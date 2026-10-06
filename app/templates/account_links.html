@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}账号关联{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto space-y-6" data-account-link-panel>
+    <div><h1 class="text-2xl font-bold">账号关联</h1><p class="text-slate-500 mt-2">关联 WikiBook 后，可以一键切换登录，继续阅读与练习。</p></div>
+    <div class="card bg-white border border-slate-100 shadow-sm"><div class="card-body">
+        <h2 class="card-title">WikiBook</h2>
+        <p>当前 Interview 账号：{{ current_user.username }}</p>
+        <p data-link-status role="status">正在读取关联状态…</p>
+        <div class="card-actions mt-4">
+            <button type="button" class="btn btn-primary" data-link-start disabled>关联 WikiBook 账号</button>
+            <button type="button" class="btn btn-primary" data-account-switch hidden>切换 WikiBook</button>
+            <button type="button" class="btn btn-outline" data-link-unlink hidden>解除关联</button>
+            <button type="button" class="btn btn-ghost" data-link-retry hidden>重试</button>
+        </div>
+        <p class="text-sm text-slate-500 mt-3">每个账号只能关联一个对方账号。关联时请登录 WikiBook，并确认双方账号。</p>
+        <div data-link-unlink-confirm hidden class="mt-4 space-y-3">
+            <p>解除后将无法一键切换登录，两个账号的数据均会保留。</p>
+            <button type="button" class="btn btn-error" data-link-unlink-yes>确认解除关联</button>
+            <button type="button" class="btn btn-ghost" data-link-unlink-no>取消</button>
+        </div>
+    </div></div>
+</section>
+{% endblock %}

@@ -19,105 +19,39 @@
         <a id="cooldown_review_link" href="#" class="hidden btn btn-sm bg-amber-500 hover:bg-amber-600 text-white border-none whitespace-nowrap">去复盘</a>
     </div>
 
-    <div class="hero rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white shadow-xl shadow-orange-200 overflow-hidden relative group">
-        <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-        <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
-        <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white/10 rounded-full"></div>
-
-        <div class="hero-content flex-col md:flex-row-reverse justify-between w-full p-8 md:p-12 z-10">
-            <div class="text-center md:text-right max-w-lg">
-                <h1 class="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-sm">准备好挑战了吗？</h1>
-                <p class="py-2 opacity-90 text-sm md:text-lg font-medium leading-relaxed">
-                    AI 面试官已就位。选择心仪岗位，开启模拟实战，<br>让每一次练习都成为 Offer 的垫脚石。
-                </p>
-                <div class="mt-6 flex flex-wrap justify-center md:justify-end gap-3">
-                    <button data-testid="open-interview-setup" onclick="document.getElementById('setup_modal').showModal()" class="btn btn-lg bg-white text-orange-600 border-none hover:bg-orange-50 px-10 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group-hover:ring-4 ring-white/30">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        立即开始面试
-                    </button>
-                    <a href="{{ url_for('routes.random_interview_page') }}" class="btn btn-lg border-white/60 bg-white/20 text-white hover:bg-white hover:text-orange-600 px-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                        随机问题面试
-                    </a>
-                </div>
-            </div>
-
-            <div class="flex flex-col justify-center">
-                <div class="text-xl font-medium opacity-80 mb-1">Welcome back,</div>
-                <div class="text-5xl font-black tracking-tight mb-4">{{ current_user.truename }} <span class="animate-wave inline-block origin-[70%_70%]">👋</span></div>
-                <div class="flex gap-2">
-                    <div class="badge badge-warning bg-white/20 border-none text-white backdrop-blur-sm p-3">
-                        {{ current_user.department or '未设置系部' }}
-                    </div>
-                    <div class="badge badge-warning bg-white/20 border-none text-white backdrop-blur-sm p-3">
-                        {{ current_user.class_name or '未设置班级' }}
-                    </div>
-                </div>
+    <section class="club-hero">
+        <div class="club-intro">
+            <p class="club-eyebrow">嗨，{{ current_user.truename }} / 你的成长小站</p>
+            <h1>把紧张放一边，<br>把经验说出来。</h1>
+            <p>今天也给自己一次尝试的机会。<br>练习不是考试，每次都可以重新开始。</p>
+            <div class="club-actions">
+                <button data-testid="open-interview-setup" onclick="document.getElementById('setup_modal').showModal()" class="btn btn-primary">立即开始面试 →</button>
+                <a href="{{ url_for('routes.random_interview_page') }}" class="btn club-secondary">随机问题面试 ↗</a>
             </div>
         </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
-        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
-            <div class="card-body p-6 flex flex-row items-center justify-between">
-                <div>
-                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">累计实战</div>
-                    <div class="text-3xl font-black text-slate-800">{{ stats.total_count }} <span class="text-sm font-normal text-slate-400">场</span></div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
-            <div class="card-body p-6 flex flex-row items-center justify-between">
-                <div>
-                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">平均得分</div>
-                    <div class="flex items-end gap-2">
-                        <div class="text-3xl font-black text-slate-800">{{ stats.avg_score }}</div>
-                        <div class="text-xs font-bold mb-1.5
-                            {% if stats.latest_trend > 0 %} text-emerald-500
-                            {% elif stats.latest_trend < 0 %} text-rose-500
-                            {% else %} text-slate-400 {% endif %}">
-                            {% if stats.latest_trend > 0 %} ▲ {{ stats.latest_trend }}
-                            {% elif stats.latest_trend < 0 %} ▼ {{ stats.latest_trend|abs }}
-                            {% else %} - {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-md transition-all duration-300">
-            <div class="card-body p-6 flex flex-row items-center justify-between">
-                <div>
-                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">历史最佳</div>
-                    <div class="text-3xl font-black text-slate-800">{{ stats.max_score }}</div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                </div>
-            </div>
-        </div>
-
-        <a href="{{ url_for('routes.learning_index') }}" class="card bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 cursor-pointer group">
-            <div class="card-body p-6 flex flex-row items-center justify-between">
-                <div>
-                    <div class="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">提升技能</div>
-                    <div class="text-xl font-bold group-hover:underline decoration-2 underline-offset-4">知识充电站 →</div>
-                    <p class="text-xs text-indigo-100 mt-1 opacity-80">查看学习资料与题库</p>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                </div>
-            </div>
-        </a>
-
-    </div>
+        {% include "_club_illustration.html" %}
+    </section>
+    <section class="club-metrics" aria-label="面试训练概况">
+        <article class="club-metric">
+            <p class="club-metric-label">一起练过的次数</p>
+            <strong>{{ stats.total_count }}<small>场</small></strong>
+            <p class="club-metric-note">再练一次，就多一份底气。</p>
+        </article>
+        <article class="club-metric">
+            <p class="club-metric-label">最近的平均表现</p>
+            <strong>{{ stats.avg_score }}</strong>
+            <p class="club-metric-note">{% if stats.latest_trend > 0 %}比上一次提升了 {{ stats.latest_trend }} 分{% elif stats.latest_trend < 0 %}比上一次下降了 {{ stats.latest_trend|abs }} 分，复盘后再出发。{% else %}把每一次回答，变成下一次进步。{% endif %}</p>
+        </article>
+        <article class="club-metric">
+            <p class="club-metric-label">最闪亮的一次</p>
+            <strong>{{ stats.max_score }}</strong>
+            <p class="club-metric-note">是努力，也是你的实力。</p>
+        </article>
+    </section>
+    <a class="club-learning-link" href="{{ url_for('routes.learning_index') }}">
+        <div><h2>给下一次练习，一点好灵感。</h2><p>知识充电站 · 学习资料、项目表达与基础测验</p></div>
+        <span>去学习 ↗</span>
+    </a>
 
     <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -129,7 +63,7 @@
         </div>
 
         <div class="overflow-x-auto p-2">
-            <table class="table w-full" id="recent-records-table">
+            <table class="table w-full" id="recent-records-table" data-mobile-primary="0" data-mobile-metric="2">
                 <thead class="text-slate-500 border-b border-slate-100">
                     <tr>
                         <th class="bg-transparent pl-6">岗位 / 时间</th>
@@ -296,17 +230,17 @@
                         <label class="label"><span class="label-text font-bold text-slate-600">面试难度</span></label>
                         <div class="grid grid-cols-3 gap-2">
                             <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
-                                <input type="radio" name="difficulty" value="新手模式" class="hidden" />
+                                <input type="radio" name="difficulty" value="新手模式" class="radio radio-primary radio-xs mb-2" />
                                 <div class="text-xl mb-1">🌱</div>
                                 <div class="text-xs font-bold">新手模式</div>
                             </label>
                             <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
-                                <input type="radio" name="difficulty" value="标准模式" class="hidden" checked />
+                                <input type="radio" name="difficulty" value="标准模式" class="radio radio-primary radio-xs mb-2" checked />
                                 <div class="text-xl mb-1">👔</div>
                                 <div class="text-xs font-bold">标准模式</div>
                             </label>
                             <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
-                                <input type="radio" name="difficulty" value="压力模式" class="hidden" />
+                                <input type="radio" name="difficulty" value="压力模式" class="radio radio-primary radio-xs mb-2" />
                                 <div class="text-xl mb-1">🔥</div>
                                 <div class="text-xs font-bold">压力模式</div>
                             </label>
@@ -370,7 +304,7 @@
     function toggleDescContent() {
         const wrapper = document.getElementById('desc-content-wrapper');
         const icon = document.getElementById('collapse-icon');
-        
+
         if (wrapper.style.display === 'none') {
             wrapper.style.display = 'block';
             icon.style.transform = 'rotate(0deg)';
@@ -387,14 +321,14 @@
         width: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent; 
+        background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #e2e8f0; 
+        background-color: #e8dfe6;
         border-radius: 20px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: #cbd5e1; 
+        background-color: #d4c8d2;
     }
 
     /* 简单的招手动画 */
@@ -411,7 +345,7 @@ async function loadCompanies() {
         allCompanies = await res.json();
         const select = document.getElementById('company-select');
         select.innerHTML = '<option disabled selected value="">请选择公司</option>';
-        
+
         allCompanies.forEach(comp => {
             const option = document.createElement('option');
             option.value = comp.id;
@@ -429,11 +363,11 @@ function onCompanyChange() {
     const compId = parseInt(document.getElementById('company-select').value);
     const company = allCompanies.find(c => c.id === compId);
     const posSelect = document.getElementById('position-select');
-    
+
     posSelect.innerHTML = '<option disabled selected value="">请选择岗位</option>';
     document.getElementById('target_role_input').value = "";
     document.getElementById('position_id_input').value = "";
-    
+
     // Reset description panel
     const contentDiv = document.getElementById('position-desc-content');
     contentDiv.innerHTML = `
@@ -442,7 +376,7 @@ function onCompanyChange() {
             <p class="text-sm">请先选择公司和岗位</p>
         </div>
     `;
-    
+
     if (company && company.positions && company.positions.length > 0) {
         company.positions.forEach(pos => {
             const option = document.createElement('option');
@@ -462,16 +396,16 @@ function onPositionChange() {
     const posId = parseInt(document.getElementById('position-select').value);
     const company = allCompanies.find(c => c.id === compId);
     const position = company ? company.positions.find(p => p.id === posId) : null;
-    
+
     if (position) {
         document.getElementById('target_role_input').value = position.name;
         document.getElementById('position_id_input').value = position.id;
-        
+
         // Combine Company Description and Position Description
         let desc = "";
         if (company.description) desc += `### ${company.name}简介\n\n${company.description}\n\n---\n\n`;
         if (position.description) desc += `### ${position.name}岗位要求\n\n${position.description}`;
-        
+
         const contentDiv = document.getElementById('position-desc-content');
         if (desc.trim()) {
             contentDiv.innerHTML = marked.parse(desc);
@@ -484,7 +418,7 @@ function onPositionChange() {
 // === 自动分页逻辑 (Client-side Pagination) ===
 document.addEventListener("DOMContentLoaded", function() {
     loadCompanies(); // Load companies on start
-    
+
     const table = document.getElementById('recent-records-table');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));

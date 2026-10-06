@@ -21,6 +21,15 @@ class Config:
     REMEMBER_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
+    # Cross-platform account association (disabled until all three are configured).
+    ACCOUNT_LINK_INTERVIEW_URL = os.environ.get('ACCOUNT_LINK_INTERVIEW_URL', '')
+    ACCOUNT_LINK_WIKIBOOK_URL = os.environ.get('ACCOUNT_LINK_WIKIBOOK_URL', '')
+    ACCOUNT_LINK_SECRET = os.environ.get('ACCOUNT_LINK_SECRET', '')
+    # Timezone of legacy naive business timestamps (datetime.now writes).
+    INTERVIEW_RECORD_TIMEZONE = os.environ.get('INTERVIEW_RECORD_TIMEZONE', 'Asia/Shanghai')
+    SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', 'interview_session' if ACCOUNT_LINK_SECRET else 'session')
+    REMEMBER_COOKIE_NAME = os.environ.get('REMEMBER_COOKIE_NAME', 'interview_remember' if ACCOUNT_LINK_SECRET else 'remember_token')
+
     # === Durable report queue ===
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')
     REPORT_QUEUE_MODE = os.environ.get(
@@ -48,20 +57,24 @@ class Config:
         '30,120',
     )
 
-    # === 硅基流动 (SiliconFlow) 配置 ===
-    # 密钥从环境变量读取（本地放 .env，生产用 systemd Environment=），勿硬编码进源码
+    # === DeepSeek 面试对话、报告及视觉分析 ===
+    # 密钥只通过服务端环境变量配置，本地 .env 不提交到 Git。
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
+    LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://api.deepseek.com')
+    # DeepSeek-V4.1-Flash 的官方 API 模型标识。
+    LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'deepseek-flash')
+    LLM_REPORT = os.environ.get('LLM_REPORT', LLM_MODEL_NAME)
+    VLM_MODEL_NAME = os.environ.get('VLM_MODEL_NAME', LLM_MODEL_NAME)
+    # 短回复使用非思考模式，避免思考占用 token 上限并延迟首字。
+    LLM_THINKING = os.environ.get('LLM_THINKING', 'disabled')
 
-    # 2. 硅基流动的 Base URL (固定写法)
-    LLM_BASE_URL = "https://api.siliconflow.cn/v1"
-
-    # 3. 模型名称 (注意：硅基流动的模型名是带厂商前缀的)
-    # 推荐使用 'Qwen/Qwen2.5-72B-Instruct' (阿里通义千问，也很强)
-    LLM_MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct"
-    # 报告生成专用模型（逐句点评、单题评估等耗时任务，支持 json_object）
-    LLM_REPORT = os.environ.get('LLM_REPORT', 'Qwen/Qwen2.5-72B-Instruct')
-    # 视觉模型 (VLM)
-    VLM_MODEL_NAME = "Qwen/Qwen2-VL-72B-Instruct"
+    # SenseVoice 在部署机器上离线识别，不使用云端 ASR 凭证。
+    ASR_MODEL_DIR = os.environ.get(
+        'ASR_MODEL_DIR',
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), '.local', 'asr', 'sensevoice'),
+    )
+    ASR_LANGUAGE = os.environ.get('ASR_LANGUAGE', 'auto')
+    ASR_NUM_THREADS = int(os.environ.get('ASR_NUM_THREADS', '2'))
 
     # === 火山引擎 TTS 配置 (豆包同款) ===
     # 密钥从环境变量读取

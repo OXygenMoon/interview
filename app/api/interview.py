@@ -442,27 +442,46 @@ def background_report_task(session_id):
             history = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp).all()
 
             # (B) 调用 AI 生成报告 (这里最耗时)
-            full_report = generate_interview_report(history, session.target_role)
+            full_report = generate_interview_report(
+                history, session.target_role,
+                round_num=session.round or 1,
+                difficulty=session.difficulty or '标准模式',
+                position_context=session.position_snapshot,
+            )
 
             # (C) 保存数据
             overall = full_report.get('overall', {})
             session.total_score = overall['total_score']
             session.radar_data = overall['scores']
             session.summary_comment = overall['comment']
-            session.evaluation_source = 'ai'
+            session.evaluation_source = full_report.get('evaluation_source', 'ai')
             session.report_model = Config.LLM_REPORT
             session.report_prompt_version = REPORT_PROMPT_VERSION
             session.report_error = None
 
             # 保存逐句点评
             reviews_list = full_report.get('details', []) or full_report.get('details_list', [])
-            user_msgs_db = [m for m in history if m.sender == 'user']
+            user_msgs_db = [
+                message
+                for message in history
+                if message.sender == 'user'
+                and message.generation_status == 'completed'
+                and (message.content or '').strip()
+            ]
+            user_msgs_by_id = {message.id: message for message in user_msgs_db}
 
-            for db_msg, review in zip(user_msgs_db, reviews_list):
+            for index, review in enumerate(reviews_list):
                 if isinstance(review, dict):
-                    db_msg.suggestion = review.get('suggestion', '').strip()
-                    db_msg.reference_answer = review.get('reference', '').strip()
-                    db_msg.is_good_response = review.get('is_good', False)
+                    db_msg = user_msgs_by_id.get(review.get('message_id'))
+                    if db_msg is None and index < len(user_msgs_db):
+                        # Compatibility for reports produced before message IDs
+                        # were included in the response.
+                        db_msg = user_msgs_db[index]
+                    if db_msg is None:
+                        continue
+                    db_msg.suggestion = (review.get('suggestion') or '').strip()
+                    db_msg.reference_answer = (review.get('reference') or '').strip()
+                    db_msg.is_good_response = bool(review.get('is_good', False))
 
             # (D) 关键：更新状态为 completed
             session.status = 'completed'
@@ -471,6 +490,8 @@ def background_report_task(session_id):
             session.report_error = None
             db.session.commit()
             print(f"✅ [后台任务] Session {session_id} 报告生成完毕！")
+            from ..services.learning_achievements import notify_wikibook_learning_change
+            notify_wikibook_learning_change(session.user_id)
             return {'status': 'completed', 'session_id': session_id}
 
         except Exception as e:
@@ -668,8 +689,8 @@ def next_round(session_id):
             'radar_data': prev.radar_data,
             'summary_comment': prev.summary_comment,
         },
-        llm_model=prev.llm_model or Config.LLM_MODEL_NAME,
-        prompt_version=prev.prompt_version or CHAT_PROMPT_VERSION,
+        llm_model=Config.LLM_MODEL_NAME,
+        prompt_version=CHAT_PROMPT_VERSION,
         round=next_round_num,
         parent_session_id=prev.id,
     )
@@ -877,7 +898,6 @@ def transcribe_audio_only():
     【新增】轻量级接口：仅将语音转换为文字，不生成AI回复
     """
     filepath = None
-    wav_path = None
     try:
         if 'audio' not in request.files:
             return jsonify({'error': 'No audio file'}), 400
@@ -893,23 +913,8 @@ def transcribe_audio_only():
         filepath = os.path.join(upload_folder, filename)
         file.save(filepath)
 
-        # 1.5 webm → wav 转码（SenseVoiceSmall 对 wav 兼容最好；无 ffmpeg 则降级直传）
-        transcribe_path = filepath
-        try:
-            from pydub import AudioSegment
-            AudioSegment.converter = "ffmpeg"  # 依赖系统 ffmpeg
-            wav_path = filepath.rsplit('.', 1)[0] + '.wav'
-            audio = AudioSegment.from_file(filepath)  # 自动按扩展名解码
-            audio = audio.set_frame_rate(16000).set_channels(1)  # ASR 友好参数
-            audio.export(wav_path, format='wav')
-            transcribe_path = wav_path
-            print(f"🎤 [STT] 已转码 webm→wav: {wav_path}")
-        except Exception as conv_e:
-            print(f"🎤 [STT] 转码跳过（无 ffmpeg 或解码失败），直传原文件: {conv_e}")
-
-        # 2. 调用 STT 服务
-        print(f"🎤 [STT] 开始转录: {transcribe_path}")
-        user_text = transcribe_audio(transcribe_path)
+        # 2. 本地解码并识别，音频不上传到外部服务。
+        user_text = transcribe_audio(filepath)
         print(f"🎤 [STT] 转录结果: {user_text}")
 
         # 3. 处理空语音
@@ -918,11 +923,13 @@ def transcribe_audio_only():
 
         return jsonify({'status': 'success', 'text': user_text})
 
+    except AIServiceError as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 503
     except Exception as e:
         print(f"❌ Transcription Error: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
-        for path in {filepath, wav_path}:
+        for path in {filepath}:
             if not path:
                 continue
             try:

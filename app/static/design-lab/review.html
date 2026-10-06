@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台的前端代码审查与设计升级建议。">
+    <title>前端 Review · 设计测试区</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="lab.css">
+  </head>
+  <body>
+    <header class="lab-header">
+      <a class="lab-brand" href="index.html"><span class="lab-mark">m</span><strong>面试之间<span>FRONTEND REVIEW</span></strong></a>
+      <nav>
+        <a href="index.html">← 返回十套设计方案</a>
+      </nav>
+    </header>
+    <main class="review-page">
+      <p class="eyebrow">
+        CODE REVIEW / 2026.10.05
+      </p>
+      <h1>
+        先理清层级，再统一设计。
+      </h1>
+      <p class="lead">
+        项目使用 Flask/Jinja 模板、Tailwind CDN、DaisyUI 4 与原生 JavaScript。已有面试设置、冷却提示、报告状态、学生首页和教师数据看板，适合在现有架构内逐步升级。本次审查聚焦四个页面文件；下列判断来自代码，未对正式环境的速度或转化率作测量。
+      </p>
+      <h2>
+        需要优先解决的问题
+      </h2>
+      <article class="finding">
+        <h3>
+          01 / 高优先级：主题规则互相覆盖，影响后续迭代
+        </h3>
+        <p>
+          学生与教师的基础模板都在模板内定义较长的 CSS，重复覆盖按钮、卡片、表单与导航。通用选择器带有大量 <code>!important</code>，会压过具体页面的视觉定义。学生首页的多色卡片与基础模板的统一表面覆盖也存在表达冲突。
+        </p>
+        <p class="source">
+          证据：<code>app/templates/base.html:179–240</code>；<code>app/templates/teacher_base.html:175–238</code>。
+        </p>
+        <p>
+          建议：先抽取表面、间距、字号、圆角与颜色变量，建立学生端和教师端两组主题；使用页面作用域降低覆盖，不一次重写业务模板。
+        </p>
+      </article>
+      <article class="finding">
+        <h3>
+          02 / 高优先级：基础模板加载的资源缺乏页面边界
+        </h3>
+        <p>
+          学生端每个页面都加载 Tailwind CDN、DaisyUI、Markdown 解析、图片导出和 PDF 导出脚本；图片和 PDF 脚本即使在不需要导出的首页也会加载。部分脚本 URL 不包含固定版本。首屏样式和功能可用性由多个外部资源共同决定。
+        </p>
+        <p class="source">
+          证据：<code>app/templates/base.html:8–13</code>；教师端同样使用 CDN 样式，见 <code>app/templates/teacher_base.html:8–10</code>。
+        </p>
+        <p>
+          建议：继续使用现有 Tailwind/DaisyUI，固定资源版本并构建本地样式；只在报告等需要的页面加载导出脚本。实际优化幅度需通过真实网络和性能测量验证。
+        </p>
+      </article>
+      <article class="finding">
+        <h3>
+          03 / 中优先级：首屏的视觉强调过多
+        </h3>
+        <p>
+          首页同时使用大面积橙黄渐变、背景光晕、玻璃侧栏、多色统计卡片和悬停动画；教师 Dashboard 又使用青、蓝、黄、紫多组强调色。开始面试、统计信息与知识入口的强调力度接近。
+        </p>
+        <p class="source">
+          证据：<code>app/templates/index.html:22–120</code>；<code>app/templates/dashboard.html:12–106</code>。
+        </p>
+        <p>
+          建议：学生端围绕「继续练习 / 先复盘」组织首屏；教师端优先显示需要处理的异常和学生表现变化。选一组稳定主题，把语义色留给状态。
+        </p>
+      </article>
+      <article class="finding">
+        <h3>
+          04 / 中优先级：输入与网络错误依赖系统弹窗
+        </h3>
+        <p>
+          岗位为空、创建失败、网络失败和冷却限制采用 <code>alert()</code>。输入问题会打断操作，网络错误与恢复入口没有直接呈现在表单中。
+        </p>
+        <p class="source">
+          证据：<code>app/templates/index.html:566–591</code>、<code>623–636</code>、<code>657–675</code>。
+        </p>
+        <p>
+          建议：岗位错误显示在输入框旁；请求失败保留已填信息并提供重试；冷却状态保留现有横幅，直接说明剩余时间与复盘入口。继续保留已有处理中与报告失败状态。
+        </p>
+      </article>
+      <article class="finding">
+        <h3>
+          05 / 中优先级：键盘与移动端细节可以补齐
+        </h3>
+        <p>
+          两个基础模板的移动菜单按钮只有图标，没有可访问名称，也未声明菜单展开状态；模板内未显式定义按钮和链接的焦点样式，以及减少动态效果的规则。主区域使用 <code>100vh</code>。数据表使用水平滚动，信息优先级还可以优化。
+        </p>
+        <p class="source">
+          证据：<code>app/templates/base.html:167–170</code>、<code>270–280</code>、<code>391–420</code>；<code>app/templates/index.html:131–145</code>。DaisyUI 可能提供部分默认焦点样式，正式页面仍需逐项检查。
+        </p>
+        <p>
+          建议：增加菜单名称、<code>aria-expanded</code> 和 <code>aria-controls</code>；提供键盘可见焦点、跳转到主要内容的链接与减少动态效果选项；移动端优先展示岗位、得分、状态与操作。
+        </p>
+      </article>
+      <h2>
+        十套方案，如何选择
+      </h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                方向
+              </th>
+              <th>
+                排版结构
+              </th>
+              <th>
+                适合的产品体验
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <a href="01-studio.html">01 企业工作台 ↗</a>
+              </td>
+              <td>
+                固定侧栏 + 非对称分析区
+              </td>
+              <td>
+                高频使用、导航清晰的正式平台
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="02-editorial.html">02 编辑杂志 ↗</a>
+              </td>
+              <td>
+                报刊头版 + 衬线标题 + 三栏正文
+              </td>
+              <td>
+                注重个人叙事与成长复盘
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="03-terminal.html">03 终端控制台 ↗</a>
+              </td>
+              <td>
+                顶栏 + 高密度方形面板 + 诊断日志
+              </td>
+              <td>
+                技术人群、数据感较强的训练工具
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="04-brutal.html">04 先锋粗野主义 ↗</a>
+              </td>
+              <td>
+                巨字分屏 + 硬边与偏移阴影
+              </td>
+              <td>
+                强调行动和鲜明品牌记忆
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="05-zen.html">05 自然极简 ↗</a>
+              </td>
+              <td>
+                开放双栏 + 圆环 + 日常练习清单
+              </td>
+              <td>
+                缓解面试紧张、建立长期习惯
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="06-glass.html">06 午夜玻璃 ↗</a>
+              </td>
+              <td>
+                悬浮图标导航 + 不规则玻璃面板
+              </td>
+              <td>
+                沉浸的个人空间和深色界面
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="07-playful.html">07 柔彩创意 ↗</a>
+              </td>
+              <td>
+                图形首屏 + 彩色卡片 + 宽松分组
+              </td>
+              <td>
+                学生人群、温和的练习陪伴感
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="08-swiss.html">08 瑞士国际主义 ↗</a>
+              </td>
+              <td>
+                严格网格 + 巨大数字 + 线条分区
+              </td>
+              <td>
+                清晰、有秩序、品牌识别度较强
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="09-board.html">09 计划看板 ↗</a>
+              </td>
+              <td>
+                工具侧栏 + 三阶段可拖动任务列
+              </td>
+              <td>
+                将面试准备组织成可推进的计划
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="10-academy.html">10 经典学院 ↗</a>
+              </td>
+              <td>
+                目录侧栏 + 研习章节 + 能力评估
+              </td>
+              <td>
+                职业教育、学院或专业训练平台
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:16px">
+        从当前产品形态出发，建议先用 01 测试导航与信息效率，再比较 05 的训练引导、09 的任务组织和 10 的学习结构。其他方向可用于探索更鲜明的品牌表达；最终选择应结合真实用户反馈。
+      </p>
+      <h2>
+        建议的升级顺序
+      </h2>
+      <ol>
+        <li>
+          选定视觉方向，定义颜色、字体、间距、按钮和状态规范。
+        </li>
+        <li>
+          抽取公共样式与导航，整理资源加载；保留 Flask/Jinja 与现有 API。
+        </li>
+        <li>
+          先升级学生首页的开始、冷却、复盘和失败恢复流程。
+        </li>
+        <li>
+          再升级教师看板，区分汇总指标、异常记录和需要关注的学生。
+        </li>
+        <li>
+          用真实内容检查桌面、手机、键盘导航和长文本，运行核心业务回归。
+        </li>
+      </ol>
+      <h2>
+        本次测试区的边界
+      </h2>
+      <p>
+        十套页面均使用本地示例数据。面试设置、固定示例反馈、报告阅读和看板操作用于交互预览，不创建真实面试、不读取账号、不调用 AI。收藏保存在当前浏览器，任务调整只在当前页面有效。正式界面保留原样，选定方向后再逐步接入真实数据和业务状态。
+      </p>
+      <p style="margin-top:25px">
+        <a href="index.html">← 回到设计测试区，比较你的候选方向</a>
+      </p>
+    </main>
+  </body>
+</html>

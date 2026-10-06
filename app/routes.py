@@ -1055,8 +1055,8 @@ def import_students():
         return jsonify({'error': '未上传文件'}), 400
 
     file = request.files['file']
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        return jsonify({'error': '请上传 Excel 文件'}), 400
+    if not (file.filename or '').lower().endswith('.xlsx'):
+        return jsonify({'error': '请上传 .xlsx 格式的 Excel 文件'}), 400
 
     try:
         df = pd.read_excel(file)
@@ -1067,25 +1067,63 @@ def import_students():
             if col not in df.columns:
                 return jsonify({'error': f'模板缺少列: {col}'}), 400
 
+        def cell_text(value):
+            """Normalize pandas/Excel scalars without turning blanks into 'nan'."""
+            if pd.isna(value):
+                return ''
+            if isinstance(value, float) and value.is_integer():
+                return str(int(value))
+            return str(value).strip()
+
+        normalized_rows = []
+        for row_index, row in df.iterrows():
+            values = {
+                'truename': cell_text(row['姓名']),
+                'student_id': cell_text(row['学号']),
+                'department': cell_text(row['系部']),
+                'class_name': cell_text(row['班级']),
+            }
+            missing = [
+                label
+                for label, key in (
+                    ('姓名', 'truename'),
+                    ('学号', 'student_id'),
+                    ('系部', 'department'),
+                    ('班级', 'class_name'),
+                )
+                if not values[key]
+            ]
+            if missing:
+                return jsonify({
+                    'error': (
+                        f'第 {row_index + 2} 行缺少必填项: '
+                        f'{", ".join(missing)}'
+                    )
+                }), 400
+
+            supplied_password = None
+            if '初始密码(选填)' in df.columns:
+                supplied_password = cell_text(row['初始密码(选填)']) or None
+                if supplied_password and len(supplied_password) < 10:
+                    return jsonify({
+                        'error': (
+                            f'第 {row_index + 2} 行学号 '
+                            f'{values["student_id"]} 的初始密码少于 10 个字符'
+                        )
+                    }), 400
+
+            values['password'] = supplied_password
+            normalized_rows.append(values)
+
         success_count = 0
         credentials = []
 
-        for _, row in df.iterrows():
-            truename = str(row['姓名']).strip()
-            student_id = str(row['学号']).strip()
-            dept_name = str(row['系部']).strip()
-            class_name = str(row['班级']).strip()
-
-            supplied_password = None
-            if '初始密码(选填)' in df.columns and pd.notna(row['初始密码(选填)']):
-                supplied_password = str(row['初始密码(选填)']).strip() or None
-                if supplied_password and len(supplied_password) < 10:
-                    return jsonify({
-                        'error': f'学号 {student_id} 的初始密码少于 10 个字符'
-                    }), 400
-
-            if not student_id or not truename:
-                continue
+        for row in normalized_rows:
+            truename = row['truename']
+            student_id = row['student_id']
+            dept_name = row['department']
+            class_name = row['class_name']
+            supplied_password = row['password']
 
             # 1. 自动处理系部 (如果不存在则创建)
             dept = Department.query.filter_by(name=dept_name).first()
@@ -1343,8 +1381,9 @@ def analyze_radar_ai():
     user_prompt = f"学生各维度平均分如下（满分100）：\n{json.dumps(score_map, ensure_ascii=False)}"
 
     try:
-        from .services.ai_agent import client, Config  # 临时导入，或复用 helper
+        from .services.ai_agent import client, Config, chat_request_options
         response = client.chat.completions.create(
+            **chat_request_options(),
             model=Config.LLM_MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -1481,7 +1520,7 @@ def restore_interview_session(session_id):
 
 @bp.route('/admin/learning')
 @login_required
-@teacher_required
+@admin_required
 def admin_learning():
     """管理端：课程内容管理"""
     categories_db = LearningCategory.query.order_by(LearningCategory.sort_order).all()
@@ -1501,7 +1540,7 @@ def admin_learning():
 
 @bp.route('/api/admin/learning/category/add', methods=['POST'])
 @login_required
-@teacher_required
+@admin_required
 def add_learning_category():
     name = (request.get_json(silent=True) or {}).get('name')
     if not name: return jsonify({'error': '名称不能为空'}), 400
@@ -1516,7 +1555,7 @@ def add_learning_category():
 
 @bp.route('/api/admin/learning/category/delete/<int:cat_id>', methods=['POST'])
 @login_required
-@teacher_required
+@admin_required
 def delete_learning_category(cat_id):
     cat = LearningCategory.query.get_or_404(cat_id)
     material_ids = [m.id for m in cat.materials]
@@ -1540,7 +1579,7 @@ def delete_learning_category(cat_id):
 
 @bp.route('/api/admin/learning/material/add', methods=['POST'])
 @login_required
-@teacher_required
+@admin_required
 def add_learning_material():
     data = request.get_json(silent=True) or {}
     category_id = data.get('category_id')
@@ -1571,7 +1610,7 @@ def add_learning_material():
 
 @bp.route('/api/admin/learning/material/delete/<int:m_id>', methods=['POST'])
 @login_required
-@teacher_required
+@admin_required
 def delete_learning_material(m_id):
     mat = LearningMaterial.query.get_or_404(m_id)
     record_count = (
@@ -1639,6 +1678,8 @@ def _record_quiz_attempt(material, answers):
         progress.status = 'completed'
         progress.completed_at = datetime.now()
     db.session.commit()
+    from .services.learning_achievements import notify_wikibook_learning_change
+    notify_wikibook_learning_change(current_user.id)
     return score, passed
 
 @bp.route('/learning')
@@ -1777,3 +1818,9 @@ def submit_quiz(material_id):
         flash(f"本次得分：{score} 分，尚未通过，可以立即重试。", "warning")
 
     return redirect(url_for('routes.learning_detail', material_id=material_id))
+
+
+@bp.get('/account-links')
+@login_required
+def account_links():
+    return render_template('account_links.html')

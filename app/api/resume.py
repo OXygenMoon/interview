@@ -155,7 +155,7 @@ def delete_resume(id):
 @login_required
 def optimize_resume():
     """
-    AI 简历优化接口 - 硅基流动 (纯净版，彻底解决配置读取问题)
+    AI 简历优化接口，使用服务端配置的模型
     """
     data = request.get_json(silent=True) or {}
     field_value = data.get('content', '')
@@ -205,6 +205,8 @@ def optimize_resume():
         "temperature": 0.7,
         "max_tokens": 1500
     }
+    from ..services.ai_agent import chat_request_options
+    payload.update(chat_request_options().get('extra_body', {}))
     
     try:
         print(f"✅ 正在请求大模型: {model_name}")

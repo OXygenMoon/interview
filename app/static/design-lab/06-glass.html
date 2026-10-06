@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台设计参考：午夜玻璃，本地示例数据与交互。">
+    <title>午夜玻璃 · 面试平台设计参考</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="common.css">
+    <script src="common.js" defer></script>
+  </head>
+  <body class="glass">
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <div class="lab-back">
+      <a href="index.html" target="_top">← 返回十套设计方案</a><span>午夜玻璃 / 设计预览 · 示例数据</span>
+    </div>
+    <div class="glass-shell">
+      <aside class="glass-dock" aria-label="快捷导航">
+        <a class="brand-symbol" href="index.html" target="_top" aria-label="返回设计测试区">m</a><button class="nav-link active" data-scroll="overview" aria-current="location" aria-label="面试大厅"><i data-icon="grid"></i></button><button class="nav-link" data-scroll="growth" aria-label="能力成长"><i data-icon="chart"></i></button><button class="nav-link" data-scroll="learning" aria-label="学习资料"><i data-icon="book"></i></button><button class="nav-link" data-scroll="records" aria-label="练习记录"><i data-icon="clock"></i></button><span class="avatar">林</span>
+      </aside>
+      <main class="glass-main" id="main">
+        <header class="glass-header" id="overview">
+          <div>
+            <p class="eyebrow">
+              INTERVIEW SPACE / 个人训练空间
+            </p>
+            <h1>
+              专注此刻，准备下一步。
+            </h1>
+            <p>
+              下午好，林同学。你的下一场练习，已经准备就绪。
+            </p>
+          </div>
+          <button class="button" data-resume>查看个人档案 ↗</button>
+        </header>
+        <div class="glass-bento">
+          <section class="panel glass-score">
+            <div>
+              <p class="eyebrow">
+                综合表现
+              </p>
+              <strong class="stat-number">82.6</strong>
+              <p>
+                <span class="positive">↗ +6.8 分</span> / 比上个月的自己
+              </p>
+            </div>
+            <div class="glass-orb" aria-hidden="true">
+              <i data-icon="mic"></i>
+            </div>
+          </section>
+          <section class="panel glass-action">
+            <span class="pill">今日推荐</span>
+            <h2>
+              下一场，<br>练出更好的表达。
+            </h2>
+            <p>
+              前端开发工程师 · 标准模式<br>预计用时 20 分钟
+            </p>
+            <button class="button primary" data-start>进入练习<i data-icon="arrow"></i></button>
+          </section>
+          <article class="metric panel">
+            <p>
+              已完成实战
+            </p>
+            <strong class="stat-number">24<small>场</small></strong>
+            <footer>
+              每一步都有记录
+            </footer>
+          </article>
+          <article class="metric panel">
+            <p>
+              个人最好成绩
+            </p>
+            <strong class="stat-number">93.0</strong>
+            <footer>
+              来自 09 月 29 日
+            </footer>
+          </article>
+          <section class="panel" id="learning">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  本周练习
+                </h2>
+                <p>
+                  4 / 5 天 · 继续保持
+                </p>
+              </div>
+            </div>
+            <div class="week" data-week>
+            </div>
+          </section>
+          <section class="panel glass-chart" id="growth">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  能力正在生长
+                </h2>
+                <p>
+                  最近 7 次综合得分
+                </p>
+              </div>
+              <span class="pill">+20.4 分</span>
+            </div>
+            <div data-chart>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  让优势更鲜明
+                </h2>
+              </div>
+            </div>
+            <div data-skills>
+            </div>
+          </section>
+        </div>
+        <section class="panel glass-records" id="records">
+          <div class="panel-heading">
+            <div>
+              <h2>
+                最近的练习
+              </h2>
+              <p>
+                每一次复盘，都是下一次进步的起点。
+              </p>
+            </div>
+            <span class=pill>最近 3 场</span>
+          </div>
+          <div data-records>
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>INTERVIEW SPACE / Your next chapter starts here.</span><span>设计预览 · 示例数据</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

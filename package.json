@@ -1,0 +1,15 @@
+{
+  "name": "interview-ui",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.cjs -i app/static/css/tailwind-input.css -o app/static/css/ui.css --minify && node scripts/build-theme-utilities.cjs",
+    "build:vendor": "node scripts/build-vendor.cjs",
+    "build:assets": "npm run build:css && npm run build:vendor"
+  },
+  "devDependencies": {
+    "chart.js": "4.4.8",
+    "daisyui": "4.12.10",
+    "marked": "12.0.2",
+    "tailwindcss": "3.4.17"
+  }
+}

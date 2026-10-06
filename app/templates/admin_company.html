@@ -3,9 +3,9 @@
 {% block title %}企业岗位管理{% endblock %}
 
 {% block content %}
-<div class="space-y-6 h-[calc(100vh-8rem)]">
+<div class="space-y-6">
 
-    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+    <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
             <h2 class="text-xl font-bold text-base-content">🏢 企业与岗位库管理</h2>
             <p class="text-sm text-base-content/60">配置公司信息及其招聘岗位（含面试提示词）</p>
@@ -15,11 +15,11 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:h-[calc(100dvh-18rem)]">
         
         <!-- 左侧：公司列表 -->
-        <div class="col-span-1 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+        <div class="col-span-1 flex flex-col min-h-64 md:h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div class="responsive-toolbar p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
                 <span class="font-bold text-base-content">公司列表</span>
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1">
@@ -45,14 +45,14 @@
         </div>
 
         <!-- 右侧：岗位管理 -->
-        <div class="col-span-2 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
+        <div class="md:col-span-2 flex flex-col min-h-96 md:h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
             
             <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/40">
-                <p>请点击左侧公司进行管理</p>
+                <p>请选择公司进行管理</p>
             </div>
 
             <div id="position-content" class="hidden flex-col h-full">
-                <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                <div class="responsive-toolbar p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
                     <div>
                         <span class="text-xs text-base-content/50">当前管理</span>
                         <h3 class="font-bold text-lg text-primary" id="current-comp-name">--</h3>

@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>账号关联</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f3ee;color:#242520;font:16px/1.7 system-ui,sans-serif}main{box-sizing:border-box;max-width:520px;width:calc(100% - 32px);padding:32px;border:1px solid #d8dbd2;border-radius:20px;background:#fff}h1{font-size:26px;margin-top:0}small{color:#5f665b}button,a{display:inline-block;padding:12px 18px;border-radius:10px;font:inherit}button{background:#315d47;color:white;border:0;cursor:pointer}a{color:#315d47}button:focus-visible,a:focus-visible{outline:3px solid #b3cabd;outline-offset:3px}.error{color:#a52d25}strong{overflow-wrap:anywhere}</style></head><body><main>
+{% if error %}<h1>暂时无法完成操作</h1><p class="error" role="alert">{{ error }}</p>
+{% elif success %}<h1>账号已关联</h1><p role="status">现在可以从两边的账号设置或导航一键切换登录。</p>
+{% else %}<h1>确认关联账号</h1><p>{{ 'WikiBook' if peer == 'wikibook' else 'Interview' }} 账号：<strong>{{ source }}</strong></p><p>{{ 'Interview' if peer == 'wikibook' else 'WikiBook' }} 账号：<strong>{{ local }}</strong></p><p>关联后，两边均可一键登录对方账号。请确认这两个账号都属于你。</p>
+<form method="post"><input type="hidden" name="link_csrf" value="{{ csrf }}">{% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}<button type="submit">确认关联这两个账号</button></form><small>账号密码与学习记录分别保留，不会自动合并。</small>
+{% endif %}
+{% if success or error %}<a href="{{ home }}">返回账号设置</a>{% else %}
+<form method="post" action="/account-link/cancel"><input type="hidden" name="link_csrf" value="{{ csrf }}">{% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}<button type="submit">取消并返回</button></form>{% endif %}
+</main></body></html>

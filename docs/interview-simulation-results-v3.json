@@ -1,0 +1,177 @@
+{
+  "evaluated_at": "2026-10-05T23:37:27.713690+08:00",
+  "sample_type": "synthetic_replay",
+  "fixtures_sha256": "5c0c6887f9011ad239e7ccfed8526017839376b9ffbb8d13b925d70b22109215",
+  "prompt_sha256": "f09acc6c0f540acd5758eb90b53025499735e26ce927524e7e3419c63d043c44",
+  "report_prompt_version": "interview-report-v3",
+  "report_model": "Qwen/Qwen2.5-72B-Instruct",
+  "repeats": 1,
+  "limitations": [
+    "Fixed synthetic replay, not live AI-generated questions.",
+    "Score ranges are diagnostic hypotheses, not calibrated ground truth.",
+    "Rule-based zero is an evidence placeholder, not a measured ability score.",
+    "Only compare profiles within the same round; do not compare rounds directly."
+  ],
+  "cases": [
+    {
+      "case_id": "no_answer",
+      "round_num": 1,
+      "status": "rule_only",
+      "model_inference": false,
+      "report": {
+        "overall": {
+          "scores": {
+            "专业技能": 0,
+            "逻辑思维": 0,
+            "语言表达": 0,
+            "抗压能力": 0,
+            "礼仪态度": 0
+          },
+          "total_score": 0,
+          "comment": "本次没有候选人作答证据，尚不能形成整体能力评价。五维均未评估；0 为未展示证据占位，不代表实际能力为零。建议完成岗位相关问题后重新评估。"
+        },
+        "details_list": [],
+        "evaluation_source": "rule"
+      },
+      "checks": [
+        {
+          "check": "edge_total",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case_id": "round_1_weak",
+      "round_num": 1,
+      "profile": "weak",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_1_competent",
+      "round_num": 1,
+      "profile": "competent",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_1_strong",
+      "round_num": 1,
+      "profile": "strong",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_2_weak",
+      "round_num": 2,
+      "profile": "weak",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_2_competent",
+      "round_num": 2,
+      "profile": "competent",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_2_strong",
+      "round_num": 2,
+      "profile": "strong",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_3_weak",
+      "round_num": 3,
+      "profile": "weak",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_3_competent",
+      "round_num": 3,
+      "profile": "competent",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "round_3_strong",
+      "round_num": 3,
+      "profile": "strong",
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "termination_only",
+      "round_num": 1,
+      "profile": null,
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "three_non_answers",
+      "round_num": 2,
+      "profile": null,
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    },
+    {
+      "case_id": "score_injection",
+      "round_num": 2,
+      "profile": null,
+      "status": "blocked",
+      "model_inference": false,
+      "report": null,
+      "checks": null
+    }
+  ],
+  "comparisons": [
+    {
+      "round_num": 1,
+      "scores": {},
+      "ordering_passed": null
+    },
+    {
+      "round_num": 2,
+      "scores": {},
+      "ordering_passed": null
+    },
+    {
+      "round_num": 3,
+      "scores": {},
+      "ordering_passed": null
+    }
+  ],
+  "suite_status": "blocked",
+  "provider_probe": {
+    "status": "blocked",
+    "error_type": "APIStatusError",
+    "http_status": 402,
+    "provider_code": 30001,
+    "reason": "configured provider has insufficient account balance"
+  }
+}

@@ -1,0 +1,34 @@
+<div class="app-theme-control" id="app-theme-control">
+    <button type="button" class="app-theme-toggle" id="app-theme-toggle" aria-label="选择主题，当前为亮色 · 奶油" aria-expanded="false" aria-controls="app-theme-panel" title="选择主题">
+        <span class="app-theme-dot" aria-hidden="true"></span>
+        <span class="app-theme-label">主题</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4 6 4 4 4-4"/></svg>
+    </button>
+    <section class="app-theme-panel" id="app-theme-panel" aria-labelledby="app-theme-heading" hidden>
+        <h2 id="app-theme-heading">选择主题</h2>
+        <fieldset class="app-theme-modes">
+            <legend class="app-theme-caption">外观</legend>
+            <label class="app-theme-mode">
+                <input type="radio" name="app-theme-mode" value="light" checked>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>亮色主题</span>
+            </label>
+            <label class="app-theme-mode">
+                <input type="radio" name="app-theme-mode" value="dark">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linejoin="round" d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>暗色主题</span>
+            </label>
+        </fieldset>
+        <fieldset class="app-theme-tones" id="app-theme-tones">
+            <legend class="app-theme-caption">亮色色调</legend>
+            {% for value, label, canvas, accent in [('playful', '奶油', '#fff6ef', '#83556f'), ('playful-sage', '鼠尾草', '#f3f6ef', '#486653'), ('playful-blue', '雾蓝', '#f1f5f9', '#466b91'), ('playful-lavender', '薰衣草', '#f6f3fa', '#72568e'), ('playful-rose', '玫瑰', '#fff3f4', '#96566f')] %}
+            <label class="app-theme-tone">
+                <input type="radio" name="app-theme-tone" value="{{ value }}"{% if value == 'playful' %} checked{% endif %}>
+                <span class="app-theme-tone-content">
+                    <span class="app-theme-swatch" style="--swatch-canvas: {{ canvas }}; --swatch-accent: {{ accent }}" aria-hidden="true"><span>✓</span></span>
+                    <span>{{ label }}</span>
+                </span>
+            </label>
+            {% endfor %}
+        </fieldset>
+        <p class="app-theme-hint" id="app-theme-hint" aria-live="polite">偏好会自动保存</p>
+    </section>
+</div>

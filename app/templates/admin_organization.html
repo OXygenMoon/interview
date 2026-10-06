@@ -3,14 +3,14 @@
 {% block title %}组织架构管理{% endblock %}
 
 {% block content %}
-<div class="space-y-6 h-[calc(100vh-8rem)]" data-testid="admin-organization">
+<div class="space-y-6" data-testid="admin-organization">
 
-    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+    <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
             <h2 class="text-xl font-bold text-base-content">🏫 组织架构与学生管理</h2>
             <p class="text-sm text-base-content/60">创建系部、班级，并批量导入学生名单</p>
         </div>
-        <div class="flex gap-2">
+        <div class="responsive-actions flex gap-2">
             <a href="/api/admin/student/template" class="btn btn-outline btn-sm gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 下载模板
@@ -22,10 +22,10 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:h-[calc(100dvh-18rem)]">
         
-        <div class="col-span-1 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+        <div class="col-span-1 flex flex-col min-h-64 md:h-full bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div class="responsive-toolbar p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
                 <span class="font-bold text-base-content">系部列表</span>
                 <button onclick="addDepartment()" class="btn btn-xs btn-ghost text-primary">+ 新增</button>
             </div>
@@ -46,15 +46,15 @@
             </div>
         </div>
 
-        <div class="col-span-2 flex flex-col h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
+        <div class="md:col-span-2 flex flex-col min-h-96 md:h-full bg-base-100 rounded-xl shadow-sm border border-base-200 relative">
             
             <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-base-content/40">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                <p>请点击左侧系部进行管理</p>
+                <p>请选择系部进行管理</p>
             </div>
 
             <div id="class-content" class="hidden flex-col h-full">
-                <div class="p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                <div class="responsive-toolbar p-4 border-b border-base-200 flex justify-between items-center bg-base-200/50">
                     <div>
                         <span class="text-xs text-base-content/50">当前管理</span>
                         <h3 class="font-bold text-lg text-primary" id="current-dept-name">--</h3>
@@ -78,7 +78,7 @@
         <h3 class="font-bold text-lg">批量导入学生</h3>
         <p class="py-4 text-sm text-base-content/60">请上传填写好的 Excel 模板。若班级不存在，系统将自动在该系部下创建。</p>
         
-        <input type="file" id="import-file" class="file-input file-input-bordered file-input-primary w-full" accept=".xlsx, .xls" />
+        <input type="file" id="import-file" class="file-input file-input-bordered file-input-primary w-full" accept=".xlsx" />
         
         <div class="modal-action">
             <form method="dialog">

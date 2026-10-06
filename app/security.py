@@ -23,6 +23,10 @@ def init_csrf_protection(app):
 
     @app.before_request
     def verify_csrf_token():
+        # These two routes authenticate server credentials in their blueprint;
+        # no browser cookies are accepted as authority.
+        if request.endpoint in {'account_link.internal', 'account_link.internal_user'}:
+            return None
         if request.method not in UNSAFE_METHODS:
             return None
         if current_app.testing or not current_app.config.get('CSRF_ENABLED', True):

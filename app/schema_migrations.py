@@ -114,17 +114,29 @@ def ensure_schema_compatibility():
                 and index.get('column_names') == ['parent_session_id']
                 for index in schema.get_indexes('interview_sessions')
             )
-            if duplicate_parent is None and not parent_is_unique:
+            if duplicate_parent is not None and not parent_is_unique:
+                result = conn.execute(text(
+                    'UPDATE interview_sessions '
+                    'SET parent_session_id = NULL '
+                    'WHERE parent_session_id IS NOT NULL '
+                    'AND id NOT IN ('
+                    'SELECT MIN(id) FROM interview_sessions '
+                    'WHERE parent_session_id IS NOT NULL '
+                    'GROUP BY parent_session_id'
+                    ')'
+                ))
+                print(
+                    '[schema] Normalized invalid interview round links: '
+                    f'detached {result.rowcount} duplicate child session(s); '
+                    'the earliest child for each parent was retained.'
+                )
+
+            if not parent_is_unique:
                 conn.exec_driver_sql(
                     'CREATE UNIQUE INDEX IF NOT EXISTS '
                     'uq_interview_sessions_parent_session_id '
                     'ON interview_sessions(parent_session_id) '
                     'WHERE parent_session_id IS NOT NULL'
-                )
-            elif duplicate_parent is not None and not parent_is_unique:
-                print(
-                    '[schema] Duplicate parent_session_id values found; '
-                    'skipping the unique index until they are reviewed.'
                 )
 
         if 'chat_messages' in table_names:

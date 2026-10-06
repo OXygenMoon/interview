@@ -1,5 +1,5 @@
 from . import db
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -312,3 +312,31 @@ class SystemConfig(db.Model):
             config = SystemConfig(key=key, value=str(value), description=description)
             db.session.add(config)
         db.session.commit()
+
+
+class AccountLink(db.Model):
+    """Authoritative one-to-one Interview / WikiBook account association."""
+    __tablename__ = 'account_links'
+    id = db.Column(db.String(36), primary_key=True)
+    interview_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True)
+    wikibook_user_id = db.Column(db.Integer, nullable=False, unique=True)
+    interview_username = db.Column(db.String(80), nullable=False)
+    wikibook_username = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
+
+class AccountLinkTicket(db.Model):
+    """Only hashes of short-lived, single-use authorization codes are stored."""
+    __tablename__ = 'account_link_tickets'
+    digest = db.Column(db.String(64), primary_key=True)
+    purpose = db.Column(db.String(10), nullable=False)
+    source_site = db.Column(db.String(10), nullable=False)
+    source_user_id = db.Column(db.Integer, nullable=False)
+    source_version = db.Column(db.String(64), nullable=False)
+    source_username = db.Column(db.String(80), nullable=False)
+    target_user_id = db.Column(db.Integer)
+    target_version = db.Column(db.String(64))
+    link_id = db.Column(db.String(36))
+    state_digest = db.Column(db.String(64))
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    consumed = db.Column(db.Boolean, nullable=False, default=False)

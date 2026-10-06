@@ -297,12 +297,13 @@ def position_match():
 
     # 调用 LLM 评估
     try:
-        from ..services.ai_agent import client
+        from ..services.ai_agent import client, chat_request_options
         from ..config import Config
         system_prompt = """你是一位资深的技术招聘专家。请根据求职者的能力画像与岗位描述，评估匹配度。
 严格返回 JSON：{"match_score": 0-100 整数, "strengths": ["优势1", ...], "gaps": ["待提升点1", ...], "suggestions": ["具体提升建议1", ...]}"""
         user_prompt = f"【岗位名称】{position.name}\n【岗位描述】{position.description[:1000]}\n【求职者能力画像(5维均分)】{my_dims}\n【简历摘要】{resume_text[:800]}"
         resp = client.chat.completions.create(
+            **chat_request_options(),
             model=Config.LLM_MODEL_NAME,
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
             temperature=0.5,

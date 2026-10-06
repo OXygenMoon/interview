@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台设计参考：计划看板，本地示例数据与交互。">
+    <title>计划看板 · 面试平台设计参考</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="common.css">
+    <script src="common.js" defer></script>
+  </head>
+  <body class="board">
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <div class="lab-back">
+      <a href="index.html" target="_top">← 返回十套设计方案</a><span>计划看板 / 设计预览 · 示例数据</span>
+    </div>
+    <div class="board-shell">
+      <aside class="board-sidebar">
+        <a class="brand" href="index.html" target="_top"><span class="brand-symbol">▦</span>练习计划</a>
+        <div>
+          <p class="sidebar-label">
+            我的工作空间
+          </p>
+          <nav aria-label="主导航">
+            <button class="nav-link active" data-scroll="overview" aria-current=location><i data-icon=grid></i>面试大厅</button><button class="nav-link " data-scroll="growth" ><i data-icon=chart></i>能力成长</button><button class="nav-link " data-scroll="learning" ><i data-icon=book></i>学习资料</button><button class="nav-link " data-scroll="records" ><i data-icon=clock></i>练习记录</button>
+          </nav>
+        </div>
+        <button class="resource-link" data-resume><span>个人简历<small>持续完善你的项目故事</small></span><i data-icon="file"></i></button>
+        <div class="account row">
+          <span class="avatar">林</span>
+          <div>
+            <strong>林同学</strong>
+            <p>
+              <small>计算机应用 · 2027 届</small>
+            </p>
+          </div>
+        </div>
+      </aside>
+      <main class="board-main" id="main">
+        <header class="board-head" id="overview">
+          <div class="greeting">
+            <p class="eyebrow">
+              个人空间 / 本周计划
+            </p>
+            <h1>
+              把准备，变成行动。
+            </h1>
+            <p>
+              一个任务，一次练习。把面试准备拆成能完成的小步骤。
+            </p>
+          </div>
+          <div class="row">
+            <button class="button" data-add-task><i data-icon="plus"></i>添加任务</button><button class="button primary" data-start>开始面试<i data-icon="arrow"></i></button>
+          </div>
+        </header>
+        <div class="board-summary">
+          <span><strong>24</strong>累计实战</span><span><strong>82.6</strong>平均得分</span><span><strong>93.0</strong>历史最佳</span><span><strong>+6.8</strong>本月提升</span>
+        </div>
+        <div class="board-view">
+          <strong>▦ 本周练习看板</strong><span>拖动卡片，或点击卡片按钮推进任务。</span>
+        </div>
+        <p id="board-status" class="sr-only" role="status" aria-live="polite">
+        </p>
+        <section class="kanban" aria-label="练习任务阶段">
+          <section class="kanban-column" data-column="0">
+            <div class="row">
+              <h2>
+                待练习
+              </h2>
+              <span class="column-count">2</span>
+            </div>
+            <div class="task-list">
+              <article class="task-card" draggable="true">
+                <span class="task-tag practice">项目表达</span>
+                <h3>
+                  整理一次性能优化经历
+                </h3>
+                <p>
+                  补充优化前后的加载时间，说明自己的贡献。
+                </p>
+                <footer>
+                  <span>今天</span><span class="avatar" style="width:23px;height:23px;font-size:10px">林</span>
+                </footer>
+                <button class="text-button" data-move>移至下一阶段 →</button>
+              </article>
+              <article class="task-card" draggable="true">
+                <span class="task-tag technical">专业知识</span>
+                <h3>
+                  复习事件循环与微任务
+                </h3>
+                <p>
+                  用一个代码例子，讲清执行顺序。
+                </p>
+                <footer>
+                  <span>10 月 06 日</span><span class="avatar" style="width:23px;height:23px;font-size:10px">林</span>
+                </footer>
+                <button class="text-button" data-move>移至下一阶段 →</button>
+              </article>
+            </div>
+          </section>
+          <section class="kanban-column" data-column="1">
+            <div class="row">
+              <h2>
+                练习中
+              </h2>
+              <span class="column-count">2</span>
+            </div>
+            <div class="task-list">
+              <article class="task-card" draggable="true">
+                <span class="task-tag ">模拟实战</span>
+                <h3>
+                  前端开发 · 标准面试
+                </h3>
+                <p>
+                  重点练习技术方案选择和项目追问。
+                </p>
+                <footer>
+                  <span>预计 20 分钟</span><span class="avatar" style="width:23px;height:23px;font-size:10px">林</span>
+                </footer>
+                <button class="text-button" data-move>移至下一阶段 →</button>
+              </article>
+              <article class="task-card" draggable="true">
+                <span class="task-tag practice">简历准备</span>
+                <h3>
+                  完善简历项目描述
+                </h3>
+                <p>
+                  把职责、技术决策、业务结果分开表达。
+                </p>
+                <footer>
+                  <span>今天</span><span class="avatar" style="width:23px;height:23px;font-size:10px">林</span>
+                </footer>
+                <button class="text-button" data-move>移至下一阶段 →</button>
+              </article>
+            </div>
+          </section>
+          <section class="kanban-column" data-column="2">
+            <div class="row">
+              <h2>
+                已复盘
+              </h2>
+              <span class="column-count">1</span>
+            </div>
+            <div class="task-list">
+              <article class="task-card" draggable="true">
+                <span class="task-tag ">复盘反馈</span>
+                <h3>
+                  回看最近一次面试
+                </h3>
+                <p>
+                  得分 88.4。下一次记得给出可量化的结果。
+                </p>
+                <footer>
+                  <span>10 月 04 日</span><span class="avatar" style="width:23px;height:23px;font-size:10px">林</span>
+                </footer>
+                <button class="text-button" data-move>移至下一阶段 →</button>
+              </article>
+            </div>
+          </section>
+        </section>
+        <div class="board-skills">
+          <section class="panel" id="growth">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  能力分布
+                </h2>
+                <p>
+                  把下一项练习放在应变能力上。
+                </p>
+              </div>
+            </div>
+            <div data-skills>
+            </div>
+          </section>
+          <section class="panel" id="learning">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  计划需要一点好资料
+                </h2>
+              </div>
+            </div>
+            <button class="resource-link" data-resource="把项目经历讲清楚"><span><strong>把项目经历讲清楚</strong><small>表达结构 · 8 分钟阅读</small></span><i data-icon="arrow"></i></button><button class="resource-link" data-resource="前端性能优化的思路"><span><strong>前端性能优化的思路</strong><small>专业知识 · 12 分钟阅读</small></span><i data-icon="arrow"></i></button><button class="resource-link" data-resource="压力面试如何拆解问题"><span><strong>压力面试如何拆解问题</strong><small>应变能力 · 6 分钟阅读</small></span><i data-icon="arrow"></i></button>
+          </section>
+        </div>
+        <section class="panel board-records" id="records">
+          <div class="panel-heading">
+            <div>
+              <h2>
+                最近的练习
+              </h2>
+              <p>
+                每一次复盘，都是下一次进步的起点。
+              </p>
+            </div>
+            <span class=pill>最近 3 场</span>
+          </div>
+          <div data-records>
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>练习计划 / Make room for progress.</span><span>设计预览 · 示例数据</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

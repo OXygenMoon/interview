@@ -4,6 +4,14 @@
     {% if is_read_only %}面试回顾{% else %}面试进行中{% endif %}
 {% endblock %}
 
+{% block body_class %}{% if not is_read_only %}interview-immersive{% endif %}{% endblock %}
+
+{% block navbar_reveal %}
+    {% if not is_read_only %}
+    <button type="button" class="app-nav-reveal" id="app-nav-reveal" aria-label="显示顶部导航" aria-controls="app-navbar" aria-expanded="false"><span>导航</span></button>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 
 <style>
@@ -28,13 +36,13 @@
 </style>
 
 <!-- 主布局容器：桌面端左右分栏，移动端上下堆叠 -->
-<div class="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-4" data-testid="interview-room">
+<div class="flex flex-col lg:flex-row h-[calc(100dvh-8rem)] gap-4" data-testid="interview-room">
 
     <!-- 左侧：聊天主区域 -->
     <div class="flex-1 flex flex-col h-full min-w-0">
         
         <!-- 顶部标题栏 -->
-        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-stone-100 mb-4 shrink-0">
+        <div class="responsive-toolbar flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-stone-100 mb-4 shrink-0">
             <div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <h2 class="font-bold text-lg text-stone-700">
@@ -265,10 +273,10 @@
 
     // 刷新保留：未发送的草稿存 sessionStorage，刷新后恢复
     const DRAFT_KEY = 'interview_draft_' + sessionId;
-    if (sessionStorage.getItem(DRAFT_KEY)) {
+    if (msgInput && sessionStorage.getItem(DRAFT_KEY)) {
         msgInput.value = sessionStorage.getItem(DRAFT_KEY);
     }
-    msgInput.addEventListener('input', () => {
+    msgInput?.addEventListener('input', () => {
         sessionStorage.setItem(DRAFT_KEY, msgInput.value);
     });
 
@@ -732,7 +740,7 @@
             } else if (data.status === 'empty') {
                 // 没说话，忽略
             } else {
-                appendMessage('ai', '（没听清，请再说一遍）');
+                appendMessage('ai', data.error || '（没听清，请再说一遍）');
             }
 
         } catch (e) {
@@ -747,7 +755,7 @@
     // 5. 其他逻辑
     // =========================================================
     function handleKeyPress(e) {
-        if (e.key === 'Enter' && !msgInput.disabled) sendMessage();
+        if (e.key === 'Enter' && msgInput && !msgInput.disabled) sendMessage();
     }
 
     if (recordBtn) {
@@ -758,21 +766,23 @@
         recordBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
     }
 
-    function finishInterview() {
+    async function finishInterview() {
         if(!confirm("确定要结束面试吗？AI 将在后台生成报告。")) return;
         const btn = document.querySelector('button[onclick="finishInterview()"]');
         if(btn) { btn.innerHTML = '提交中...'; btn.disabled = true; }
 
-        fetch(`/api/interview/${sessionId}/finish`, {method: 'POST'})
-            .then(res => res.json())
-            .then(data => {
-                alert("提交成功！\n请返回首页稍后查看报告。");
-                window.location.href = "/";
-            })
-            .catch(err => {
-                alert("提交失败");
-                if(btn) { btn.innerHTML = '结束面试'; btn.disabled = false; }
-            });
+        try {
+            const res = await fetch(`/api/interview/${sessionId}/finish`, {method: 'POST'});
+            const data = await res.json().catch(() => ({}));
+            if(!res.ok) {
+                throw new Error(data.error || `服务器返回 ${res.status}`);
+            }
+            alert("提交成功！\n请返回首页稍后查看报告。");
+            window.location.href = "/";
+        } catch (err) {
+            alert(`提交失败：${err.message || '请稍后重试'}`);
+            if(btn) { btn.innerHTML = '结束面试'; btn.disabled = false; }
+        }
     }
 </script>
 {% endblock %}

@@ -1,0 +1,105 @@
+/* Generated from scripts/theme-palettes.cjs; do not edit. */
+html[data-theme="playful-sage"] {
+    color-scheme: light;
+    --ui-canvas: #f3f6ef;
+    --ui-surface: #fcfdf9;
+    --ui-ink: #34443b;
+    --ui-muted: #647369;
+    --ui-line: #dce5d7;
+    --ui-accent: #486653;
+    --ui-peach: #dfe9d6;
+    --ui-lilac: #e7efe3;
+    --theme-primary-hover: #385340;
+    --theme-soft: #f1f6ee;
+    --theme-border: #d0dfc8;
+    --tone-surface: 252 253 249;
+    --tone-50: 241 246 238;
+    --tone-100: 231 239 227;
+    --tone-200: 208 223 200;
+    --tone-300: 176 199 167;
+    --tone-400: 134 167 125;
+    --tone-500: 96 131 94;
+    --tone-600: 72 102 83;
+    --tone-700: 56 83 64;
+    --tone-800: 45 68 52;
+    --tone-900: 38 57 44;
+    --tone-950: 27 41 32;
+}
+html[data-theme="playful-blue"] {
+    color-scheme: light;
+    --ui-canvas: #f1f5f9;
+    --ui-surface: #fbfdff;
+    --ui-ink: #354351;
+    --ui-muted: #637487;
+    --ui-line: #dbe4ee;
+    --ui-accent: #466b91;
+    --ui-peach: #dce8f3;
+    --ui-lilac: #e5edf6;
+    --theme-primary-hover: #355577;
+    --theme-soft: #f0f5fa;
+    --theme-border: #cbdced;
+    --tone-surface: 251 253 255;
+    --tone-50: 240 245 250;
+    --tone-100: 229 237 246;
+    --tone-200: 203 220 237;
+    --tone-300: 169 196 223;
+    --tone-400: 125 164 200;
+    --tone-500: 92 133 173;
+    --tone-600: 70 107 145;
+    --tone-700: 53 85 119;
+    --tone-800: 43 69 97;
+    --tone-900: 38 59 80;
+    --tone-950: 27 42 58;
+}
+html[data-theme="playful-lavender"] {
+    color-scheme: light;
+    --ui-canvas: #f6f3fa;
+    --ui-surface: #fdfbff;
+    --ui-ink: #443b53;
+    --ui-muted: #78698b;
+    --ui-line: #e6ddef;
+    --ui-accent: #72568e;
+    --ui-peach: #e8def3;
+    --ui-lilac: #eee6f5;
+    --theme-primary-hover: #5b4275;
+    --theme-soft: #f7f2fb;
+    --theme-border: #ddccec;
+    --tone-surface: 253 251 255;
+    --tone-50: 247 242 251;
+    --tone-100: 238 230 245;
+    --tone-200: 221 204 236;
+    --tone-300: 198 173 222;
+    --tone-400: 170 137 201;
+    --tone-500: 137 103 172;
+    --tone-600: 114 86 142;
+    --tone-700: 91 66 117;
+    --tone-800: 74 54 95;
+    --tone-900: 62 46 78;
+    --tone-950: 43 32 56;
+}
+html[data-theme="playful-rose"] {
+    color-scheme: light;
+    --ui-canvas: #fff3f4;
+    --ui-surface: #fffbfc;
+    --ui-ink: #503b43;
+    --ui-muted: #8a6672;
+    --ui-line: #efdce2;
+    --ui-accent: #96566f;
+    --ui-peach: #f4dce3;
+    --ui-lilac: #f8e7ed;
+    --theme-primary-hover: #7b415a;
+    --theme-soft: #fff2f6;
+    --theme-border: #edcbd8;
+    --tone-surface: 255 251 252;
+    --tone-50: 255 242 246;
+    --tone-100: 248 231 237;
+    --tone-200: 237 203 216;
+    --tone-300: 221 167 189;
+    --tone-400: 199 126 156;
+    --tone-500: 174 99 131;
+    --tone-600: 150 86 111;
+    --tone-700: 123 65 90;
+    --tone-800: 101 54 74;
+    --tone-900: 83 46 62;
+    --tone-950: 59 32 44;
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台设计参考：自然极简，本地示例数据与交互。">
+    <title>自然极简 · 面试平台设计参考</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="common.css">
+    <script src="common.js" defer></script>
+  </head>
+  <body class="zen">
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <div class="lab-back">
+      <a href="index.html" target="_top">← 返回十套设计方案</a><span>自然极简 / 设计预览 · 示例数据</span>
+    </div>
+    <div class="zen-shell">
+      <header class="top-nav">
+        <a class="brand" href="index.html" target="_top"><span class="brand-symbol">m</span>慢慢练</a>
+        <nav aria-label="主导航">
+          <button class="nav-link active" data-scroll="overview" aria-current=location>面试大厅</button><button class="nav-link " data-scroll="growth" >能力成长</button><button class="nav-link " data-scroll="learning" >学习资料</button><button class="nav-link " data-scroll="records" >练习记录</button>
+        </nav>
+        <span class="avatar" aria-label="林同学">林</span>
+      </header>
+      <main id="main">
+        <section class="zen-hero" id="overview">
+          <div class="greeting">
+            <p class="eyebrow">
+              为成长，留一点时间
+            </p>
+            <h1>
+              不用急着完美。<br>今天，比昨天好一点。
+            </h1>
+            <p>
+              下午好，林同学。给自己 20 分钟，<br>梳理一段经历，练习一次清晰的表达。
+            </p>
+            <button class="button primary" data-start>开始今天的练习<i data-icon="arrow"></i></button>
+          </div>
+          <aside class="zen-orbit">
+            <div class="zen-ring">
+              <div class="zen-ring-inner">
+                <strong>82.6</strong><span>你的平均综合得分</span>
+              </div>
+            </div>
+            <span class="orbit-note">一小步，也是在向前。↗</span>
+          </aside>
+        </section>
+        <div class="zen-stats">
+          <article class="metric ">
+            <p>
+              认真练习的次数
+            </p>
+            <strong class="stat-number">24<small>场</small></strong>
+            <footer>
+              本月完成 6 场
+            </footer>
+          </article>
+          <article class="metric ">
+            <p>
+              最好的自己
+            </p>
+            <strong class="stat-number">93.0<small>分</small></strong>
+            <footer>
+              来自 9 月 29 日的练习
+            </footer>
+          </article>
+          <article class="metric ">
+            <p>
+              本月的进步
+            </p>
+            <strong class="stat-number">+6.8<small>分</small></strong>
+            <footer>
+              表达，更清晰了
+            </footer>
+          </article>
+        </div>
+        <div class="zen-content">
+          <section class="zen-ritual" id="learning">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  今天的三个小目标
+                </h2>
+                <p>
+                  不求做很多，只求做得认真。
+                </p>
+              </div>
+            </div>
+            <article class="zen-task">
+              <span>01</span>
+              <div>
+                <h3>
+                  整理一个项目故事
+                </h3>
+                <p>
+                  从背景到结果，找到属于你的贡献。
+                </p>
+              </div>
+              <button class="text-button" data-resource="把项目经历讲清楚">读一读 ↗</button>
+            </article>
+            <article class="zen-task">
+              <span>02</span>
+              <div>
+                <h3>
+                  完成一次模拟面试
+                </h3>
+                <p>
+                  选择标准模式，保持自然地表达。
+                </p>
+              </div>
+              <button class="text-button" data-start>练一练 ↗</button>
+            </article>
+            <article class="zen-task">
+              <span>03</span>
+              <div>
+                <h3>
+                  回看上一次的反馈
+                </h3>
+                <p>
+                  找到一个可以立即改进的地方。
+                </p>
+              </div>
+              <button class="text-button" data-report="0">看一看 ↗</button>
+            </article>
+          </section>
+          <section class="panel" id="growth">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  属于你的练习节奏
+                </h2>
+                <p>
+                  本周计划完成 5 天，已完成 4 天。
+                </p>
+              </div>
+            </div>
+            <div class="week" data-week>
+            </div>
+            <div style="margin-top:26px">
+              <div class="panel-heading">
+                <div>
+                  <h2>
+                    成长的轨迹
+                  </h2>
+                </div>
+              </div>
+              <div data-chart>
+              </div>
+            </div>
+          </section>
+        </div>
+        <section class="zen-records" id="records">
+          <div class="panel-heading">
+            <div>
+              <h2>
+                最近的练习
+              </h2>
+              <p>
+                每一次复盘，都是下一次进步的起点。
+              </p>
+            </div>
+            <span class=pill>最近 3 场</span>
+          </div>
+          <div data-records>
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>慢慢练 / 把注意力，放回自己的成长。</span><span>设计预览 · 示例数据</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

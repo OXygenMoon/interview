@@ -1,0 +1,61 @@
+{
+  "evaluated_at_utc": "2026-10-05T13:13:08.316879+00:00",
+  "chat_prompt_version": "interview-chat-v3",
+  "report_prompt_version": "interview-report-v3",
+  "chat_model": "Qwen/Qwen2.5-72B-Instruct",
+  "report_model": "Qwen/Qwen2.5-72B-Instruct",
+  "sample_type": "synthetic",
+  "scope": "Eight synthetic smoke cases attempted; none evaluated because the provider rejected all requests. The chat fallback is not a successful model evaluation.",
+  "cases": [
+    {
+      "case": "chat_thanks_is_not_termination",
+      "passed": null,
+      "status": "blocked",
+      "error_type": "ProviderHTTP402"
+    },
+    {
+      "case": "overall_no_answer",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "overall_termination",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "overall_three_non_answers",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "random_concise_correct",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "random_core_error",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "random_empty_claim",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    },
+    {
+      "case": "random_injection",
+      "passed": null,
+      "error_type": "ProviderHTTP402",
+      "status": "blocked"
+    }
+  ],
+  "suite_status": "blocked",
+  "blocker": "SiliconFlow returned HTTP 402, provider code 30001: insufficient account balance. No live model output was obtained."
+}

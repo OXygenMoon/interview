@@ -13,9 +13,11 @@ python-dotenv==1.2.2
 openai==2.44.0
 requests==2.34.2
 pydub==0.25.1
+sherpa-onnx==1.13.8
 
 # Document and data processing
 Markdown==3.4.1
+lxml==6.1.1
 openpyxl==3.1.5
 pandas==2.3.3
 pdfplumber==0.11.10

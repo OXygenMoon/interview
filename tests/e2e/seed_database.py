@@ -20,6 +20,7 @@ from app.models import (
 PASSWORDS = {
     'student': 'StudentPass123!',
     'interview_student': 'InterviewPass123!',
+    'mobile_interview_student': 'MobileInterviewPass123!',
     'teacher': 'TeacherPass123!',
     'admin': 'AdminPass123!',
 }
@@ -106,6 +107,7 @@ def main():
         )
         teacher = make_user('teacher', 'teacher', '端到端教师')
         admin = make_user('admin', 'admin', '端到端管理员')
+        mobile_student = make_user('mobile_interview_student', 'student', '手机交互学生')
         student.student_id = 'E2E-STUDENT-001'
         interview_student.student_id = 'E2E-STUDENT-002'
 
@@ -117,6 +119,7 @@ def main():
             interview_student,
             teacher,
             admin,
+            mobile_student,
         ])
         db.session.flush()
 

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-200 flex items-center justify-between">
+    <div class="responsive-toolbar bg-base-100 p-4 rounded-xl shadow-sm border border-base-200 flex items-center justify-between">
         <div>
             <h2 class="text-xl font-bold text-base-content">随机问题题库配置</h2>
             <p class="text-sm text-base-content/60">学生端“随机问题面试”将从这里随机抽题（每行一题）</p>
@@ -27,7 +27,7 @@
                         placeholder="每行输入一个面试问题">{{ questions|join('\n') }}</textarea>
                 </label>
 
-                <div class="flex items-center justify-between gap-3">
+                <div class="responsive-toolbar flex items-center justify-between gap-3">
                     <div class="text-xs text-base-content/50" id="question-count-text">共 {{ questions|length }} 题</div>
                     <button class="btn btn-primary text-white" type="submit">保存题库配置</button>
                 </div>

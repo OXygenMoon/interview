@@ -7,13 +7,13 @@ Wants=redis-server.service interview-worker.service
 User=root
 Group=root
 WorkingDirectory=/root/projects/interview
-Environment="PATH=/root/projects/interview/venv/bin"
+Environment="PATH=/root/projects/interview/venv/bin:/usr/local/bin:/usr/bin:/bin"
 EnvironmentFile=-/root/projects/interview/.env
 Environment="APP_ENV=production"
 Environment="REPORT_QUEUE_MODE=rq"
 Environment="LD_LIBRARY_PATH=/nix/store/dj06r96j515npcqi9d8af1d1c60bx2vn-gcc-14.3.0-lib/lib"
 ExecStartPre=/root/projects/interview/venv/bin/flask --app run.py bootstrap-db
-ExecStart=/root/projects/interview/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5001 run:app
+ExecStart=/root/projects/interview/venv/bin/gunicorn --workers 3 --worker-class gthread --threads 8 --timeout 180 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile - --bind 127.0.0.1:5001 run:app
 Restart=on-failure
 RestartSec=5
 

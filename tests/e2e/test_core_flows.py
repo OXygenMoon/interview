@@ -94,6 +94,28 @@ def test_interview_creation_reaches_live_room(page, live_server):
         '请先做一个简单的自我介绍'
     )
 
+    dialogs = []
+
+    def accept_dialog(dialog):
+        dialogs.append(dialog.message)
+        dialog.accept()
+
+    page.on('dialog', accept_dialog)
+    page.route(
+        re.compile(r'.*/api/interview/\d+/finish$'),
+        lambda route: route.fulfill(
+            status=503,
+            content_type='application/json',
+            body='{"error":"报告队列不可用"}',
+        ),
+    )
+    finish_button = page.get_by_role('button', name='结束面试')
+    finish_button.click()
+    expect(finish_button).to_be_enabled()
+    expect(finish_button).to_have_text('结束面试')
+    expect(page).to_have_url(re.compile(r'/interview/room/\d+$'))
+    assert any('提交失败：报告队列不可用' in message for message in dialogs)
+
 
 def test_teacher_and_admin_role_destinations(page, live_server):
     login(page, live_server, 'teacher')
@@ -105,6 +127,7 @@ def test_teacher_and_admin_role_destinations(page, live_server):
     expect(page).to_have_url(f'{live_server}/dashboard')
     expect(page.get_by_text('只有校级管理员可以访问此页面')).to_be_visible()
 
+    page.locator('#app-account-toggle').click()
     page.get_by_title('退出登录').click()
     expect(page).to_have_url(f'{live_server}/login')
     login(page, live_server, 'admin')

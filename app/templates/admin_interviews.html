@@ -6,12 +6,12 @@
 <div class="space-y-6" data-testid="admin-interviews">
 
     <!-- 顶部标题区 -->
-    <div class="flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
+    <div class="responsive-toolbar flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
             <h2 class="text-xl font-bold text-base-content">面试记录流水</h2>
             <p class="text-sm text-base-content/60">实时监控所有面试活动，支持按时间段统计与管理</p>
         </div>
-        <div class="flex gap-2">
+        <div class="responsive-actions flex gap-2">
             {% if current_user.role == 'admin' %}
             <a href="{{ url_for('routes.admin_interviews', include_deleted=0 if include_deleted else 1) }}" class="btn btn-outline btn-sm">
                 {{ '仅看有效记录' if include_deleted else '查看已隐藏记录' }}
@@ -59,7 +59,7 @@
     <div class="card bg-base-100 shadow-sm border border-base-200">
         <div class="card-body p-0">
             <div class="overflow-x-auto">
-                <table class="table w-full" id="log-table">
+                <table class="table w-full" id="log-table" data-mobile-primary="1" data-mobile-metric="3" data-mobile-secondary="2">
                     <thead class="bg-base-200/50 text-base-content/70">
                         <tr>
                             <th>ID</th>
@@ -113,7 +113,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="flex gap-2">
+                                <div class="responsive-actions flex gap-2">
                                     {% if s.status == 'deleted' %}
                                     <button onclick="restoreSession({{ s.id }})" class="btn btn-xs btn-ghost text-success">恢复</button>
                                     {% else %}

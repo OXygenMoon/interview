@@ -115,6 +115,8 @@ def mark_reviewed(session):
     if not session.reviewed:
         session.reviewed = True
         db.session.commit()
+        from ..services.learning_achievements import notify_wikibook_learning_change
+        notify_wikibook_learning_change(session.user_id)
 
 
 def get_cooldown_status(user_id):

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台设计参考：编辑杂志，本地示例数据与交互。">
+    <title>编辑杂志 · 面试平台设计参考</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="common.css">
+    <script src="common.js" defer></script>
+  </head>
+  <body class="editorial">
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <div class="lab-back">
+      <a href="index.html" target="_top">← 返回十套设计方案</a><span>编辑杂志 / 设计预览 · 示例数据</span>
+    </div>
+    <div class="editorial-shell">
+      <header class="editorial-masthead">
+        <a class="editorial-logo" href="index.html" target="_top">面试练习手记<span class="muted">.</span></a>
+        <div class="editorial-edition">
+          VOL. 024 / MON, OCT 05<br>一本关于成长的个人刊物
+        </div>
+      </header>
+      <div class="top-nav">
+        <nav aria-label="主导航">
+          <button class="nav-link active" data-scroll="overview" aria-current=location>面试大厅</button><button class="nav-link " data-scroll="growth" >能力成长</button><button class="nav-link " data-scroll="learning" >学习资料</button><button class="nav-link " data-scroll="records" >练习记录</button>
+        </nav>
+        <button class="text-button" data-resume>个人档案 ↗</button>
+      </div>
+      <main id="main">
+        <section class="editorial-hero" id="overview">
+          <div>
+            <p class="eyebrow">
+              本期主题 / 更好的表达
+            </p>
+            <h1>
+              下一份 Offer，<br>从一次<em>好好练习</em><br>开始。
+            </h1>
+            <p>
+              林同学，这是你的第 24 次成长记录。把经历梳理清楚，让每一个答案都值得被听见。
+            </p>
+            <button class="button primary" data-start>开启今天的练习<i data-icon="arrow"></i></button>
+          </div>
+          <aside class="editorial-feature">
+            <span class="eyebrow">本期表现 · 平均综合得分</span><strong class="stat-number">82.6<span style="font-size:20px"> / 100</span></strong>
+            <div class="feature-caption">
+              <span><small>较上月提升</small><br><strong>+6.8 分</strong></span><span class="muted">慢慢来，也会走得很远。</span>
+            </div>
+          </aside>
+        </section>
+        <div class="editorial-columns">
+          <section id="growth">
+            <p class="section-number">
+              01 — THE PROGRESS
+            </p>
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  练习留下的轨迹
+                </h2>
+              </div>
+            </div>
+            <div data-chart>
+            </div>
+            <article class="metric ">
+              <p>
+                累计实战
+              </p>
+              <strong class="stat-number">24<small>场</small></strong>
+              <footer>
+                本月完成 6 场
+              </footer>
+            </article>
+            <article class="metric ">
+              <p>
+                历史最佳
+              </p>
+              <strong class="stat-number">93.0</strong>
+              <footer>
+                前端开发工程师
+              </footer>
+            </article>
+          </section>
+          <section>
+            <p class="section-number">
+              02 — THE PORTRAIT
+            </p>
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  你的能力侧写
+                </h2>
+              </div>
+            </div>
+            <div data-skills>
+            </div>
+            <p>
+              <small>项目经验是你的优势。接下来，试着在追问中保持思路完整。</small>
+            </p>
+          </section>
+          <section id="learning">
+            <p class="section-number">
+              03 — THE READING LIST
+            </p>
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  今日阅读清单
+                </h2>
+              </div>
+            </div>
+            <button class="resource-link" data-resource="把项目经历讲清楚"><span><strong>把项目经历讲清楚</strong><small>表达结构 · 8 分钟阅读</small></span><i data-icon="arrow"></i></button><button class="resource-link" data-resource="前端性能优化的思路"><span><strong>前端性能优化的思路</strong><small>专业知识 · 12 分钟阅读</small></span><i data-icon="arrow"></i></button><button class="resource-link" data-resource="压力面试如何拆解问题"><span><strong>压力面试如何拆解问题</strong><small>应变能力 · 6 分钟阅读</small></span><i data-icon="arrow"></i></button>
+          </section>
+        </div>
+        <section class="editorial-records" id="records">
+          <div class="panel-heading">
+            <div>
+              <h2>
+                最近的练习
+              </h2>
+              <p>
+                每一次复盘，都是下一次进步的起点。
+              </p>
+            </div>
+            <span class=pill>最近 3 场</span>
+          </div>
+          <div data-records>
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>THE INTERVIEW JOURNAL / 每一页，都记录你的成长。</span><span>设计预览 · 示例数据</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

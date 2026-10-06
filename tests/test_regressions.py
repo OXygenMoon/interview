@@ -4,9 +4,12 @@ import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+
+import pandas as pd
 
 os.environ.setdefault('APP_ENV', 'testing')
 os.environ.setdefault('SECRET_KEY', 'test-secret-key')
@@ -28,6 +31,7 @@ from app.models import (
     UserLearningProgress,
 )
 from app.services.ai_agent import AIServiceError
+from app.filters import render_markdown
 from app.utils.session_state import get_cooldown_status
 
 
@@ -123,6 +127,7 @@ class BusinessRegressionTests(unittest.TestCase):
                 round=1,
                 reviewed=True,
                 target_role='Python 工程师',
+                llm_model='Qwen/Qwen2.5-72B-Instruct',
                 start_time=old,
                 end_time=old,
                 last_activity=old,
@@ -144,6 +149,8 @@ class BusinessRegressionTests(unittest.TestCase):
                 InterviewSession.query.filter_by(parent_session_id=previous_id).count(),
                 1,
             )
+            next_session = db.session.get(InterviewSession, first.get_json()['session_id'])
+            self.assertEqual(next_session.llm_model, Config.LLM_MODEL_NAME)
 
     def test_failed_quiz_is_recorded_but_remains_retryable(self):
         with self.app.app_context():
@@ -195,6 +202,74 @@ class BusinessRegressionTests(unittest.TestCase):
                 material_id=material_id,
             ).one()
             self.assertEqual(progress.score, 100)
+
+    def test_learning_content_is_admin_only_and_html_is_sanitized(self):
+        rendered = str(render_markdown(
+            '<script>alert(1)</script>'
+            '<img src="x" onerror="alert(2)">'
+            '[bad](javascript:alert(3)) **safe**'
+        ))
+        self.assertNotIn('<script', rendered)
+        self.assertNotIn('onerror', rendered)
+        self.assertNotIn('javascript:', rendered)
+        self.assertIn('<strong>safe</strong>', rendered)
+
+        with self.app.test_client() as client:
+            login(client, self.teacher_id)
+            page = client.get('/admin/learning')
+            create = client.post(
+                '/api/admin/learning/category/add',
+                json={'name': '教师不应创建'},
+            )
+
+        self.assertEqual(page.status_code, 403)
+        self.assertEqual(create.status_code, 403)
+        with self.app.app_context():
+            self.assertIsNone(
+                LearningCategory.query.filter_by(name='教师不应创建').first()
+            )
+
+    def test_student_import_rejects_blank_cells_and_normalizes_numeric_ids(self):
+        blank_workbook = BytesIO()
+        pd.DataFrame([{
+            '姓名': '空学号学生',
+            '学号': None,
+            '系部': '计算机系',
+            '班级': '软件一班',
+            '初始密码(选填)': None,
+        }]).to_excel(blank_workbook, index=False)
+        blank_workbook.seek(0)
+
+        valid_workbook = BytesIO()
+        pd.DataFrame([{
+            '姓名': '数字学号学生',
+            '学号': 20240001,
+            '系部': '计算机系',
+            '班级': '软件一班',
+            '初始密码(选填)': None,
+        }]).to_excel(valid_workbook, index=False)
+        valid_workbook.seek(0)
+
+        with self.app.test_client() as client:
+            login(client, self.admin_id)
+            rejected = client.post(
+                '/api/admin/student/import',
+                data={'file': (blank_workbook, 'students.xlsx')},
+                content_type='multipart/form-data',
+            )
+            accepted = client.post(
+                '/api/admin/student/import',
+                data={'file': (valid_workbook, 'students.xlsx')},
+                content_type='multipart/form-data',
+            )
+
+        self.assertEqual(rejected.status_code, 400)
+        self.assertIn('第 2 行缺少必填项: 学号', rejected.get_json()['error'])
+        self.assertEqual(accepted.status_code, 200)
+        with self.app.app_context():
+            imported = User.query.filter_by(truename='数字学号学生').one()
+            self.assertEqual(imported.student_id, '20240001')
+            self.assertNotEqual(imported.student_id, 'nan')
 
     def test_soft_delete_preserves_transcript_and_admin_can_restore(self):
         with self.app.app_context():
@@ -740,6 +815,62 @@ class BusinessRegressionTests(unittest.TestCase):
             self.assertEqual(interview.report_queue_status, 'failed')
             self.assertEqual(interview.report_attempt_count, 2)
 
+    def test_report_feedback_is_saved_to_the_reviewed_message_id(self):
+        with self.app.app_context():
+            interview = InterviewSession(
+                user_id=self.student_id,
+                status='processing',
+                target_role='Python 工程师',
+                report_queue_status='queued',
+            )
+            db.session.add(interview)
+            db.session.flush()
+            short_answer = ChatMessage(
+                session_id=interview.id,
+                sender='user',
+                content='嗯',
+            )
+            reviewed_answer = ChatMessage(
+                session_id=interview.id,
+                sender='user',
+                content='我会先定位瓶颈并补充监控。',
+            )
+            db.session.add_all([short_answer, reviewed_answer])
+            db.session.commit()
+            interview_id = interview.id
+            short_answer_id = short_answer.id
+            reviewed_answer_id = reviewed_answer.id
+
+        report = {
+            'overall': {
+                'total_score': 82,
+                'scores': {'专业技能': 82},
+                'comment': '整体表现良好',
+            },
+            'details_list': [{
+                'message_id': reviewed_answer_id,
+                'suggestion': '补充量化结果',
+                'reference': '参考答案',
+                'is_good': True,
+            }],
+        }
+        with (
+            patch('app.create_app', return_value=self.app),
+            patch(
+                'app.api.interview.generate_interview_report',
+                return_value=report,
+            ),
+        ):
+            from app.api.interview import background_report_task
+            result = background_report_task(interview_id)
+
+        self.assertEqual(result['status'], 'completed')
+        with self.app.app_context():
+            short_answer = db.session.get(ChatMessage, short_answer_id)
+            reviewed_answer = db.session.get(ChatMessage, reviewed_answer_id)
+            self.assertIsNone(short_answer.suggestion)
+            self.assertEqual(reviewed_answer.suggestion, '补充量化结果')
+
 
 class SchemaMigrationTests(unittest.TestCase):
     def test_fresh_database_is_created_at_migration_head(self):
@@ -783,7 +914,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '755f763692a5')
+        self.assertEqual(revision, '20261006_account_links')
         self.assertTrue(
             {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
             <= tables
@@ -861,11 +992,119 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '755f763692a5')
+        self.assertEqual(revision, '20261006_account_links')
         self.assertEqual((username, truename), ('legacy-user', '需要保留'))
         self.assertIn('active', user_columns)
         self.assertIn('report_error', session_columns)
         self.assertIn('generation_status', message_columns)
+
+    def test_legacy_duplicate_round_links_are_preserved_and_normalized(self):
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'duplicate-rounds.db'
+            original_uri = Config.SQLALCHEMY_DATABASE_URI
+            Config.SQLALCHEMY_DATABASE_URI = f'sqlite:///{database}'
+            try:
+                app = create_app()
+                app.config.update(TESTING=True)
+                runner = app.test_cli_runner()
+                with app.app_context():
+                    db.create_all()
+                    db.session.add(User(username='legacy-student', role='student'))
+                    db.session.commit()
+
+                connection = sqlite3.connect(database)
+                create_sql = connection.execute(
+                    "SELECT sql FROM sqlite_master "
+                    "WHERE type='table' AND name='interview_sessions'"
+                ).fetchone()[0]
+                create_sql = create_sql.replace(
+                    'CREATE TABLE interview_sessions',
+                    'CREATE TABLE interview_sessions_new',
+                    1,
+                ).replace(
+                    '\n\tCONSTRAINT uq_interview_sessions_parent_session_id '
+                    'UNIQUE (parent_session_id), ',
+                    '',
+                    1,
+                )
+                columns = [
+                    row[1]
+                    for row in connection.execute(
+                        'PRAGMA table_info(interview_sessions)'
+                    )
+                ]
+                column_list = ', '.join(f'"{column}"' for column in columns)
+                connection.execute('PRAGMA foreign_keys=OFF')
+                connection.execute(create_sql)
+                connection.execute(
+                    f'INSERT INTO interview_sessions_new ({column_list}) '
+                    f'SELECT {column_list} FROM interview_sessions'
+                )
+                connection.execute('DROP TABLE interview_sessions')
+                connection.execute(
+                    'ALTER TABLE interview_sessions_new '
+                    'RENAME TO interview_sessions'
+                )
+                connection.executemany(
+                    'INSERT INTO interview_sessions '
+                    '(id, user_id, status, round, parent_session_id) '
+                    'VALUES (?, 1, ?, ?, ?)',
+                    [
+                        (10, 'completed', 1, None),
+                        (11, 'completed', 2, 10),
+                        (12, 'completed', 2, 10),
+                    ],
+                )
+                connection.commit()
+                connection.close()
+
+                result = runner.invoke(args=['bootstrap-db'])
+                self.assertEqual(result.exit_code, 0, result.output)
+                drift = runner.invoke(args=['db', 'check'])
+                self.assertEqual(drift.exit_code, 0, drift.output)
+
+                connection = sqlite3.connect(database)
+                links = connection.execute(
+                    'SELECT id, parent_session_id FROM interview_sessions '
+                    'WHERE id IN (11, 12) ORDER BY id'
+                ).fetchall()
+                count = connection.execute(
+                    'SELECT COUNT(*) FROM interview_sessions '
+                    'WHERE id IN (10, 11, 12)'
+                ).fetchone()[0]
+                connection.close()
+            finally:
+                Config.SQLALCHEMY_DATABASE_URI = original_uri
+
+        self.assertEqual(count, 3)
+        self.assertEqual(links, [(11, 10), (12, None)])
+
+
+class DeploymentConfigurationTests(unittest.TestCase):
+    project_root = Path(__file__).resolve().parents[1]
+
+    def test_gunicorn_is_threaded_and_allows_long_streaming_requests(self):
+        service = (self.project_root / 'interview.service').read_text(
+            encoding='utf-8'
+        )
+        self.assertIn('--worker-class gthread', service)
+        self.assertRegex(service, r'--threads\s+(?:[2-9]|[1-9]\d+)')
+        timeout = int(service.split('--timeout ', 1)[1].split()[0])
+        self.assertGreaterEqual(timeout, 180)
+
+    def test_nginx_allows_app_upload_limit_and_disables_stream_buffering(self):
+        nginx = (self.project_root / 'interview_nginx').read_text(
+            encoding='utf-8'
+        )
+        self.assertRegex(nginx, r'client_max_body_size\s+(?:9|[1-9]\d+)m;')
+        self.assertIn('proxy_buffering off;', nginx)
+        self.assertIn('proxy_read_timeout 300s;', nginx)
+
+    def test_example_environment_bootstraps_in_development_mode(self):
+        environment = (self.project_root / '.env.example').read_text(
+            encoding='utf-8'
+        )
+        self.assertIn('APP_ENV=development', environment.splitlines())
 
 
 if __name__ == '__main__':

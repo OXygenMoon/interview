@@ -53,6 +53,21 @@ def upgrade():
         constraint.get('column_names') == ['parent_session_id']
         for constraint in unique_constraints
     )
+    if not parent_unique:
+        # Some pre-Alembic deployments allowed more than one next-round
+        # session for the same parent. Preserve every session, retain the
+        # earliest link, and detach later duplicate children before adding the
+        # model's uniqueness constraint.
+        bind.execute(sa.text(
+            'UPDATE interview_sessions '
+            'SET parent_session_id = NULL '
+            'WHERE parent_session_id IS NOT NULL '
+            'AND id NOT IN ('
+            'SELECT MIN(id) FROM interview_sessions '
+            'WHERE parent_session_id IS NOT NULL '
+            'GROUP BY parent_session_id'
+            ')'
+        ))
     legacy_parent_index = indexes.get(
         'uq_interview_sessions_parent_session_id'
     )

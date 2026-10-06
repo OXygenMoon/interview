@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="AI 模拟面试平台的十种设计方向。预览、比较和收藏不同的风格与布局。">
+    <title>十种可能 · 前端设计测试区</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="lab.css">
+    <script src="lab.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">跳转到设计预览</a>
+    <header class="lab-header">
+      <a class="lab-brand" href="index.html"><span class="lab-mark">m</span><strong>面试之间<span>DESIGN EXPLORATIONS</span></strong></a>
+      <nav aria-label="测试区导航">
+        <a href="#directions">设计方案 <span>10</span></a><a href="#review">项目 Review ↗</a>
+      </nav>
+      <span class="header-note"><i></i> 设计测试区</span>
+    </header>
+    <main class="lab-main">
+      <section class="lab-intro">
+        <div>
+          <p class="eyebrow">
+            ONE PRODUCT. TEN PERSPECTIVES.
+          </p>
+          <h1>
+            同一个产品，<em>十种可能。</em>
+          </h1>
+          <p class="intro-copy">
+            为 AI 模拟面试平台，探索不同的视觉语言与使用节奏。<br>选择一种风格，看看它如何承载你的产品。
+          </p>
+        </div>
+        <aside class="intro-aside">
+          <span class="intro-count">10<span> / 方向</span></span>
+          <p>
+            不同风格 · 不同排版 · 不同设计<br>独立页面，可交互预览
+          </p>
+        </aside>
+      </section>
+      <section id="directions" aria-label="十套设计方向">
+        <div class="directions-head">
+          <span>选择你的设计方向</span><label class="favorite-filter"><input type="checkbox" id="favorites-only">只看收藏 <span id="favorite-count">0</span></label>
+        </div>
+        <div id="concept-list" class="concept-list">
+        </div>
+        <p id="empty-favorites" class="empty-favorites" hidden>
+          还没有收藏。点击预览工具栏中的「收藏方案」，把喜欢的方向留下来。
+        </p>
+      </section>
+      <section class="workspace" id="workspace" aria-label="设计预览工作台">
+        <header class="workspace-header">
+          <div class="selected-info">
+            <span id="selected-number">01</span>
+            <div>
+              <h2 id="selected-name">
+                企业工作台
+              </h2>
+              <p id="selected-description">
+                清晰的导航，克制的蓝色，适合日常高频使用。
+              </p>
+            </div>
+          </div>
+          <div class="preview-actions">
+            <button id="favorite-button" aria-pressed="false">☆ 收藏方案</button><button id="compare-button" aria-pressed="false">⇄ 并排比较</button><a id="open-page" href="01-studio.html" target="_blank" rel="noopener">独立打开 ↗</a>
+          </div>
+        </header>
+        <div class="preview-toolbar">
+          <div class="viewport-options" role="group" aria-label="预览尺寸">
+            <button data-viewport="desktop" aria-pressed="true">桌面 <span>自适应</span></button><button data-viewport="tablet" aria-pressed="false">平板 <span>768</span></button><button data-viewport="mobile" aria-pressed="false">手机 <span>390</span></button>
+          </div>
+          <div class="pager">
+            <button id="previous" aria-label="上一套设计">←</button><span id="page-position">01 / 10</span><button id="next" aria-label="下一套设计">→</button>
+          </div>
+        </div>
+        <div id="comparison-controls" class="comparison-controls" hidden>
+          <label for="compare-select">对比方案</label><select id="compare-select"></select><span>两侧保持相同预览尺寸；手机上可横向滚动。</span>
+        </div>
+        <div id="preview-stage" class="preview-stage">
+          <div class="preview-frame-wrap">
+            <div class="frame-label" id="left-label" hidden>
+              01 · 企业工作台
+            </div>
+            <iframe id="preview" src="01-studio.html" title="01 企业工作台设计预览"></iframe>
+          </div>
+          <div class="preview-frame-wrap" id="second-wrap" hidden>
+            <div class="frame-label" id="right-label">
+              02 · 编辑杂志
+            </div>
+            <iframe id="comparison" title="对比设计预览" loading="lazy"></iframe>
+          </div>
+        </div>
+        <footer class="workspace-footer">
+          <span>提示：点击页面中的面试、报告和学习按钮，体验交互。</span><span>示例数据 · 不连接 AI 或真实账号</span>
+        </footer>
+      </section>
+      <section class="review-section" id="review">
+        <div class="review-intro">
+          <p class="eyebrow">
+            BEFORE THE NEXT CHAPTER
+          </p>
+          <h2>
+            升级，从看清现状开始。
+          </h2>
+          <p>
+            基于现有首页、教师 Dashboard 和两个基础模板的代码审查。
+          </p>
+          <a href="review.html">查看完整 Review 与升级建议 ↗</a>
+        </div>
+        <div class="review-points">
+          <article>
+            <span>01</span>
+            <div>
+              <h3>
+                让主操作更聚焦
+              </h3>
+              <p>
+                大面积渐变、玻璃效果和彩色卡片同时抢占注意力。建议先明确「开始面试」与「复盘」的优先级。
+              </p>
+            </div>
+          </article>
+          <article>
+            <span>02</span>
+            <div>
+              <h3>
+                让主题更容易维护
+              </h3>
+              <p>
+                两个基础模板重复定义导航、按钮与表面样式，并使用较多全局覆盖。适合提取设计变量与公共组件。
+              </p>
+            </div>
+          </article>
+          <article>
+            <span>03</span>
+            <div>
+              <h3>
+                让每种状态都可用
+              </h3>
+              <p>
+                已有处理中与失败状态。下一步补齐键盘焦点、减少动态效果选项，以及移动端表格的信息优先级。
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+      <footer class="lab-footer">
+        <span>面试之间 · FRONTEND DESIGN LAB</span><span>2026 / 10 · 十套独立方向，等待你的选择。</span>
+      </footer>
+    </main>
+    <p class="sr-only" id="lab-status" aria-live="polite" role="status">
+    </p>
+  </body>
+</html>

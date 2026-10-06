@@ -1,0 +1,82 @@
+/* Warm charcoal surfaces and readable pastel accents for the entire app shell. */
+html[data-theme="playful-dark"] {
+    color-scheme: dark;
+    --ui-canvas: #1b1721;
+    --ui-surface: #26212c;
+    --ui-ink: #f3eaf0;
+    --ui-muted: #baabba;
+    --ui-accent: #d9a3c1;
+    --ui-line: #493c50;
+    --ui-peach: #493530;
+    --ui-lilac: #3a2f46;
+    --ui-sage: #303c2d;
+    --ui-cream: #443927;
+    --theme-primary-hover: #e8b8d3;
+    --theme-soft: #332836;
+    --theme-border: #604563;
+}
+html[data-theme="playful-dark"] ::selection { background: #805975; color: #fff5fd; }
+html[data-theme="playful-dark"] .app-navbar { background: #26212cf5; border-color: var(--ui-line); box-shadow: 0 10px 32px #100c1629; }
+html[data-theme="playful-dark"] .app-brand-mark { background: #be8b70; color: #291d26; }
+html[data-theme="playful-dark"] :is(.app-nav-link,.app-account-name,.app-logout) { color: var(--ui-muted); }
+html[data-theme="playful-dark"] :is(.app-nav-link:hover,.app-nav-link.is-active) { background: var(--ui-lilac); color: #e6bed7; }
+html[data-theme="playful-dark"] .app-account-avatar { color: #c3d9b6; }
+html[data-theme="playful-dark"] .app-logout:hover { background: #41303b; }
+html[data-theme="playful-dark"] .app-nav-dropdown { box-shadow: 0 15px 40px #100c1666; }
+html[data-theme="playful-dark"] .app-main :is(.btn-primary,.pastel-banner .btn-primary) { color: #2b1c27; }
+html[data-theme="playful-dark"] .app-main .btn-primary:hover { background: #e8b8d3; border-color: #e8b8d3; }
+html[data-theme="playful-dark"] .app-main .btn-secondary { background: #d9ab8f; color: #2c211c; border-color: #d9ab8f; }
+html[data-theme="playful-dark"] .app-main .btn-accent { background: #b4cca2; color: #1f2c1c; border-color: #b4cca2; }
+html[data-theme="playful-dark"] .app-main .btn-warning { color: #edd19b; }
+html[data-theme="playful-dark"] .app-main .btn-ghost:hover { background: #403145; }
+html[data-theme="playful-dark"] .app-main :is(.input,.select,.textarea,.file-input) { border-color: #5f4c63; }
+html[data-theme="playful-dark"] .app-main :is(.input,.textarea)::placeholder { color: #b7a5b5; }
+html[data-theme="playful-dark"] .app-main .badge-error { color: #efb5ad; }
+html[data-theme="playful-dark"] .app-main .badge-success { color: #bbd3aa; }
+html[data-theme="playful-dark"] .app-main .badge-warning { color: #edd19b; }
+html[data-theme="playful-dark"] .app-main .table :where(thead,tbody) tr { border-color: #413747; }
+html[data-theme="playful-dark"] .app-main .table th { color: var(--ui-muted); }
+html[data-theme="playful-dark"] .app-main .table tbody tr:hover { background: #322a38; }
+html[data-theme="playful-dark"] .app-main .table-zebra tbody tr:nth-child(even) { background: #2d2633; }
+html[data-theme="playful-dark"] .app-shell .modal::backdrop { background: #100c1699; }
+html[data-theme="playful-dark"] .app-main .pastel-banner :is(.text-white,[class*="text-white/"],[class*="text-indigo-"],[class*="text-emerald-"],[class*="text-slate-"],[class*="text-violet-"]) { color: #eedbd6; }
+html[data-theme="playful-dark"] .app-main .pastel-banner .btn:not(.btn-primary) { color: #e4b7cc; background: #332936; border-color: #605064; }
+html[data-theme="playful-dark"] .app-main .pastel-banner :is([class*="bg-white/"]) { background: #30272c66; border-color: #6a4c49; }
+html[data-theme="playful-dark"] .app-main .pastel-banner .radial-progress { background: #2b232c; color: var(--ui-accent); }
+html[data-theme="playful-dark"] .app-main .pastel-feature-card { background: var(--ui-lilac); }
+html[data-theme="playful-dark"] .app-main .pastel-feature-card :is(.text-white,[class*="text-white/"],[class*="text-indigo-"],[class*="text-orange-"]) { color: #e3cbe4; }
+html[data-theme="playful-dark"] :is(.club-eyebrow,.club-intro p:not(.club-eyebrow),.auth-story > p) { color: #dcc0b9; }
+html[data-theme="playful-dark"] .club-actions .club-secondary { color: #e9c7d9; background: #332831; border-color: #675059; }
+html[data-theme="playful-dark"] .club-art-circle { background: #865e47; }
+html[data-theme="playful-dark"] .club-art-sheet { background: #e7c9b2; }
+html[data-theme="playful-dark"] .club-art-square { background: #7c946c; }
+html[data-theme="playful-dark"] .club-art-line { background: #aa858e; }
+html[data-theme="playful-dark"] .club-art-seal { color: #2b1c27; }
+html[data-theme="playful-dark"] .club-art-bubble { background: #3d4e34; color: #cfe1c0; }
+html[data-theme="playful-dark"] :is(.club-metric-label,.club-metric-note,.auth-form-panel .auth-helper) { color: var(--ui-muted); }
+html[data-theme="playful-dark"] .dashboard-shell .metric-card:nth-child(4) { background: #493530; }
+html[data-theme="playful-dark"] .dashboard-shell .panel-header { background: #2b232f; }
+html[data-theme="playful-dark"] .dashboard-shell .metric-icon { background: #1b17215c; }
+html[data-theme="playful-dark"] .dashboard-shell .quick-link { background: var(--ui-surface); border-color: var(--ui-line); }
+html[data-theme="playful-dark"] .dashboard-shell :is(.quick-link:hover,.top-row:hover) { background: #33302f; }
+html[data-theme="playful-dark"] .app-main .chat-bubble:not(.chat-bubble-primary) { background: #40302d; }
+html[data-theme="playful-dark"] .app-main :is(.chat-bubble-primary,.chat-end .chat-bubble) { background: var(--ui-lilac); color: var(--ui-ink); }
+html[data-theme="playful-dark"] .app-main .prose { color: var(--ui-ink); }
+html[data-theme="playful-dark"] .app-main .prose :is(strong,li,blockquote) { color: var(--ui-ink); }
+html[data-theme="playful-dark"] .app-main .prose blockquote { background: #302735; border-color: #98729c; }
+html[data-theme="playful-dark"] .app-main .prose :not(pre) > code { background: #332b39; color: #edc4de; }
+html[data-theme="playful-dark"] .resume-editor-body { background: #302936; }
+html[data-theme="playful-dark"] .section-nav-row.is-active { background: #3a2f46; }
+html[data-theme="playful-dark"] .app-main #section-editor { background: var(--ui-surface); }
+html[data-theme="playful-dark"] .markdown-body { color: var(--ui-ink); }
+html[data-theme="playful-dark"] .markdown-body :is(h1,h2,h3,h4,strong) { color: var(--ui-ink); }
+html[data-theme="playful-dark"] .markdown-body a { color: var(--ui-accent); }
+html[data-theme="playful-dark"] .markdown-body blockquote { color: #ddcde0; background: #302735; border-color: #98729c; }
+html[data-theme="playful-dark"] .markdown-body code { background: #332b39; color: #edc4de; }
+html[data-theme="playful-dark"] .markdown-body pre code { background: transparent; color: #eee2ed; }
+/* Documents remain print-accurate even while the surrounding editor is dark. */
+html[data-theme="playful-dark"] #resume-preview { background: white; color-scheme: light; }
+@media print {
+    html[data-theme="playful-dark"] { color-scheme: light; }
+    html[data-theme="playful-dark"] body.app-shell { background: white; }
+}

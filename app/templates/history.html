@@ -5,7 +5,7 @@
 {% block content %}
 <div class="space-y-8 pb-12" data-testid="history-page">
 
-    <div class="hero rounded-3xl bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 text-white shadow-xl shadow-slate-200 overflow-hidden relative group">
+    <div class="pastel-banner hero rounded-3xl bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 text-white shadow-xl shadow-slate-200 overflow-hidden relative group">
         <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
         <div class="absolute bottom-0 left-0 w-40 h-40 bg-black/5 rounded-full blur-2xl"></div>
         <div class="absolute top-10 left-10 w-20 h-20 border-4 border-white/10 rounded-full"></div>
@@ -61,7 +61,7 @@
             </div>
         </div>
 
-        <div class="card bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200 group hover:-translate-y-1 transition-all duration-300">
+        <div class="card pastel-feature-card bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-200 group hover:-translate-y-1 transition-all duration-300">
             <div class="card-body flex flex-row items-center justify-between p-6">
                 <div>
                     <div class="text-orange-100 text-xs font-bold uppercase tracking-wider mb-1">历史最佳</div>
@@ -116,7 +116,7 @@
         </div>
 
         <div class="overflow-x-auto p-2">
-            <table class="table w-full" id="history-table">
+            <table class="table w-full" id="history-table" data-mobile-primary="0" data-mobile-metric="3">
                 <thead class="text-slate-500 border-b border-slate-100">
                     <tr>
                         <th class="bg-transparent pl-6">时间 / 岗位</th>
@@ -218,12 +218,12 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <script>
     // 全局字体配置
-    Chart.defaults.font.family = '"Inter", sans-serif';
-    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = '"Avenir Next", "PingFang SC", sans-serif';
+    Chart.defaults.color = '#8d7c89';
 
     document.addEventListener("DOMContentLoaded", function() {
         // === 1. 绘制折线图 ===
@@ -231,8 +231,8 @@
 
         // 渐变背景
         const gradient = trendCtx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)'); // Indigo
-        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+        gradient.addColorStop(0, 'rgba(141,88,122, 0.2)'); // Indigo
+        gradient.addColorStop(1, 'rgba(141,88,122, 0)');
 
         new Chart(trendCtx, {
             type: 'line',
@@ -241,11 +241,11 @@
                 datasets: [{
                     label: '得分',
                     data: {{ stats.recent_trend | tojson | safe }},
-                    borderColor: '#6366f1', // Indigo-500
+                    borderColor: '#8d587a', // Indigo-500
                     backgroundColor: gradient,
                     borderWidth: 3,
                     pointBackgroundColor: '#fff',
-                    pointBorderColor: '#6366f1',
+                    pointBorderColor: '#8d587a',
                     pointRadius: 4,
                     pointHoverRadius: 6,
                     tension: 0.4, // 平滑
@@ -258,7 +258,7 @@
                 scales: {
                     y: {
                         beginAtZero: false, suggestedMin: 40, suggestedMax: 100,
-                        grid: { borderDash: [4, 4], color: '#f1f5f9' }
+                        grid: { borderDash: [4, 4], color: '#faf7f7' }
                     },
                     x: { grid: { display: false } }
                 },
@@ -275,11 +275,11 @@
                 datasets: [{
                     data: {{ stats.role_dist_values | tojson | safe }},
                     backgroundColor: [
-                        '#6366f1', // Indigo
-                        '#f97316', // Orange
-                        '#10b981', // Emerald
-                        '#ec4899', // Pink
-                        '#3b82f6'  // Blue
+                        '#8d587a', // Indigo
+                        '#a46748', // Orange
+                        '#6c8a58', // Emerald
+                        '#b76c61', // Pink
+                        '#757498'  // Blue
                     ],
                     borderWidth: 2,
                     borderColor: '#ffffff'

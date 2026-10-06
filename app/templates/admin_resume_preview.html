@@ -3,8 +3,6 @@
 {% block title %}简历预览{% endblock %}
 
 {% block content %}
-<!-- 引入 html2pdf (与编辑器保持一致，虽然这里主要用 print) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <div class="space-y-4">
     <div class="bg-base-100 p-4 rounded-xl shadow-sm border border-base-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -37,8 +35,8 @@
     </div>
 
     <div class="bg-base-200/50 rounded-xl border border-base-200 overflow-hidden">
-        <div class="overflow-y-auto p-4 flex justify-center bg-gray-100">
-            <div id="resume-preview" class="bg-white shadow-xl origin-top transition-transform" style="width: 210mm; min-height: 297mm; padding: 0;"></div>
+        <div class="resume-preview-canvas overflow-y-auto p-4 flex justify-center bg-gray-100">
+            <div id="resume-preview" data-theme="playful" class="bg-white shadow-xl origin-top transition-transform" style="width: 210mm; min-height: 297mm; padding: 0;"></div>
         </div>
     </div>
 </div>

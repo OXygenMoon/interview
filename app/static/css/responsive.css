@@ -1,0 +1,120 @@
+/* Mobile records use two summary rows and a complete detail view. */
+.page-shell, .app-main :is(.card-body, .grid > *, .flex > *, .join > input) { min-width: 0; }
+.app-navigation [hidden], .app-account [hidden] { display: none !important; }
+.app-main :is(p, h1, h2, h3, h4, .chat-bubble) { overflow-wrap: anywhere; }
+.app-main :is(.prose, .markdown-body) { min-width: 0; overflow-wrap: anywhere; }
+.app-main :is(.prose, .markdown-body) :is(img, video, iframe) { max-width: 100%; }
+.app-main :is(.prose, .markdown-body) pre { max-width: 100%; overflow-x: auto; }
+.app-main .table-scroll {
+    width: 100%; max-width: 100%; min-width: 0; overflow-x: auto;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
+.app-main .responsive-table { display: table; width: 100%; margin-block: 0; }
+.app-main .responsive-table :is(th, td) { overflow-wrap: anywhere; }
+.mobile-record-heading, .mobile-record-meta, .mobile-record-open { display: none; }
+.mobile-cell-value { display: contents; }
+.mobile-record-dialog:not([open]) { display: none; }
+.record-detail-fields { display: grid; gap: 16px; margin-top: 20px; }
+.record-detail-fields dt { font-size: 13px; color: var(--ui-muted); margin-bottom: 4px; }
+.record-detail-fields dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.record-detail-fields dd :is(.flex, .btn) { flex-wrap: wrap; }
+.record-detail-fields .opacity-0 { opacity: 1; }
+.record-detail-fields :is(.truncate, .whitespace-nowrap) { white-space: normal; overflow: visible; text-overflow: clip; }
+.resume-preview-canvas { min-width: 0; }
+.resume-preview-canvas > #resume-preview { flex-shrink: 0; }
+
+@media screen and (max-width: 1023px) {
+    .app-main [data-testid="interview-room"],
+    .interview-immersive .app-main [data-testid="interview-room"] { height: auto; min-height: 0; }
+    .app-main [data-testid="interview-room"] > div:first-child {
+        flex: none; height: max(620px, calc(100dvh - var(--ui-nav-offset) - 35px));
+    }
+    .interview-immersive .app-main [data-testid="interview-room"] > div:first-child {
+        height: max(620px, calc(100dvh - 64px));
+    }
+    .app-main .table-scroll { overflow-x: visible; }
+    .app-main .responsive-table { display: block; width: 100%; min-width: 0; }
+    .app-main .responsive-table thead {
+        position: absolute; width: 1px; height: 1px; padding: 0;
+        overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+    .app-main .responsive-table tbody { display: grid; width: 100%; gap: 12px; padding: 12px; }
+    .app-main .responsive-table tbody tr {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(72px, 34%);
+        gap: 8px 12px; align-items: center; padding: 16px;
+        border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface);
+    }
+    .app-main .responsive-table tr.mobile-record { cursor: pointer; }
+    .app-main .responsive-table tr.mobile-record:hover { border-color: var(--ui-accent); }
+    .app-main .responsive-table td { display: none; min-width: 0; padding: 0; font-size: 14px; }
+    .app-main .responsive-table :is(.mobile-record-primary, .mobile-record-metric, .mobile-record-meta, .mobile-record-open) { display: block; }
+    .app-main .mobile-record-primary { grid-area: 1 / 1; }
+    .app-main .mobile-record-primary > .mobile-cell-value { display: none; }
+    .app-main .mobile-record-heading { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 16px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+    .app-main .mobile-record-metric { grid-area: 1 / 2; text-align: right; }
+    .app-main .mobile-record-metric::before { content: attr(data-mobile-label); display: block; font-size: 12px; color: var(--ui-muted); margin-bottom: 2px; }
+    .app-main .mobile-record-metric > .mobile-cell-value { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+    .app-main .mobile-record-metric[data-mobile-label*="分"] .mobile-cell-value :is(.font-bold, .font-black) { color: var(--ui-accent); font-size: 20px; }
+    .app-main .mobile-record-meta { grid-area: 2 / 1; color: var(--ui-muted); font-size: 13px; line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+    .app-main .mobile-record-open { grid-area: 2 / 2; }
+    .app-main .mobile-record-open .btn { width: 100%; min-height: 44px; height: auto; padding: 8px; font-size: 13px; white-space: normal; }
+    .app-main .responsive-table .mobile-empty-row { display: block; }
+    .app-main .responsive-table .mobile-empty-row td { display: block; width: 100%; }
+    .app-main .responsive-table .badge { height: auto; min-height: 22px; white-space: normal; }
+    .app-main #pagination { flex-wrap: wrap; justify-content: center; }
+}
+
+@media screen and (max-width: 767px) {
+    .app-main { padding-inline: 12px; }
+    .app-main .responsive-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+    .app-main .responsive-actions { flex-wrap: wrap; gap: 8px; }
+    .app-main .responsive-toolbar :is(.input, .select) { max-width: 100%; }
+    .app-main :is(.btn, .tab) { min-height: 44px; height: auto; }
+    .app-main :is(.btn-circle, .btn-square) { min-width: 44px; width: 44px; flex-shrink: 0; }
+    .app-main :is(.input, .select, .file-input) { min-height: 44px; height: auto; }
+    .app-main :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 16px; }
+    .app-main .input :is(input, svg) { min-width: 0; }
+    .app-main .join input { flex: 1; }
+    .app-main .tabs { display: flex; flex-wrap: wrap; justify-content: center; max-width: 100%; gap: 8px; }
+    .app-main .tabs .tab { flex: 1 1 auto; padding-inline: 12px; font-size: 14px; }
+    .app-shell .modal-box { width: calc(100% - 24px); max-height: calc(100dvh - 24px); padding: 20px; }
+    .app-shell :is(.modal-action, .modal-box .label) { flex-wrap: wrap; gap: 8px; }
+    .app-account-avatar { display: none; }
+    :is(.app-theme-toggle, .app-menu-toggle, .app-logout) { min-width: 44px; min-height: 44px; }
+    .app-navbar { padding-inline: 10px; }
+    .app-main .club-actions .btn { min-height: 44px; height: auto; }
+    .app-main .club-learning-link { flex-wrap: wrap; }
+    .app-main .club-intro p:not(.club-eyebrow) { font-size: 16px; }
+    .app-main :is(.prose, .markdown-body, .chat-bubble) { font-size: 16px; }
+    .app-main .resume-preview-toolbar > .select { width: 100%; }
+    .app-main .resume-preview-toolbar > .responsive-actions { width: 100%; }
+    .app-main :is(#text-mode, #voice-mode) { min-width: 0; }
+    .app-main #text-mode .btn { padding-inline: 12px; flex-shrink: 0; }
+    .app-main #msg-input { flex: 1; min-width: 0; }
+    .app-main #class-grid { grid-template-columns: minmax(0, 1fr); }
+    .app-main #class-grid > div { padding-right: 52px; min-height: 60px; }
+    .app-main #class-grid button { min-width: 44px; min-height: 44px; }
+}
+
+/* Actions that used to require hovering must remain available to fingers. */
+@media (hover: none), (pointer: coarse) {
+    .app-main .group :is(button, a).opacity-0 { opacity: 1; }
+    .app-main .cat-item > button { display: grid; place-items: center; min-width: 44px; min-height: 44px; }
+}
+@media screen and (pointer: coarse) {
+    .app-main :is(.btn, .tab, .input, .select, .file-input) { min-height: 44px; height: auto; }
+    .app-main :is(.btn-circle, .btn-square) { min-width: 44px; width: 44px; flex-shrink: 0; }
+    .app-main :is(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 16px; }
+    :is(.app-theme-toggle, .app-menu-toggle, .app-logout) { min-width: 44px; min-height: 44px; }
+}
+@media screen and (max-width: 360px) {
+    .app-brand-caption { display: none; }
+    .app-navbar { gap: 4px; }
+    .app-main .club-intro { padding-inline: 20px; }
+}
+@media print {
+    .mobile-record-dialog { display: none !important; }
+    .app-main .table-scroll { overflow: visible; }
+    .app-main .responsive-table { min-width: 0; }
+    #resume-preview { zoom: 1 !important; }
+}

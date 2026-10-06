@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="responsive-toolbar flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">班级对比看板</h1>
             <p class="text-sm text-slate-500 mt-1">各班级面试表现横向对比、维度热力、薄弱题聚合</p>
@@ -40,9 +40,9 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+const COLORS = ['#8d587a','#c98b6c','#6c8a58','#b76c61','#a27ca6','#757498','#b76c61','#89a574'];
 
 function heatColor(v) {
     // 0-100 -> 从浅红到深红表达薄弱
