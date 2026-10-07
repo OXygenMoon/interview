@@ -1,8 +1,10 @@
 """Company workspace and administrator-managed school partnerships."""
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
+from io import BytesIO
+from types import SimpleNamespace
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for, send_file
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
@@ -10,6 +12,7 @@ from . import db
 from .decorators import admin_required
 from .models import Company, CompanyAccount, Position, InterviewSession, ChatMessage, User
 from .services.company_matching import recommend_students
+from .services.visual_review import visual_record
 
 bp = Blueprint('company_portal', __name__)
 
@@ -190,8 +193,15 @@ def interviews():
         query = query.filter(InterviewSession.position_id == selected.id)
     page = query.order_by(InterviewSession.start_time.desc(), InterviewSession.id.desc()).paginate(
         page=request.args.get('page', 1, type=int), per_page=20, error_out=False)
+    now = datetime.now()
+    stats = {'all': query.count()}
+    for label, duration in [('1h', timedelta(hours=1)), ('24h', timedelta(hours=24)),
+                            ('1week', timedelta(days=7)), ('1month', timedelta(days=30)),
+                            ('1year', timedelta(days=365))]:
+        stats[label] = query.filter(InterviewSession.start_time >= now - duration).count()
     return render_template('company_interviews.html', company=current_user.company_account.company,
-                           selected=selected, pagination=page)
+                           selected=selected, pagination=page, sessions=page.items, stats=stats,
+                           company_view=True, base_template='company_base.html')
 
 
 @bp.get('/company/interviews/<int:session_id>')
@@ -200,7 +210,15 @@ def interviews():
 def interview_detail(session_id):
     record = company_sessions().filter(InterviewSession.id == session_id).first_or_404()
     messages = ChatMessage.query.filter_by(session_id=record.id).order_by(ChatMessage.timestamp, ChatMessage.id).all()
-    return render_template('company_interview_detail.html', record=record, messages=messages)
+    return render_template('company_interview_detail.html', session=record, messages=messages,
+                           base_template='company_base.html',
+                           back_url=url_for('.interviews', position_id=record.position_id),
+                           back_label='返回面试记录',
+                           conversation_url=url_for('.conversation', session_id=record.id),
+                           submitted_resume_url=url_for('.submitted_resume', session_id=record.id),
+                           frame_endpoint='company_portal.interview_frame',
+                           visual_records={message.id: review for message in messages
+                                           if (review := visual_record(message, record))})
 
 
 @bp.get('/company/interviews/<int:session_id>/resume')
@@ -209,7 +227,46 @@ def interview_detail(session_id):
 def submitted_resume(session_id):
     record = company_sessions().filter(InterviewSession.id == session_id).first_or_404()
     # Only the submitted snapshot, never the student's current resume library.
-    return render_template('company_submitted_resume.html', record=record)
+    document = record.resume_document_snapshot or {}
+    resume = SimpleNamespace(title=document.get('title') or '递交简历',
+                             template_id=document.get('template_id') or 'classic',
+                             content=document.get('content') or {})
+    return render_template('company_submitted_resume.html', record=record, resume=resume,
+                           student=record.user, base_template='company_base.html',
+                           submitted_text=record.resume_snapshot if not document else None,
+                           no_resume=not (record.resume_snapshot or document),
+                           back_url=url_for('.interview_detail', session_id=record.id))
+
+
+@bp.get('/company/interviews/<int:session_id>/conversation')
+@login_required
+@company_required
+def conversation(session_id):
+    record = company_sessions().filter(InterviewSession.id == session_id).first_or_404()
+    messages = ChatMessage.query.filter_by(session_id=record.id).order_by(ChatMessage.timestamp, ChatMessage.id).all()
+    timer_end = record.end_time or record.last_activity or record.start_time
+    return render_template('chat.html', session=record, messages=messages, is_read_only=True,
+                           base_template='company_base.html', enable_video=False,
+                           enable_realtime_voice=False, enable_tts=False, timer_running=False,
+                           elapsed_seconds=max(0, int((timer_end - record.start_time).total_seconds())),
+                           report_url=url_for('.interview_detail', session_id=record.id),
+                           frame_endpoint='company_portal.interview_frame',
+                           visual_records={message.id: review for message in messages
+                                           if (review := visual_record(message, record))})
+
+
+@bp.get('/company/interviews/<int:session_id>/frames/<int:message_id>')
+@login_required
+@company_required
+def interview_frame(session_id, message_id):
+    record = company_sessions().filter(InterviewSession.id == session_id).first_or_404()
+    message = ChatMessage.query.filter_by(id=message_id, session_id=record.id, sender='user').first_or_404()
+    if not message.visual_image:
+        abort(404)
+    mimetype = 'image/png' if message.visual_image.startswith(b'\x89PNG') else 'image/jpeg'
+    response = send_file(BytesIO(message.visual_image), mimetype=mimetype)
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
 
 
 @bp.get('/company/positions/<int:position_id>/recommendations')

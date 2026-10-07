@@ -1,8 +1,8 @@
-{% macro visual_card(record, session_id, link_answer=false) %}
+{% macro visual_card(record, session_id, link_answer=false, frame_endpoint='routes.interview_frame') %}
 <article id="visual-{{ record.message_id }}" class="bg-white border border-stone-200 rounded-xl overflow-hidden" style="scroll-margin-top: 100px;" data-testid="visual-record">
     {% if record.has_image %}
-    <a href="{{ url_for('routes.interview_frame', session_id=session_id, message_id=record.message_id) }}" target="_blank" rel="noopener" aria-label="查看 {{ record.elapsed }} 的完整画面">
-        <img src="{{ url_for('routes.interview_frame', session_id=session_id, message_id=record.message_id) }}" alt="面试 {{ record.elapsed }} 时的摄像头截图" loading="lazy" class="w-full object-contain bg-stone-100" style="height: 180px;" />
+    <a href="{{ url_for(frame_endpoint, session_id=session_id, message_id=record.message_id) }}" target="_blank" rel="noopener" aria-label="查看 {{ record.elapsed }} 的完整画面">
+        <img src="{{ url_for(frame_endpoint, session_id=session_id, message_id=record.message_id) }}" alt="面试 {{ record.elapsed }} 时的摄像头截图" loading="lazy" class="w-full object-contain bg-stone-100" style="height: 180px;" />
     </a>
     {% else %}
     <div class="bg-stone-100 px-4 py-3 text-xs text-stone-500">历史记录未保存截图</div>

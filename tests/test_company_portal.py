@@ -1,5 +1,6 @@
 """Company account lifecycle, tenant isolation, submitted snapshots and ranking."""
 import os
+import json
 from datetime import datetime, timedelta
 
 import pytest
@@ -10,7 +11,7 @@ os.environ.setdefault('LLM_API_KEY', 'company-tests-key')
 
 from app import create_app, db
 from app.config import Config
-from app.models import Company, CompanyAccount, InterviewSession, Position, Resume, User
+from app.models import Company, CompanyAccount, InterviewSession, Position, Resume, User, ChatMessage
 
 
 @pytest.fixture
@@ -74,6 +75,7 @@ def test_company_login_and_home_routes(app):
 
 @pytest.mark.parametrize('path', ['/company', '/company/positions', '/company/interviews',
                                   '/company/interviews/1', '/company/interviews/1/resume',
+                                  '/company/interviews/1/conversation', '/company/interviews/5',
                                   '/company/positions/1/recommendations'])
 def test_company_pages_render(app, path):
     response = login(app).get(path)
@@ -89,7 +91,8 @@ def test_company_workspace_requires_bound_company_role(app, user_id):
 @pytest.mark.parametrize('path', ['/company/positions/2/edit', '/company/interviews/2',
                                   '/company/interviews/2/resume', '/company/positions/2/recommendations',
                                   '/company/interviews?position_id=2', '/company/interviews/3',
-                                  '/company/interviews/4'])
+                                  '/company/interviews/4', '/company/interviews/2/conversation',
+                                  '/company/interviews/2/frames/1', '/company/interviews/3/conversation'])
 def test_other_company_and_unfinished_or_deleted_records_are_private(app, path):
     assert login(app).get(path).status_code == 404
 
@@ -131,7 +134,8 @@ def test_submitted_resume_remains_snapshot_after_edit_or_delete(app):
         db.session.delete(db.session.get(Resume, 1))
         db.session.commit()
     html = login(app).get('/company/interviews/1/resume').get_data(as_text=True)
-    assert '面试递交快照' in html and '&lt;script&gt;' in html
+    assert json.dumps('面试递交快照')[1:-1] in html
+    assert r'\u003cscript\u003e' in html
     assert '<script>snapshot()' not in html and '当前未递交的私人简历' not in html
     assert '未保存递交简历' in login(app).get('/company/interviews/5/resume').get_data(as_text=True)
 
@@ -245,3 +249,75 @@ def test_company_forms_require_csrf_when_enabled(app):
             token = state['_csrf_token']
         assert client.post('/company/positions/new', data={'name': 'CSRF岗位', 'csrf_token': token}).status_code == 302
     app.config['TESTING'] = True
+
+
+def test_company_uses_shared_report_and_read_only_conversation(app):
+    with app.app_context():
+        db.session.add(ChatMessage(id=10, session_id=1, sender='user', content='面试证据',
+                                   suggestion='补充具体行动', reference_answer='参考方法',
+                                   visual_captured_at=datetime.now(), visual_image=b'\x89PNG\r\n',
+                                   visual_context=json.dumps({'tags': ['自然姿态'], 'comment': '仪态点评内容'})))
+        db.session.commit()
+    client = login(app)
+    html = client.get('/company/interviews/1').get_data(as_text=True)
+    for label in ('radarChart', '能力模型分析', '对话深度复盘', '补充具体行动', '参考方法', '视频画面与仪态复盘'):
+        assert label in html
+    assert '/company/interviews/1/frames/10' in html
+    assert '进入下一轮' not in html and '/api/insights/match?' not in html
+    assert '查看递交简历' in html
+    chat = client.get('/company/interviews/1/conversation').get_data(as_text=True)
+    assert '仅供查阅模式' in chat and 'id="msg-input"' not in chat
+    assert 'href="/company/interviews/1"' in chat
+    frame = client.get('/company/interviews/1/frames/10')
+    assert frame.status_code == 200 and frame.data == b'\x89PNG\r\n'
+    assert frame.headers['Cache-Control'] == 'private, no-store'
+    assert client.get('/company/interviews/1/frames/999').status_code == 404
+    assert client.post('/api/interview/1/chat', json={'message': '不可修改'}).status_code == 403
+    with app.app_context():
+        assert not db.session.get(InterviewSession, 1).reviewed
+
+
+def test_structured_resume_capture_freezes_visible_content_and_template(app):
+    from app.services.submitted_resume import snapshot_resume
+    with app.app_context():
+        resume = db.session.get(Resume, 1)
+        resume.title = '岗位递交简历'
+        resume.template_id = 'campus'
+        resume.content = {'basic': {'name': '张同学', 'phone': '13800000000'},
+                          'skills': ['Python', '隐藏技能'], 'experience': [{'company': '隐藏企业'}],
+                          'projects': [{'name': '展示项目', 'description': '隐藏描述', '_hiddenFields': {'description': True}},
+                                       {'name': '隐藏项目', '_hidden': True}],
+                          'hiddenSkills': {'隐藏技能': True}, 'hiddenFields': {'basic': {'phone': True}},
+                          'hiddenSections': {'experience': True}, 'layout': {'density': 3}}
+        db.session.commit()
+    student = login(app, 3)
+    result = student.post('/api/interview/create', data={'position_id': '1', 'resume_id': '1'})
+    assert result.status_code == 200
+    with app.app_context():
+        interview = db.session.get(InterviewSession, result.get_json()['session_id'])
+        document = interview.resume_document_snapshot
+        assert document['title'] == '岗位递交简历' and document['template_id'] == 'campus'
+        assert document['content']['layout']['density'] == 3
+        assert 'phone' not in document['content']['basic']
+        assert document['content']['projects'] == [{'name': '展示项目'}]
+        assert document['content']['skills'] == ['Python']
+        for private in ('隐藏企业', '隐藏描述', '隐藏项目', '隐藏技能', '13800000000'):
+            assert private not in json.dumps(document, ensure_ascii=False)
+            assert private not in interview.resume_snapshot
+        assert 'experience' not in document['content']
+        assert '隐藏企业' not in json.dumps(document, ensure_ascii=False)
+        assert snapshot_resume(db.session.get(Resume, 1)) == document
+        interview.status = 'completed'
+        interview.total_score = 90
+        resume = db.session.get(Resume, 1)
+        resume.title, resume.template_id = '后来修改', 'tech'
+        resume.content = {'basic': {'name': '私有新内容'}}
+        db.session.commit()
+        session_id = interview.id
+        db.session.delete(resume)
+        db.session.commit()
+    html = login(app).get(f'/company/interviews/{session_id}/resume').get_data(as_text=True)
+    assert '岗位递交简历' in html and '13800000000' not in html and 'resume-preview' in html
+    assert '智能一页纸' in html and '打印 / PDF' in html
+    assert json.dumps('私有新内容')[1:-1] not in html
+    assert 'let currentTemplate = "campus"' in html

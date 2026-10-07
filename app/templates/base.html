@@ -13,10 +13,10 @@
     <script src="{{ url_for('static', filename='js/app-shell.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/account-link.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/app-responsive.js') }}" defer></script>
-    {% if request.endpoint in ['routes.home', 'routes.interview_room'] %}
+    {% if request.endpoint in ['routes.home', 'routes.interview_room', 'company_portal.conversation'] %}
     <script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
     {% endif %}
-    {% if request.endpoint in ['routes.history', 'routes.ability_radar', 'routes.interview_summary', 'routes.dashboard_compare', 'routes.teacher_student_detail', 'routes.admin_capability_profile'] %}
+    {% if request.endpoint in ['routes.history', 'routes.ability_radar', 'routes.interview_summary', 'company_portal.interview_detail', 'routes.dashboard_compare', 'routes.teacher_student_detail', 'routes.admin_capability_profile'] %}
     <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-charts.js') }}"></script>
     {% endif %}

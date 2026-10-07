@@ -91,6 +91,7 @@ class InterviewSession(db.Model):
     position_id = db.Column(db.Integer, db.ForeignKey('positions.id'), nullable=True)
     resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=True)
     resume_snapshot = db.Column(db.Text)
+    resume_document_snapshot = db.Column(db.JSON)
     position_snapshot = db.Column(db.JSON)
     prior_round_summary = db.Column(db.JSON)
     llm_model = db.Column(db.String(100))

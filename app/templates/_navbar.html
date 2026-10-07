@@ -18,7 +18,7 @@
             {% if company_user %}
                 {{ nav_link('公司概览', 'company_portal.dashboard', endpoint == 'company_portal.dashboard') }}
                 {{ nav_link('面试岗位', 'company_portal.positions', endpoint in ['company_portal.positions', 'company_portal.edit_position', 'company_portal.recommendations']) }}
-                {{ nav_link('学生面试记录', 'company_portal.interviews', endpoint in ['company_portal.interviews', 'company_portal.interview_detail', 'company_portal.submitted_resume']) }}
+                {{ nav_link('学生面试记录', 'company_portal.interviews', endpoint in ['company_portal.interviews', 'company_portal.interview_detail', 'company_portal.conversation', 'company_portal.submitted_resume']) }}
             {% elif teaching %}
                 {{ nav_link('教学概览', 'routes.dashboard', endpoint == 'routes.dashboard') }}
                 {{ nav_link('学生名册', 'routes.teacher_students', endpoint in ['routes.teacher_students', 'routes.teacher_student_detail']) }}

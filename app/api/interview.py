@@ -15,6 +15,7 @@ from ..config import Config
 
 # 引入 AI 服务
 from ..services.ai_agent import AIServiceError, CHAT_PROMPT_VERSION, REPORT_PROMPT_VERSION, generate_interview_report, transcribe_audio, analyze_image, evaluate_random_answer
+from ..services.submitted_resume import snapshot_resume, visible_resume_content
 from ..services.question_bank import get_random_interview_questions
 from ..services.interview_prompts import STUDENT_MODES
 from ..services.local_asr import AudioDecodeError
@@ -36,6 +37,7 @@ def resume_json_to_text(data):
     if not data:
         return ""
     
+    data = visible_resume_content(data)
     lines = []
     hidden = data.get('hiddenSections') or {}
     if not isinstance(hidden, dict):
@@ -162,6 +164,7 @@ def create_session():
         resume_id = request.form.get('resume_id', type=int)
         use_resume = False
         resume_text = ""
+        resume_document_snapshot = None
         
         if resume_id:
             resume_obj = db.session.get(Resume, resume_id)
@@ -171,6 +174,7 @@ def create_session():
             if not resume_text:
                 return jsonify({'error': 'selected resume is empty'}), 400
             use_resume = True
+            resume_document_snapshot = snapshot_resume(resume_obj)
 
         # 情况 B: 处理简历文件上传 (可选，优先级高于在线简历)
         temporary_resume_path = None
@@ -201,6 +205,7 @@ def create_session():
                     return jsonify({'error': 'resume could not be parsed or is empty'}), 400
                 resume_text = uploaded_text
                 resume_id = None
+                resume_document_snapshot = None
                 use_resume = True
 
         # 4. 创建面试会话
@@ -211,6 +216,7 @@ def create_session():
             position_id=position_id if position_id else None,
             resume_id=resume_id if use_resume else None,
             resume_snapshot=resume_text[:50000] if use_resume else None,
+            resume_document_snapshot=resume_document_snapshot,
             position_snapshot=position_snapshot,
             llm_model=Config.LLM_MODEL_NAME,
             prompt_version=CHAT_PROMPT_VERSION,
@@ -707,6 +713,7 @@ def next_round(session_id):
         use_resume=prev.use_resume,
         resume_id=prev.resume_id,
         resume_snapshot=prev.resume_snapshot,
+        resume_document_snapshot=prev.resume_document_snapshot,
         position_snapshot=prev.position_snapshot,
         prior_round_summary={
             'round': prev.round or 1,

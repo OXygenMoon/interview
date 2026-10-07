@@ -23,7 +23,7 @@ class InterviewRealtimeVoice {
         if (this.stopping) await this.stopping;
         if (this.active || this.disabled) return;
         if (!window.isSecureContext) {
-            this.status('当前为 HTTP 访问，手机浏览器无法使用麦克风。请使用 HTTPS 地址，或输入文字继续面试。');
+            this.status(window.InterviewMediaAccess?.message || '当前为 HTTP 访问，请使用 HTTPS 地址，或输入文字继续面试。');
             return;
         }
         if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) {

@@ -42,6 +42,7 @@ SQLITE_COLUMNS = {
         'report_finished_at': 'DATETIME',
         'resume_id': 'INTEGER',
         'resume_snapshot': 'TEXT',
+        'resume_document_snapshot': 'JSON',
         'position_snapshot': 'TEXT',
         'prior_round_summary': 'TEXT',
         'llm_model': 'VARCHAR(100)',

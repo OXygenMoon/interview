@@ -45,6 +45,8 @@
                         <div id="recording-status" class="badge badge-ghost text-xs hidden">正在收听...</div>
                     </div>
 
+                    {% include "_media_access_help.html" %}
+
                     <div id="answer-stream" class="min-h-40 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700 leading-7">
                         点击下方「开始语音」后，识别文本会实时出现在这里。
                     </div>
@@ -115,6 +117,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/media-access.js', v='media-help-20261008-1') }}"></script>
 <script>
     const questionText = document.getElementById('question-text');
     const questionBadge = document.getElementById('question-badge');
@@ -206,6 +209,11 @@
     }
 
     async function initCameraPreview() {
+        if (!window.isSecureContext) {
+            if (cameraStatus) cameraStatus.innerText = '需要 HTTPS 或浏览器例外';
+            InterviewMediaAccess.showHelp();
+            return;
+        }
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !localVideo) {
             if (cameraStatus) cameraStatus.innerText = '不可用';
             return;
@@ -349,6 +357,10 @@
 
     async function startRecording() {
         if (isRecording) return;
+        if (!window.isSecureContext) {
+            InterviewMediaAccess.showHelp();
+            return;
+        }
         resultCard.classList.add('hidden');
 
         try {

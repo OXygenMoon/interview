@@ -91,7 +91,7 @@
             </div>
 
             {% if is_read_only %}
-                <a href="{{ url_for('routes.interview_summary', session_id=session.id) }}" class="btn btn-primary btn-sm text-white">
+                <a href="{{ report_url|default(url_for('routes.interview_summary', session_id=session.id)) }}" class="btn btn-primary btn-sm text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     查看报告
                 </a>
@@ -127,7 +127,7 @@
                     </div>
                     <div class="chat-bubble bg-primary text-white shadow-md">{{ msg.content }}</div>
                     {% if is_read_only and msg.id in visual_records %}
-                    <div class="w-full max-w-sm mt-2">{{ visual_card(visual_records[msg.id], session.id) }}</div>
+                    <div class="w-full max-w-sm mt-2">{{ visual_card(visual_records[msg.id], session.id, false, frame_endpoint|default('routes.interview_frame')) }}</div>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -145,6 +145,9 @@
                 {% endif %}
             </div>
         {% else %}
+            {% if enable_realtime_voice or enable_video %}
+            {% include "_media_access_help.html" %}
+            {% endif %}
             <div class="flex gap-2 items-center mb-2" role="group" aria-label="回答方式">
                 <button type="button" id="text-toggle" class="btn btn-primary btn-sm" aria-pressed="true" onclick="selectTextInput()">文字输入</button>
                 {% if enable_realtime_voice %}
@@ -152,7 +155,6 @@
                 {% endif %}
             </div>
             {% if enable_realtime_voice %}
-            <p id="voice-environment-status" class="text-xs text-stone-500 mb-2" role="status" aria-live="polite" hidden></p>
             <div id="realtime-controls" class="bg-white p-3 rounded-xl border border-stone-100 mb-2" hidden style="display: none;">
                 <div class="flex gap-2 items-center flex-wrap">
                     <button type="button" id="record-btn" class="btn btn-primary btn-sm text-white">开始实时对话</button>
@@ -226,37 +228,11 @@
 
 </div>
 
-<!-- 麦克风权限提示模态框 -->
-<dialog id="mic_permission_modal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg text-warning flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            无法访问麦克风
-        </h3>
-        <p class="py-4">由于浏览器安全策略，非 HTTPS 环境（如 IP 访问）默认禁止使用麦克风。</p>
-        
-        <div class="bg-base-200 p-3 rounded-lg text-sm mb-4">
-            <p class="font-bold mb-1">当前访问地址：</p>
-            <code id="current-origin" class="text-primary font-mono select-all"></code>
-        </div>
-
-        <p class="text-sm text-stone-600">请使用平台的 HTTPS 地址，并在浏览器中允许麦克风权限。iPhone / iPad 请使用 Safari；如果从微信等应用打开，可选择“在浏览器中打开”。</p>
-        <p class="text-sm text-stone-600 mt-2">如果目前只有 HTTP 地址，请联系管理员配置 HTTPS。你可以先切换到文字输入继续面试。</p>
-        
-        <div class="modal-action">
-            <form method="dialog">
-                <button class="btn">我已了解</button>
-            </form>
-        </div>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-    </form>
-</dialog>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-mobile-20261007-1') }}"></script>
+<script src="{{ url_for('static', filename='js/media-access.js', v='media-help-20261008-1') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-media-help-20261008-1') }}"></script>
 <script>
     // Use server-computed duration: no browser date parsing or device timezone dependency.
     const initialElapsed = {{ elapsed_seconds|tojson }};
@@ -305,6 +281,7 @@
     // =========================================================
     async function initCamera() {
         if (document.getElementById('local-video')) {
+            if (!window.isSecureContext) return;
             try {
                 const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 const video = document.getElementById('local-video');
@@ -766,9 +743,12 @@
         if (isRecording) return;
 
         // 检查环境是否支持麦克风
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-             document.getElementById('current-origin').innerText = window.location.origin;
-             document.getElementById('mic_permission_modal').showModal();
+        if (!window.isSecureContext) {
+             InterviewMediaAccess.showHelp();
+             return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia) {
+             textAudioStatus('当前浏览器不支持录音，请更新浏览器或输入文字继续面试。');
              return;
         }
 
@@ -938,11 +918,6 @@
             } catch (error) { console.warn('画面观察暂不可用'); }
         },
     }) : null;
-    const voiceEnvironmentStatus = document.getElementById('voice-environment-status');
-    if (voiceEnvironmentStatus && !window.isSecureContext) {
-        voiceEnvironmentStatus.hidden = false;
-        voiceEnvironmentStatus.textContent = '当前为 HTTP 访问，手机浏览器无法使用麦克风。请使用 HTTPS 地址；现在可输入文字继续面试。';
-    }
     syncInputMode();
     recordBtn?.addEventListener('click', toggleInputMode);
     document.getElementById('realtime-mute')?.addEventListener('click', () => realtimeVoice.toggleMute());

@@ -40,10 +40,14 @@ python run.py
 首次登录与密码重置后必须修改密码。公司资料仍在「企业与岗位管理」维护。
 
 公司通过统一登录页进入 `/company`，可查看、新增、编辑本公司的岗位，
-按岗位筛选学生面试记录，查看面试对话、评分及本次递交的简历快照。
+按岗位筛选学生面试记录。公司与学生、管理员共用面试报告及只读对话页面，
+包含能力雷达图、逐句点评、参考回答和画面仪态复盘；面试记录表格与管理员共用。
+递交简历共用管理员的 A4 预览、模板切换、一页纸排版及打印 / PDF。
 学生结束该公司的岗位面试后，记录自动汇入，生成中的报告也会显示状态。
 简历显示面试时的内容，不读取学生后续修改的简历或未递交的其他简历；
-未递交简历与缺少历史快照的情况会显示为空。
+新面试保存可见简历内容、模板及排版密度，并继承到下一轮；隐藏模块不递交。
+旧面试和文件上传只保留解析文本的记录，在同一 A4 预览中展示原有文本，
+不会用学生后来修改的简历补充历史内容。未递交简历与缺少历史快照的情况会显示为空。
 
 岗位的「一键推荐学生」采用可解释的评分：岗位专业技能 60% + 面试综合分
 40%，参考分至少 75、专业技能至少 60。只比较学生在该岗位的最近一次已完成
@@ -51,7 +55,7 @@ python run.py
 推荐页面提供评分依据、面试证据与递交简历入口。
 
 更新后运行 `flask --app run.py bootstrap-db`，将数据库升级到
-`20261007_company_portal`，然后重启 Web 与 Worker。迁移仅新增公司账号关联表，
+`20261008_resume_document`，然后重启 Web 与 Worker。迁移新增公司账号关联表及递交简历排版快照，
 保留现有公司、岗位和面试数据。已有公司账号或面试记录的公司，以及已有面试
 记录的岗位，不允许删除，以保留历史记录归属。
 
@@ -68,10 +72,19 @@ python run.py
 音色 ID 依据[火山引擎官方音色列表](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh)。
 如需覆盖默认男声，在 `.env` 设置 `VOLC_REALTIME_VOICE`。
 
-安装更新后的 `requirements.txt` 并重启 Web。浏览器需通过 HTTPS 或
+安装更新后的 `requirements.txt` 并重启 Web。正式使用时浏览器需通过 HTTPS 或
 localhost 访问才能授权麦克风。使用 Nginx 时需部署更新后的
 `interview_nginx` 中的 WebSocket Upgrade／Connection 转发配置；现有
 Gunicorn `gthread` 配置支持此连接，每个实时会话占用一个服务线程。
+
+HTTP 访问时，正式面试和随机问题面试会显示麦克风、摄像头设置说明，
+可一键复制当前站点地址（协议、主机、端口）和浏览器设置地址。
+桌面 Chrome / Edge 可以手动添加本站测试例外，Android Chrome 视版本
+可尝试相同的 flags 选项；iPhone / iPad 和应用内浏览器优先使用可信 HTTPS。
+网页不能直接写入浏览器策略，例外不加密 HTTP，设置后仍需授权设备权限。
+平台按实际 `window.isSecureContext` 判断，已添加并生效的例外不会被误拦截。
+Chrome 策略参考 [OverrideSecurityRestrictionsOnInsecureOrigin](https://chromeenterprise.google/policies/override-security-restrictions-on-insecure-origin/)，
+测试设置参考 [Chromium 官方说明](https://www.chromium.org/Home/chromium-security/deprecating-powerful-features-on-insecure-origins/)。
 
 音频按 20 ms 分包，输入单声道 16 kHz PCM16，输出 24 kHz PCM16。
 用户与面试官文字记录由服务端保存，支持刷新后续接、评分和复盘。

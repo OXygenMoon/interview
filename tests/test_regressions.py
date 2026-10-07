@@ -467,6 +467,7 @@ class BusinessRegressionTests(unittest.TestCase):
             self.assertEqual(interview.position_snapshot['company_name'], '示例公司')
             self.assertIn('Python', interview.resume_snapshot)
             self.assertEqual(interview.resume_id, resume_id)
+            self.assertEqual(interview.resume_document_snapshot['content']['skills'], ['Python'])
             self.assertEqual(
                 db.session.get(User, self.student_id).resume_text,
                 '当前简历不得被覆盖',
@@ -921,7 +922,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261007_company_portal')
+        self.assertEqual(revision, '20261008_resume_document')
         self.assertTrue(
             {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
             <= tables
@@ -999,7 +1000,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261007_company_portal')
+        self.assertEqual(revision, '20261008_resume_document')
         self.assertEqual((username, truename), ('legacy-user', '需要保留'))
         self.assertIn('active', user_columns)
         self.assertIn('report_error', session_columns)

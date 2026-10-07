@@ -1,15 +1,15 @@
-{% extends "teacher_base.html" %}
+{% extends base_template|default('teacher_base.html') %}
 
 {% block title %}面试记录流水{% endblock %}
 
 {% block content %}
-<div class="space-y-6" data-testid="admin-interviews">
+<div class="space-y-6" data-testid="{{ 'company-interviews' if company_view|default(false) else 'admin-interviews' }}">
 
     <!-- 顶部标题区 -->
     <div class="responsive-toolbar flex justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm border border-base-200">
         <div>
             <h2 class="text-xl font-bold text-base-content">面试记录流水</h2>
-            <p class="text-sm text-base-content/60">实时监控所有面试活动，支持按时间段统计与管理</p>
+            <p class="text-sm text-base-content/60">{{ '查看本公司岗位的面试报告、对话与递交简历。' if company_view|default(false) else '实时监控所有面试活动，支持按时间段统计与管理' }}</p>
         </div>
         <div class="responsive-actions flex gap-2">
             {% if current_user.role == 'admin' %}
@@ -26,6 +26,15 @@
             </button>
         </div>
     </div>
+
+    {% if company_view|default(false) %}
+    <form method="get" class="responsive-toolbar flex flex-wrap items-center gap-3 bg-base-100 border border-base-200 p-4 rounded-xl">
+        <label for="position-filter">面试岗位</label>
+        <select class="select select-bordered" name="position_id" id="position-filter"><option value="">全部岗位</option>{% for position in company.positions %}<option value="{{ position.id }}" {{ 'selected' if selected and selected.id == position.id else '' }}>{{ position.name }}</option>{% endfor %}</select>
+        <button class="btn" type="submit">筛选</button>
+        {% if selected %}<a class="btn btn-primary" href="{{ url_for('company_portal.recommendations', position_id=selected.id) }}">一键推荐学生 →</a>{% endif %}
+    </form>
+    {% endif %}
 
     <!-- 统计卡片区 -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -59,81 +68,17 @@
     <div class="card bg-base-100 shadow-sm border border-base-200">
         <div class="card-body p-0">
             <div class="overflow-x-auto">
-                <table class="table w-full" id="log-table" data-mobile-primary="1" data-mobile-metric="3" data-mobile-secondary="2">
-                    <thead class="bg-base-200/50 text-base-content/70">
-                        <tr>
-                            <th>ID</th>
-                            <th>学生信息</th>
-                            <th>面试岗位</th>
-                            <th>得分</th>
-                            <th>开始时间</th>
-                            <th>耗时</th>
-                            <th>状态</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in sessions %}
-                        <tr class="hover group">
-                            <td class="font-mono text-xs opacity-50">#{{ s.id }}</td>
-                            <td>
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-base-content">{{ s.user.truename }}</span>
-                                    <span class="text-xs text-base-content/50">{{ s.user.student_id }} | {{ s.user.class_name }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="badge badge-ghost badge-sm">{{ s.target_role }}</div>
-                            </td>
-                            <td>
-                                {% if s.total_score is not none %}
-                                    <span class="font-bold {{ 'text-success' if s.total_score >= 80 else 'text-warning' }}">{{ s.total_score }}</span>
-                                {% else %}
-                                    <span class="text-base-content/30">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-sm">
-                                <div>{{ s.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
-                                <div class="text-xs text-base-content/40">{{ s.start_time | time_ago }}</div>
-                            </td>
-                            <td class="text-xs text-base-content/60">
-                                {% if s.end_time %}
-                                    {{ ((s.end_time - s.start_time).seconds / 60)|round(1) }} min
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if s.status == 'completed' %}
-                                    <div class="badge badge-primary badge-xs gap-1">完成</div>
-                                {% elif s.status == 'ongoing' %}
-                                    <div class="badge badge-info badge-xs gap-1">进行中</div>
-                                {% else %}
-                                    <div class="badge badge-ghost badge-xs">{{ s.status }}</div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="responsive-actions flex gap-2">
-                                    {% if s.status == 'deleted' %}
-                                    <button onclick="restoreSession({{ s.id }})" class="btn btn-xs btn-ghost text-success">恢复</button>
-                                    {% else %}
-                                    <a href="/interview/summary/{{ s.id }}" class="btn btn-xs btn-ghost text-primary" target="_blank">查看</a>
-                                    <button onclick="deleteSession({{ s.id }})" class="btn btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">隐藏</button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="8" class="text-center py-10 text-base-content/40">暂无记录</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% include '_interview_records_table.html' %}
             </div>
             
             <!-- 分页控件容器 -->
-            <div id="pagination" class="p-4 border-t border-base-200 flex justify-end gap-2"></div>
+            {% if pagination is defined %}
+            <nav class="p-4 border-t border-base-200 flex justify-end items-center gap-2" aria-label="面试记录分页">
+                {% if pagination.has_prev %}<a class="btn btn-sm" href="{{ url_for('company_portal.interviews', position_id=selected.id if selected else '', page=pagination.prev_num) }}">上一页</a>{% endif %}
+                <span class="text-sm">第 {{ pagination.page }} / {{ pagination.pages or 1 }} 页 · 共 {{ pagination.total }} 条</span>
+                {% if pagination.has_next %}<a class="btn btn-sm" href="{{ url_for('company_portal.interviews', position_id=selected.id if selected else '', page=pagination.next_num) }}">下一页</a>{% endif %}
+            </nav>
+            {% else %}<div id="pagination" class="p-4 border-t border-base-200 flex justify-end gap-2"></div>{% endif %}
         </div>
     </div>
 </div>
@@ -141,6 +86,7 @@
 <script>
     // 简单的分页逻辑
     document.addEventListener("DOMContentLoaded", function() {
+        {% if pagination is defined %}return;{% endif %}
         const table = document.getElementById('log-table');
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));

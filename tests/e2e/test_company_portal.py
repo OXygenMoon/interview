@@ -20,6 +20,8 @@ def sign_out(page):
 
 
 def test_company_account_positions_records_recommendations_and_mobile(page, live_server):
+    errors = []
+    page.on('pageerror', lambda error: errors.append(str(error)))
     sign_in(page, live_server, 'admin', 'AdminPass123!')
     page.goto(f'{live_server}/admin/partnerships')
     expect(page.get_by_role('heading', name='校企合作管理')).to_be_visible()
@@ -55,9 +57,36 @@ def test_company_account_positions_records_recommendations_and_mobile(page, live
     expect(page.get_by_role('heading', name='1. 端到端学生')).to_be_visible()
     expect(page.get_by_text('87.2', exact=True)).to_be_visible()
     page.get_by_role('link', name='查看递交简历').click()
-    expect(page.get_by_test_id('submitted-resume')).to_contain_text('熟悉 Python')
+    expect(page.get_by_test_id('resume-preview')).to_contain_text('熟悉 Python')
+    expect(page.locator('.resume-campus')).to_be_visible()
+    company_preview = page.locator('#resume-preview').inner_html()
+    page.get_by_label('简历模板').select_option('classic')
+    expect(page.locator('.resume-classic')).to_be_visible()
+    page.get_by_label('简历模板').select_option('campus')
+    page.get_by_role('button', name='智能一页纸').click()
+    expect(page.get_by_role('button', name='智能一页纸')).to_be_enabled()
+    page.emulate_media(media='print')
+    expect(page.locator('#resume-preview')).to_have_css('zoom', '1')
+    page.emulate_media(media='screen')
+    artifact = Path('test-results/company-portal')
+    artifact.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(artifact / 'resume-desktop.png'), full_page=True)
+    page.set_viewport_size({'width': 390, 'height': 844})
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    page.screenshot(path=str(artifact / 'resume-mobile.png'), full_page=True)
+    page.set_viewport_size({'width': 1440, 'height': 1000})
     page.get_by_role('link', name='返回面试详情').click()
+    expect(page.get_by_test_id('interview-summary')).to_be_visible()
     expect(page.get_by_text('我通过指标、告警和压测闭环改进稳定性。')).to_be_visible()
+    assert page.locator('#radarChart').evaluate('el => !!window.Chart.getChart(el)')
+    expect(page.get_by_role('button', name='进入下一轮 →')).to_have_count(0)
+    frame = page.get_by_test_id('visual-record').locator('img')
+    expect(frame).to_be_visible()
+    assert frame.evaluate('el => el.complete && el.naturalWidth > 0')
+    page.get_by_role('link', name='查看对话记录', exact=True).click()
+    expect(page.get_by_text('仅供查阅模式，无法发送消息')).to_be_visible()
+    expect(page.get_by_label('文字回答')).to_have_count(0)
+    page.get_by_role('link', name='查看报告', exact=True).click()
 
     artifact = Path('test-results/company-portal')
     artifact.mkdir(parents=True, exist_ok=True)
@@ -71,3 +100,21 @@ def test_company_account_positions_records_recommendations_and_mobile(page, live
         assert response.status == 200
         assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
         page.screenshot(path=str(artifact / (url.replace('/', '-') + '-mobile.png')), full_page=True)
+
+    page.set_viewport_size({'width': 1440, 'height': 1000})
+    page.goto(f'{live_server}/admin/resumes')
+    preview = page.locator('tr').filter(has_text='递交简历排版测试').get_by_role('link', name='预览', exact=True)
+    page.goto(live_server + preview.get_attribute('href'))
+    expect(page.locator('.resume-campus')).to_be_visible()
+    assert page.locator('#resume-preview').inner_html() == company_preview
+    assert errors == []
+
+    sign_out(page)
+    sign_in(page, live_server, 'student', 'StudentPass123!')
+    page.goto(f'{live_server}/resume_dashboard')
+    editor = page.locator('a[href^="/resume/edit/"]').first
+    page.goto(live_server + editor.get_attribute('href'))
+    page.get_by_role('button', name='预览', exact=True).click()
+    expect(page.locator('.resume-campus')).to_be_visible()
+    assert page.locator('#resume-preview').inner_html() == company_preview
+    assert errors == []

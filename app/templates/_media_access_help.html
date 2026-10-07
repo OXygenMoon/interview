@@ -1,0 +1,40 @@
+<div id="media-access-notice" class="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-3" hidden>
+    <p id="voice-environment-status" class="text-sm text-stone-600" role="status" aria-live="polite"></p>
+    <button type="button" id="media-access-help" class="btn btn-outline btn-sm mt-2">查看麦克风与摄像头设置</button>
+</div>
+
+<dialog id="mic_permission_modal" class="modal" aria-labelledby="media-access-title">
+    <div class="modal-box">
+        <h3 id="media-access-title" class="font-bold text-lg">启用麦克风与摄像头</h3>
+        <p class="text-sm text-stone-600 mt-3">麦克风与摄像头默认需要 HTTPS 安全连接。Edge 的例外设置只在该浏览器生效，Chrome 和手机需要分别处理。</p>
+        <p class="text-sm text-stone-600 mt-2">网页无法直接添加浏览器策略或打开浏览器内部设置。下方可复制设置所需地址，再手动完成设置。</p>
+
+        <label for="current-origin" class="block text-sm font-bold mt-4 mb-1">本站地址（包含协议与端口）</label>
+        <input id="current-origin" class="input input-bordered w-full text-sm" type="text" readonly />
+        <button type="button" id="copy-media-origin" class="btn btn-outline btn-sm mt-2">复制本站地址</button>
+
+        <div id="media-flags-guide" class="text-sm text-stone-600 mt-4" hidden>
+            <p id="media-browser-guide" class="font-bold mb-2"></p>
+            <label for="media-flags-address" class="block mb-1">浏览器设置地址</label>
+            <input id="media-flags-address" class="input input-bordered w-full text-sm" type="text" readonly />
+            <button type="button" id="copy-media-flags" class="btn btn-outline btn-sm mt-2">复制设置地址</button>
+            <ol class="mt-3 space-y-2" style="list-style-type: decimal; padding-left: 1.25rem;">
+                <li>把设置地址粘贴到浏览器地址栏并打开。</li>
+                <li>找到 “Insecure origins treated as secure”，在地址列表中追加上方本站地址，保留已有地址（多个地址用英文逗号分隔）。</li>
+                <li>设为 Enabled，点击 Relaunch 重启浏览器，再返回面试页面并允许麦克风、摄像头权限。重启会中断当前通话，请先完成本次回答。</li>
+            </ol>
+            <p class="mt-3">此设置仅适合可信测试站点，不会加密 HTTP 连接。若此选项不存在、被管理员禁用或设置后仍不可用，请使用 HTTPS 地址。</p>
+            <details class="mt-3">
+                <summary class="cursor-pointer">由管理员统一配置策略</summary>
+                <p class="mt-2">管理员可将本站地址加入 OverrideSecurityRestrictionsOnInsecureOrigin 策略，重启浏览器后生效。Chrome 与 Edge 的策略分别配置；受管理的 Android Chrome 可由设备管理员下发策略，普通手机网页无法自行安装。</p>
+            </details>
+        </div>
+        <p id="media-https-guide" class="text-sm text-stone-600 mt-4" hidden></p>
+        <p class="text-sm text-stone-600 mt-3">正式使用请联系管理员配置带有效证书的 HTTPS 地址。现在也可以输入文字继续面试。</p>
+        <p id="media-copy-status" class="text-sm text-stone-600 mt-2" role="status" aria-live="polite"></p>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn">返回面试</button></form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button aria-label="关闭设置说明">关闭</button></form>
+</dialog>

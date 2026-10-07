@@ -231,9 +231,12 @@ def test_mobile_student_filter_and_table_pagination(touch_page, live_server):
     assert_table_cards(page, page.locator('#student-table'))
 
     # Repeat the real server-rendered row to exercise a second client-side page.
+    expected = {}
     def many_rows(route):
         response = route.fetch()
         html = response.text()
+        body = re.search(r'<tbody>([\s\S]*?)</tbody>', html).group(1)
+        expected['remaining'] = len(re.findall(r'<tr[\s\S]*?</tr>', body)) + 17 - 15
         row = re.search(r'<tbody>\s*(<tr[\s\S]*?</tr>)', html).group(1)
         html = html.replace('<tbody>', '<tbody>' + row * 17, 1)
         route.fulfill(response=response, body=html)
@@ -242,7 +245,7 @@ def test_mobile_student_filter_and_table_pagination(touch_page, live_server):
     page.goto(f'{live_server}/admin/interviews')
     expect(page.locator('#log-table tbody tr:visible')).to_have_count(15)
     page.get_by_role('button', name='下一页', exact=True).tap()
-    expect(page.locator('#log-table tbody tr:visible')).to_have_count(3)
+    expect(page.locator('#log-table tbody tr:visible')).to_have_count(expected['remaining'])
     assert_table_cards(page, page.locator('#log-table'))
     page.get_by_role('button', name='上一页', exact=True).tap()
     expect(page.locator('#log-table tbody tr:visible')).to_have_count(15)

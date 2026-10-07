@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from app import create_app, db
 from app.services.test_accounts import seed_test_accounts
+from app.services.submitted_resume import snapshot_resume
 from app.models import (
     ChatMessage,
     Company,
@@ -14,6 +15,7 @@ from app.models import (
     LearningCategory,
     LearningMaterial,
     Position,
+    Resume,
     SchoolClass,
     User,
 )
@@ -129,6 +131,15 @@ def main():
         ])
         db.session.flush()
 
+        submitted = Resume(user_id=student.id, title='递交简历排版测试', template_id='campus', content={
+            'basic': {'name': '端到端学生', 'phone': '13800000000', 'email': 'student@example.test',
+                      'job_target': '后端开发工程师', 'self_evaluation': '熟悉 Python，参与服务稳定性项目。'},
+            'education': [{'school': '嘉善技师学院', 'major': '软件工程', 'date': '2024—2026'}],
+            'projects': [{'name': '服务稳定性项目', 'role': '开发', 'description': '完成指标、告警和压测闭环。'}],
+            'skills': ['Python', 'SQL'], 'layout': {'density': 1},
+        })
+        db.session.add(submitted)
+        db.session.flush()
         started = datetime.now() - timedelta(hours=3)
         completed = InterviewSession(
             user_id=student.id,
@@ -150,6 +161,7 @@ def main():
             reviewed=True,
             report_queue_status='finished',
             resume_snapshot='端到端学生的递交简历：熟悉 Python，参与服务稳定性项目。',
+            use_resume=True, resume_id=submitted.id, resume_document_snapshot=snapshot_resume(submitted),
         )
         db.session.add(completed)
         db.session.flush()
