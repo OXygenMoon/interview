@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-07",
+  "scope": "app",
+  "framework": "Flask/Jinja with Tailwind 3.4.17 and DaisyUI 4.12.10",
+  "font_stack": {
+    "display": "Avenir Next / PingFang SC / Microsoft YaHei",
+    "body": "same existing brand stack",
+    "source": "app/static/css/playful.css:30"
+  },
+  "palette": {
+    "canvas": "#fff6ef",
+    "surface": "#fffdf9",
+    "ink": "#453d48",
+    "accent": "#83556f",
+    "source": "app/static/css/playful.css:2",
+    "variants": [
+      "sage",
+      "blue",
+      "lavender",
+      "rose",
+      "dark"
+    ]
+  },
+  "motion": "motion-cut; CSS interaction feedback only; no runtime animation library",
+  "spacing": "existing spacing refined to semantic 4-point tokens",
+  "preserved": [
+    "brand",
+    "route URLs",
+    "primary navigation labels",
+    "form field names and order",
+    "theme preferences",
+    "print documents"
+  ],
+  "introduced": [
+    "tokens.css",
+    "additive refinement.css",
+    "functional home session panel",
+    "inline setup recovery",
+    "login image and password visibility"
+  ],
+  "inputs": {
+    "package.json": 1791331588.5096805,
+    "tailwind.config.cjs": 1791228193.3335526
+  },
+  "validation": {
+    "browser_tests": 93,
+    "lighthouse_login": {
+      "performance": 99,
+      "accessibility": 100,
+      "best_practices": 100,
+      "lcp_seconds": 2.0,
+      "cls": 0
+    }
+  }
+}

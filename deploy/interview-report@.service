@@ -1,0 +1,24 @@
+[Unit]
+Description=Interview Report Worker %i
+After=network.target redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/projects/interview
+Environment="PATH=/root/projects/interview/venv/bin:/root/.nix-profile/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="REPORT_WORKER_NAME=interview-report-%i"
+Environment="LD_LIBRARY_PATH=/nix/store/dj06r96j515npcqi9d8af1d1c60bx2vn-gcc-14.3.0-lib/lib:/nix/store/z55x0q74zldi64iwamqf8wgrm2iza5rk-zlib-1.3.1/lib"
+ExecStart=/bin/bash /root/projects/interview/run-production.sh worker
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=660
+KillSignal=SIGTERM
+KillMode=mixed
+LimitNOFILE=65536
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

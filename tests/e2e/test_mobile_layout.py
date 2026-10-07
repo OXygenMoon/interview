@@ -267,7 +267,7 @@ def test_live_interview_input_and_navigation_fit_touch_landscape(touch_page, liv
     with page.expect_response('**/api/interview/resumable') as resumable:
         page.goto(f'{live_server}/login')
         page.get_by_label('账号').fill('mobile_interview_student')
-        page.get_by_label('密码').fill('MobileInterviewPass123!')
+        page.get_by_label('密码', exact=True).fill('MobileInterviewPass123!')
         page.get_by_test_id('login-submit').tap()
     expect(page.get_by_test_id('student-home')).to_be_visible()
     if resumable.value.json()['has_session']:
@@ -331,7 +331,7 @@ def test_record_keyboard_details_navigation_and_desktop_restore(page, live_serve
     page.keyboard.press('Escape')
     expect(record).to_be_focused()
     record.get_by_role('button', name='查看详情', exact=True).click()
-    page.locator('.mobile-record-dialog').get_by_role('link', name='查看报告').click()
+    page.locator('.mobile-record-dialog').get_by_role('link', name='查看报告', exact=True).click()
     expect(page).to_have_url(re.compile(r'/interview/summary/\d+$'))
     page.goto(f'{live_server}/')
     Path('test-results').mkdir(exist_ok=True)
@@ -344,7 +344,7 @@ def test_record_keyboard_details_navigation_and_desktop_restore(page, live_serve
     expect(page.locator('#recent-records-table')).to_have_attribute('role', 'table')
     expect(page.locator('#recent-records-table thead')).to_be_visible()
     expect(page.locator('#recent-records-table .mobile-record-open').first).not_to_be_visible()
-    expect(page.get_by_role('link', name='查看报告')).to_be_visible()
+    expect(page.get_by_role('link', name='查看报告', exact=True)).to_be_visible()
 
 
 @pytest.mark.parametrize('width', [320, 390, 768, 844])
@@ -364,5 +364,5 @@ def test_long_record_titles_wrap_to_two_lines_and_open_complete_details(page, li
     page.locator('#recent-records-table .mobile-record-open button').first.click()
     expect(page.locator('#mobile-record-title')).to_have_text(name)
     expect(page.locator('.record-detail-fields')).to_contain_text(name)
-    expect(page.locator('.mobile-record-dialog').get_by_role('link', name='查看报告')).to_be_visible()
+    expect(page.locator('.mobile-record-dialog').get_by_role('link', name='查看报告', exact=True)).to_be_visible()
     page.keyboard.press('Escape')

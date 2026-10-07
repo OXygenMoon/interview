@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}测试账号{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/test-accounts.css') }}">
+{% endblock %}
+{% block content %}
+<section class="test-pool" data-testid="test-account-pool" data-status-url="{{ url_for('test_accounts.status') }}">
+    <header class="test-pool-heading">
+        <div>
+            <p class="club-eyebrow">{{ test_department }} / {{ test_class }}</p>
+            <h1>选一个账号，开始体验。</h1>
+            <p>10 个测试账号，共享一个班级。完成或放弃面试后，等待 5 分钟即可再次练习。</p>
+        </div>
+        <div class="test-pool-count"><strong data-pool-available>{{ accounts | selectattr('active') | rejectattr('busy') | list | length }}</strong><span>个账号可用</span></div>
+    </header>
+    <div class="test-pool-note">
+        <p>账号状态每 5 秒自动更新。使用中的账号无法重复登录，退出登录后立即可用。</p>
+        <p>关闭所有平台页面或网络断开后，约 3 分钟自动释放账号；再次访问需要重新选择。测试资料与记录会保留在对应账号中。</p>
+    </div>
+    {% if pool_error %}<p class="alert alert-error" role="alert">{{ pool_error }}</p>{% endif %}
+    {% if current_user.is_authenticated %}
+    <p class="test-pool-session" data-pool-session>当前登录：{{ current_user.truename or current_user.username }}。切换账号前，请通过右上角账号菜单退出登录。</p>
+    {% else %}
+    <p class="test-pool-session" data-pool-session hidden></p>
+    {% endif %}
+    <p class="test-pool-sync" data-pool-sync role="status" aria-live="polite">账号状态已更新</p>
+    <div class="test-pool-grid">
+        {% for account in accounts %}
+        <article class="test-pool-card" data-account-id="{{ account.id }}">
+            <span class="test-pool-number" aria-hidden="true">{{ '%02d' | format(loop.index) }}</span>
+            <div><h2>{{ account.name }}</h2><p class="test-pool-username">{{ account.username }}</p></div>
+            <p class="test-pool-state" data-state data-busy="{{ 'true' if account.busy else 'false' }}">
+                {{ '已停用，无法登录' if not account.active else ('使用中，无法登录该账号' if account.busy else '未登录，可以使用') }}
+            </p>
+            <form method="POST" action="{{ url_for('test_accounts.login', user_id=account.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn {{ 'btn-primary' if account.owned or (account.active and not account.busy and not current_user.is_authenticated) else 'btn-outline' }}" type="submit" data-login-button {% if not account.owned and (not account.active or account.busy or current_user.is_authenticated) %}disabled{% endif %}>
+                    {{ '进入面试大厅 →' if account.owned else ('已停用' if not account.active else ('使用中' if account.busy else '使用此账号 →')) }}
+                </button>
+            </form>
+        </article>
+        {% else %}
+        <p class="alert">测试账号尚未初始化，请联系管理员。</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/test-accounts.js') }}" defer></script>
+{% endblock %}

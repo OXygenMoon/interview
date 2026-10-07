@@ -19,7 +19,7 @@ PASSWORDS = {
 def login(page, base_url, username):
     page.goto(f'{base_url}/login')
     page.get_by_label('账号').fill(username)
-    page.get_by_label('密码').fill(PASSWORDS[username])
+    page.get_by_label('密码', exact=True).fill(PASSWORDS[username])
     page.get_by_test_id('login-submit').click()
 
 

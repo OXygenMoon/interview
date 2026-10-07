@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# 通用前台启动脚本（macOS 本地 / Linux 服务器通用）
+# 通用前台启动脚本（macOS 开发 / Linux 生产）
 #
 #   ./run.sh                前台运行（Ctrl+C 停止）
 #   APP_PORT=5050 ./run.sh  覆盖端口
+#   APP_RUN_MODE=development ./run.sh  Linux 上显式使用开发服务器
 #
 # 行为：
 #   - 本地（macOS）：优先使用项目 .venv/bin/python
@@ -21,6 +22,11 @@ if [ -f "$ROOT_DIR/.env" ]; then
     # shellcheck disable=SC1091
     . "$ROOT_DIR/.env"
     set +a
+fi
+
+# Linux defaults to the production server; macOS keeps local development.
+if [ "$(uname -s)" = "Linux" ] && [ "${APP_RUN_MODE:-production}" = production ]; then
+    exec /bin/bash "$ROOT_DIR/run-production.sh" web
 fi
 
 export APP_HOST="${APP_HOST:-127.0.0.1}"

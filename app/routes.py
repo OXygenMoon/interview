@@ -12,6 +12,7 @@ from .models import InterviewSession, ChatMessage, User, Department, SchoolClass
 from .config import Config
 from .decorators import teacher_required, admin_required
 from .services.question_bank import get_random_interview_questions, sanitize_questions
+from .services.visual_review import visual_record
 from .utils.session_state import (
     mark_reviewed,
     expire_stale_sessions,
@@ -21,6 +22,35 @@ from .utils.session_state import (
 )
 
 bp = Blueprint('routes', __name__)
+
+
+def _can_view_interview(session):
+    student = db.session.get(User, session.user_id)
+    return bool(student) and (
+        current_user.id == student.id
+        or current_user.role == 'admin'
+        or (current_user.role == 'dept_head' and current_user.department == student.department)
+        or (current_user.role == 'teacher' and current_user.department == student.department
+            and current_user.class_name == student.class_name)
+    )
+
+
+@bp.route('/interview/<int:session_id>/frames/<int:message_id>')
+@login_required
+def interview_frame(session_id, message_id):
+    session = InterviewSession.query.get_or_404(session_id)
+    if session.status == 'deleted':
+        abort(404)
+    if not _can_view_interview(session):
+        abort(403)
+    message = ChatMessage.query.filter_by(id=message_id, session_id=session_id, sender='user').first_or_404()
+    if not message.visual_image:
+        abort(404)
+    mimetype = 'image/png' if message.visual_image.startswith(b'\x89PNG') else 'image/jpeg'
+    response = send_file(BytesIO(message.visual_image), mimetype=mimetype)
+    response.headers['Cache-Control'] = 'private, no-store'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 # ===============================================================
@@ -60,10 +90,12 @@ def admin_settings():
     if request.method == 'POST':
         # 处理开关设置
         enable_tts = request.form.get('enable_tts') == 'on'
+        enable_realtime_voice = request.form.get('enable_realtime_voice') == 'on'
         enable_video = request.form.get('enable_video') == 'on'
 
         # 保存设置
         SystemConfig.set('enable_tts', 'true' if enable_tts else 'false', '是否启用面试官语音输出 (TTS)')
+        SystemConfig.set('enable_realtime_voice', 'true' if enable_realtime_voice else 'false', '是否启用实时语音交互')
         SystemConfig.set('enable_video', 'true' if enable_video else 'false', '是否启用视频面试 (摄像头与视觉分析)')
 
         # 冷却系统配置
@@ -90,6 +122,7 @@ def admin_settings():
 
     # 读取设置
     enable_tts = SystemConfig.get('enable_tts', 'true') == 'true'
+    enable_realtime_voice = SystemConfig.get('enable_realtime_voice', 'true') == 'true'
     enable_video = SystemConfig.get('enable_video', 'true') == 'true'
     cooldown = {
         'session_ttl_minutes': SystemConfig.get('session_ttl_minutes', '10'),
@@ -100,7 +133,8 @@ def admin_settings():
         'temp_retention_hours': SystemConfig.get('temp_retention_hours', '24'),
     }
 
-    return render_template('admin_settings.html', enable_tts=enable_tts, enable_video=enable_video, cooldown=cooldown)
+    return render_template('admin_settings.html', enable_tts=enable_tts, enable_realtime_voice=enable_realtime_voice,
+                           enable_video=enable_video, cooldown=cooldown)
 
 
 @bp.route('/admin/random_questions', methods=['GET', 'POST'])
@@ -411,6 +445,7 @@ def interview_room(session_id):
     
     # 获取全局配置
     enable_video = SystemConfig.get('enable_video', 'true') == 'true'
+    enable_realtime_voice = SystemConfig.get('enable_realtime_voice', 'true') == 'true'
 
     return render_template('chat.html',
                            session=session,
@@ -418,7 +453,11 @@ def interview_room(session_id):
                            current_user=current_user,
                            base_template=base_template,
                            is_read_only=is_read_only,
-                           enable_video=enable_video)
+                           enable_video=enable_video,
+                           enable_realtime_voice=enable_realtime_voice,
+                           enable_tts=SystemConfig.get('enable_tts', 'true') == 'true',
+                           visual_records={msg.id: record for msg in messages
+                                           if (record := visual_record(msg, session))})
 
 
 # === 面试报告页 ===
@@ -464,7 +503,9 @@ def interview_summary(session_id):
                            session=session,
                            current_user=current_user,
                            messages=messages,
-                           base_template=base_template)
+                           base_template=base_template,
+                           visual_records={msg.id: record for msg in messages
+                                           if (record := visual_record(msg, session))})
 
 
 # === 个人与杂项 ===

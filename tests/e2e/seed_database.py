@@ -1,9 +1,11 @@
 """Seed deterministic data into the isolated E2E database."""
 
 import json
+import base64
 from datetime import datetime, timedelta
 
 from app import create_app, db
+from app.services.test_accounts import seed_test_accounts
 from app.models import (
     ChatMessage,
     Company,
@@ -21,6 +23,7 @@ PASSWORDS = {
     'student': 'StudentPass123!',
     'interview_student': 'InterviewPass123!',
     'mobile_interview_student': 'MobileInterviewPass123!',
+    'realtime_student': 'RealtimePass123!',
     'teacher': 'TeacherPass123!',
     'admin': 'AdminPass123!',
 }
@@ -44,6 +47,7 @@ def main():
     app = create_app()
     app.config.update(TESTING=True)
     with app.app_context():
+        seed_test_accounts()
         if User.query.filter_by(username='student').first():
             return
 
@@ -108,6 +112,7 @@ def main():
         teacher = make_user('teacher', 'teacher', '端到端教师')
         admin = make_user('admin', 'admin', '端到端管理员')
         mobile_student = make_user('mobile_interview_student', 'student', '手机交互学生')
+        realtime_student = make_user('realtime_student', 'student', '实时语音测试学生')
         student.student_id = 'E2E-STUDENT-001'
         interview_student.student_id = 'E2E-STUDENT-002'
 
@@ -120,6 +125,7 @@ def main():
             teacher,
             admin,
             mobile_student,
+            realtime_student,
         ])
         db.session.flush()
 
@@ -151,6 +157,7 @@ def main():
                 session_id=completed.id,
                 sender='ai',
                 content='请介绍一次服务稳定性改进。',
+                timestamp=started + timedelta(seconds=60),
             ),
             ChatMessage(
                 session_id=completed.id,
@@ -158,8 +165,46 @@ def main():
                 content='我通过指标、告警和压测闭环改进稳定性。',
                 is_good_response=True,
                 suggestion='可以补充量化结果。',
+                reference_answer='示例思路：说明改进前后的故障率和具体行动。',
+                timestamp=started + timedelta(seconds=90),
+                visual_captured_at=started + timedelta(seconds=90),
+                visual_image=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQ1sAAAAASUVORK5CYII='),
+                visual_context=json.dumps({
+                    'tags': ['头肩居中', '镜头偏低'],
+                    'comment': '本帧头肩居中。建议将镜头抬至眼睛同高，保持自然姿态。',
+                }, ensure_ascii=False),
             ),
         ])
+        visual_report = InterviewSession(
+            user_id=admin.id,
+            target_role='仪态翻页测试',
+            difficulty='标准模式',
+            status='completed',
+            total_score=70,
+            radar_data={'表达能力': 70},
+            summary_comment='用于验证不同时间戳的画面切换。',
+            start_time=started,
+            end_time=started + timedelta(minutes=15),
+            reviewed=True,
+            report_queue_status='finished',
+        )
+        db.session.add(visual_report)
+        db.session.flush()
+        for index in range(9):
+            captured = started + timedelta(seconds=90 + index * 30)
+            db.session.add(ChatMessage(
+                session_id=visual_report.id,
+                sender='user',
+                content=f'第 {index + 1} 次仪态练习回答。',
+                timestamp=captured,
+                visual_captured_at=captured if index != 8 else None,
+                visual_image=(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQ1sAAAAASUVORK5CYII=')
+                              if index != 8 else None),
+                visual_context=json.dumps({
+                    'tags': [f'画面标签 {index + 1}'],
+                    'comment': f'第 {index + 1} 帧仪态点评：保持头肩自然，调整镜头高度。',
+                }, ensure_ascii=False),
+            ))
         db.session.commit()
 
 

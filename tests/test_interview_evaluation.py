@@ -9,6 +9,7 @@ from scripts.evaluate_interview_rounds import (
     history_for,
     judge_case,
 )
+from scripts.evaluate_student_interviews import validate_fixtures
 
 
 def test_round_fixtures_use_identical_questions_across_profiles():
@@ -23,6 +24,14 @@ def test_round_fixtures_use_identical_questions_across_profiles():
             assert len(history) == 12
             assert [message.id for message in history] == list(range(1, 13))
             assert all(message.sender == 'user' for message in history[1::2])
+
+
+def test_student_fixtures_cover_both_modes_all_rounds_and_score_edges():
+    path = Path(__file__).resolve().parents[1] / 'docs/student-interview-cases-v4.json'
+    fixtures = json.loads(path.read_text())
+    validate_fixtures(fixtures)
+    assert len({c['case_id'] for c in fixtures['cases'] + fixtures['edge_cases']}) == 24
+    assert all(c['expected_total'] == 0 for c in fixtures['edge_cases'])
 
 
 def test_blocked_or_missing_profiles_do_not_count_as_ordering_pass():

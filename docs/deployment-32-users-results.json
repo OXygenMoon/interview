@@ -1,0 +1,57 @@
+{
+  "users": 32,
+  "base_url": "http://127.0.0.1:20018",
+  "phases": {
+    "login": {
+      "requests": 32,
+      "success": 32,
+      "wall_seconds": 1.1,
+      "median_seconds": 1.025,
+      "p95_seconds": 1.046,
+      "max_seconds": 1.075,
+      "failures": []
+    },
+    "pages": {
+      "requests": 320,
+      "success": 320,
+      "wall_seconds": 0.904,
+      "median_seconds": 0.059,
+      "p95_seconds": 0.226,
+      "max_seconds": 0.409,
+      "failures": []
+    },
+    "speech_first_use": {
+      "requests": 32,
+      "success": 32,
+      "wall_seconds": 7.796,
+      "median_seconds": 4.641,
+      "p95_seconds": 7.23,
+      "max_seconds": 7.778,
+      "failures": []
+    },
+    "speech_warm": {
+      "requests": 32,
+      "success": 32,
+      "wall_seconds": 7.54,
+      "median_seconds": 2.823,
+      "p95_seconds": 6.244,
+      "max_seconds": 7.506,
+      "failures": []
+    },
+    "chat": {
+      "requests": 32,
+      "success": 32,
+      "wall_seconds": 2.517,
+      "median_seconds": 1.961,
+      "p95_seconds": 2.351,
+      "max_seconds": 2.473,
+      "failures": [],
+      "responses_with_audio": 0,
+      "max_first_token_seconds": 2.013
+    }
+  },
+  "cleanup": {
+    "remaining_probe_users": 0
+  },
+  "passed": true
+}

@@ -74,6 +74,29 @@ def create_app():
         queue = get_queue_health()
         return jsonify(queue), 200 if queue['ready'] else 503
 
+    @app.before_request
+    def require_current_database_schema():
+        # Check before auth/CSRF hooks or templates can load a user relation
+        # whose table is introduced by an unapplied migration.
+        if app.testing or request.endpoint in {
+            'healthz', 'readyz', 'queuez', 'static',
+        }:
+            return None
+        from .database_migrations import get_migration_status
+        # A development reload or deployment can add revisions while the
+        # process still holds an earlier "current" status. Never trust that
+        # cached success to authorize queries against new models.
+        status = get_migration_status()
+        app.extensions['database_migration_status'] = status
+        if not status['is_current']:
+            abort(
+                503,
+                description=(
+                    '数据库迁移尚未完成，请先运行 '
+                    '`flask --app run.py bootstrap-db`。'
+                ),
+            )
+
     from .security import init_csrf_protection
     init_csrf_protection(app)
 
@@ -89,7 +112,9 @@ def create_app():
     from .models import User
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, int(user_id))
+        from .services.test_accounts import validate_test_login
+        user = db.session.get(User, int(user_id))
+        return user if user and validate_test_login(user) else None
 
     # =========================================================
     # 注册蓝图
@@ -97,12 +122,20 @@ def create_app():
     from .api.interview import api_bp as interview_bp
     app.register_blueprint(interview_bp, url_prefix='/api/interview')
 
+    from .api.realtime import init_realtime
+    init_realtime(app)
+
     from .routes import bp as routes_bp
     app.register_blueprint(routes_bp)
 
     # === 注册认证蓝图 ===
     from .auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    from .test_accounts import test_accounts_bp
+    from .services.test_accounts import init_test_account_sessions
+    app.register_blueprint(test_accounts_bp)
+    init_test_account_sessions(app)
 
     from .integrations.account_link import init_account_link
     from .integrations.account_link_authority import operate
@@ -147,28 +180,5 @@ def create_app():
             repair_question_bank()
             from .services.storage_cleanup import cleanup_runtime_files
             cleanup_runtime_files(app)
-
-    @app.before_request
-    def require_current_database_schema():
-        if app.testing or request.endpoint in {
-            'healthz',
-            'readyz',
-            'queuez',
-            'static',
-        }:
-            return None
-        status = app.extensions['database_migration_status']
-        if not status['is_current']:
-            from .database_migrations import get_migration_status
-            status = get_migration_status()
-            app.extensions['database_migration_status'] = status
-        if not status['is_current']:
-            abort(
-                503,
-                description=(
-                    '数据库迁移尚未完成，请先运行 '
-                    '`flask --app run.py bootstrap-db`。'
-                ),
-            )
 
     return app

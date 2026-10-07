@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% from '_visual_review.html' import visual_card %}
 
 {% block title %}面试深度复盘{% endblock %}
 
@@ -99,7 +100,7 @@
                         <div class="font-bold text-indigo-700">挑战下一轮面试</div>
                         <div class="text-xs text-indigo-500 mt-1">
                             当前：{% set r = session.round or 1 %}{% if r == 1 %}初面（HR）{% elif r == 2 %}复面（技术）{% else %}终面{% endif %}
-                            · 下一轮：{% if r == 1 %}复面（技术面，深挖专业能力）{% else %}终面（高管面，考察综合素质）{% endif %}
+                            · 下一轮：{% if session.difficulty in ['新手模式', '标准模式'] %}{% if r == 1 %}复面（基础实操）{% else %}终面（协作与成长）{% endif %}{% else %}{% if r == 1 %}复面（技术面，深挖专业能力）{% else %}终面（高管面，考察综合素质）{% endif %}{% endif %}
                         </div>
                     </div>
                     <button onclick="startNextRound()" id="nextRoundBtn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm whitespace-nowrap">进入下一轮 →</button>
@@ -129,6 +130,31 @@
         </div>
 
         <div class="lg:col-span-8">
+            <section class="card bg-white shadow-sm border border-stone-200 mb-6" aria-labelledby="visual-review-title" data-testid="visual-review">
+                <div class="card-body p-6">
+                    <h3 id="visual-review-title" class="font-bold text-lg text-stone-800">视频画面与仪态复盘</h3>
+                    {% if visual_records %}
+                    <p class="text-sm text-stone-500 mb-3">共 {{ visual_records|length }} 条画面记录。时间戳为距面试开始的时长；每次提交回答时截取一帧，点评仅依据当时可见的姿态与画面。</p>
+                    <div data-visual-pager>
+                        <nav class="visual-page-nav" aria-label="选择画面时间戳">
+                            {% for record in visual_records.values() %}
+                            {% if not loop.first %}<span class="visual-page-divider" aria-hidden="true">|</span>{% endif %}
+                            <button type="button" class="visual-page-button" data-visual-page="{{ loop.index0 }}" data-elapsed="{{ record.elapsed }}" aria-controls="visual-panel-{{ record.message_id }}" aria-label="第 {{ loop.index }} 条画面，{{ record.elapsed }}"{% if loop.first %} aria-current="page"{% endif %}>{{ loop.index }}</button>
+                            {% endfor %}
+                        </nav>
+                        {% set first_record = visual_records.values()|first %}
+                        <p class="visual-page-status text-sm text-stone-500" aria-live="polite" aria-atomic="true" data-visual-page-status>第 1 / {{ visual_records|length }} 条 · 时间戳 {{ first_record.elapsed }}</p>
+                        {% for record in visual_records.values() %}
+                        <div id="visual-panel-{{ record.message_id }}" data-visual-panel role="region" aria-label="{{ record.elapsed }} 的画面与仪态点评"{% if not loop.first %} hidden{% endif %}>
+                            {{ visual_card(record, session.id, true) }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-stone-500">本次没有可用的画面记录，无法进行仪态点评。下次练习可开启摄像头，在提交回答时记录画面。</p>
+                    {% endif %}
+                </div>
+            </section>
             <div class="card bg-white shadow-sm border border-stone-200 min-h-screen">
                 <div class="card-header px-6 py-5 border-b border-stone-100 flex justify-between items-center bg-stone-50/50 rounded-t-2xl">
                     <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
@@ -158,7 +184,7 @@
                             </div>
 
                         {% else %}
-                            <div class="flex flex-col items-end gap-2 group">
+                            <div id="answer-{{ msg.id }}" class="flex flex-col items-end gap-2 group" style="scroll-margin-top: 100px;">
                                 <div class="flex gap-4 flex-row-reverse max-w-[90%]">
                                     <div class="flex-shrink-0 mt-1">
                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md shadow-orange-100">
@@ -167,6 +193,9 @@
                                     </div>
 
                                     <div class="flex flex-col items-end w-full">
+                                        {% if msg.id in visual_records %}
+                                        <a href="#visual-{{ msg.id }}" class="link text-xs text-stone-500 mb-2">{{ visual_records[msg.id].elapsed }} · 查看画面与仪态点评</a>
+                                        {% endif %}
                                         <div class="bg-orange-500 text-white p-4 rounded-2xl rounded-tr-none text-sm shadow-md shadow-orange-100 leading-relaxed text-left w-fit max-w-full">
                                             {{ msg.content }}
                                         </div>
@@ -225,6 +254,7 @@
 </div>
 
 
+<script src="{{ url_for('static', filename='js/visual-review-pager.js') }}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const rawData = {{ session.radar_data | tojson | safe }} || {};
@@ -273,6 +303,47 @@
 </script>
 
 <style>
+    .visual-page-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+    }
+    .visual-page-button {
+        min-width: 44px;
+        min-height: 44px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: var(--color-muted);
+        font-weight: 600;
+        background: transparent;
+        cursor: pointer;
+    }
+    .visual-page-button:hover {
+        background: var(--color-soft);
+        color: var(--color-accent);
+    }
+    .visual-page-button[aria-current="page"] {
+        background: var(--color-soft);
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+    }
+    .visual-page-button:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+    .visual-page-divider {
+        color: var(--color-rule);
+    }
+    .visual-page-status {
+        margin: 8px 0 16px;
+    }
+    [data-visual-panel][hidden] {
+        display: none;
+    }
+    [data-visual-panel] img {
+        height: clamp(180px, 30vw, 300px) !important;
+    }
     @keyframes pulse-once {
         0% { transform: scale(0.98); opacity: 0; }
         100% { transform: scale(1); opacity: 1; }

@@ -1,0 +1,65 @@
+/* Hallmark · macrostructure: Workbench · tone: calm learning · anchor hue: muted rose
+ * genre: modern-minimal · theme: existing soft-color brand · nav: N1b · footer: Ft2
+ * pre-emit critique: P4 H5 E4 S5 R5 V4 · scope: app
+ * Existing theme variables remain the palette authority for all six themes.
+ */
+:root {
+    --color-paper: var(--ui-canvas);
+    --color-surface: var(--ui-surface);
+    --color-ink: var(--ui-ink);
+    --color-muted: var(--ui-muted);
+    --color-accent: var(--ui-accent);
+    --color-accent-hover: var(--theme-primary-hover);
+    --color-accent-ink: oklch(99% 0.004 65);
+    --color-rule: var(--ui-line);
+    --color-soft: color-mix(in oklch, var(--color-accent) 7%, var(--color-surface));
+    --color-raised: color-mix(in oklch, var(--color-surface) 70%, var(--color-paper));
+    --color-focus: var(--ui-accent);
+    --color-error: oklch(44% 0.13 23);
+    --color-error-soft: oklch(96% 0.018 23);
+    --color-success: oklch(40% 0.085 150);
+    --color-success-soft: oklch(96% 0.018 150);
+    --color-shadow: color-mix(in oklch, var(--color-accent) 12%, transparent);
+    --color-overlay: oklch(22% 0.025 320 / 0.45);
+    --font-display: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-body: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --space-3xs: 0.25rem;
+    --space-2xs: 0.5rem;
+    --space-xs: 0.75rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --space-2xl: 4rem;
+    --space-3xl: 6rem;
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-body: 1rem;
+    --text-lg: 1.125rem;
+    --text-title: clamp(1.75rem, 2.4vw, 2.25rem);
+    --text-display: clamp(1.75rem, 2.8vw, 2.75rem);
+    --radius-input: 0.625rem;
+    --radius-button: 0.75rem;
+    --radius-panel: 1.25rem;
+    --radius-feature: 1.5rem;
+    --radius-pill: 999px;
+    --rule-hair: 1px;
+    --dur-short: 160ms;
+    --dur-medium: 240ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    /* Shared with the existing shell: navigation 40, dialogs 50, skip link 60. */
+    --layer-nav: 40;
+    --layer-dialog: 50;
+    --layer-skip: 60;
+}
+html[data-theme="playful-dark"] {
+    --color-accent-ink: oklch(23% 0.028 330);
+    --color-error: oklch(82% 0.075 23);
+    --color-error-soft: oklch(29% 0.03 23);
+    --color-success: oklch(82% 0.075 150);
+    --color-success-soft: oklch(29% 0.03 150);
+    --color-overlay: oklch(15% 0.025 320 / 0.7);
+}

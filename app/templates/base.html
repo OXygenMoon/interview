@@ -8,17 +8,14 @@
     <title>{% block title %}{% endblock %} - 嘉善技师学院 AI 智聘平台</title>
     <script src="{{ url_for('static', filename='js/app-theme.js') }}"></script>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/brand.svg') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/playful.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/light-themes.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-utilities.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/playful-dark.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.bundle.css' if request.endpoint in ['auth.login', 'auth.register'] else 'css/app.bundle.css') }}">
     <script src="{{ url_for('static', filename='js/app-requests.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-shell.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/account-link.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/app-responsive.js') }}" defer></script>
+    {% if request.endpoint in ['routes.home', 'routes.interview_room'] %}
     <script src="{{ url_for('static', filename='vendor/marked.min.js') }}"></script>
+    {% endif %}
     {% if request.endpoint in ['routes.history', 'routes.ability_radar', 'routes.interview_summary', 'routes.dashboard_compare', 'routes.teacher_student_detail', 'routes.admin_capability_profile'] %}
     <script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app-charts.js') }}"></script>
@@ -40,5 +37,8 @@
         </div>
     </main>
     {% block scripts %}{% endblock %}
+    {% if current_user.is_authenticated and current_user.test_account %}
+    <script src="{{ url_for('static', filename='js/test-account-session.js') }}" data-test-account-heartbeat="{{ url_for('test_accounts.heartbeat') }}" data-test-account-pool="{{ url_for('test_accounts.index') }}" defer></script>
+    {% endif %}
 </body>
 </html>

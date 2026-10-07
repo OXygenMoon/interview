@@ -5,7 +5,7 @@
 <a href="{{ url_for(destination) }}" class="app-nav-link {{ 'is-active' if active else '' }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
 {%- endmacro %}
 <header class="app-navbar" id="app-navbar" data-testid="app-navbar">
-    <a class="app-brand" href="{{ url_for('routes.dashboard' if teaching else 'routes.home') }}" aria-label="AI 智聘平台首页">
+    <a class="app-brand" href="{{ url_for('routes.dashboard' if teaching else 'routes.home') }}" aria-label="AI 智聘 {{ '教学工作空间' if teaching else '你的成长练习站' }}首页">
         <span class="app-brand-mark" aria-hidden="true">✳</span>
         <span>AI 智聘<span class="app-brand-caption">{{ '教学工作空间' if teaching else '你的成长练习站' }}</span></span>
     </a>
@@ -45,6 +45,7 @@
         {% elif not signed_in %}
             <span class="app-nav-note">练习一次，多一点底气。</span>
             {{ nav_link('返回登录', 'auth.login', endpoint == 'auth.login') }}
+            {{ nav_link('测试账号', 'test_accounts.index', endpoint == 'test_accounts.index') }}
         {% else %}
             <span class="app-nav-note">完成密码更新，继续你的练习。</span>
         {% endif %}
@@ -65,6 +66,9 @@
                 <button class="app-profile-action" type="button" data-link-start disabled>关联 WikiBook 账号</button>
                 <button class="app-profile-action" type="button" data-account-switch hidden>切换 WikiBook</button>
                 <a class="app-profile-action" href="{{ url_for('routes.account_links') }}">账号关联设置</a>
+                {% if current_user.test_account or current_user.is_admin %}
+                <a class="app-profile-action" href="{{ url_for('test_accounts.index') }}">测试账号与使用状态</a>
+                {% endif %}
                 {% endif %}
                 <form method="POST" action="{{ url_for('auth.logout') }}" class="app-profile-logout">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

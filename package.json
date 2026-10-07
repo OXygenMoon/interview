@@ -2,7 +2,7 @@
   "name": "interview-ui",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -c tailwind.config.cjs -i app/static/css/tailwind-input.css -o app/static/css/ui.css --minify && node scripts/build-theme-utilities.cjs",
+    "build:css": "tailwindcss -c tailwind.config.cjs -i app/static/css/tailwind-input.css -o app/static/css/ui.css --minify && tailwindcss -c tailwind.auth.config.cjs -i app/static/css/tailwind-input.css -o app/static/css/auth-ui.css --minify && node scripts/build-theme-utilities.cjs && node scripts/build-theme-utilities.cjs auth-ui.css auth-theme-utilities.css && node scripts/build-design-tokens.cjs && node scripts/build-stylesheets.cjs",
     "build:vendor": "node scripts/build-vendor.cjs",
     "build:assets": "npm run build:css && npm run build:vendor"
   },

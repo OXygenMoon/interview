@@ -55,6 +55,15 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+class TestAccount(db.Model):
+    """Dedicated demo accounts with a single renewable browser login lease."""
+    __tablename__ = 'test_accounts'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    lease_token = db.Column(db.String(64))
+    lease_expires_at = db.Column(db.DateTime)
+    user = db.relationship('User', backref=db.backref('test_account', uselist=False))
+
+
 class Resume(db.Model):
     """简历表"""
     __tablename__ = 'resumes'
@@ -162,6 +171,8 @@ class ChatMessage(db.Model):
 
     # 新增：视觉分析上下文 (存储 JSON 或 文本标签)
     visual_context = db.Column(db.Text)
+    visual_image = db.deferred(db.Column(db.LargeBinary))
+    visual_captured_at = db.Column(db.DateTime)
     generation_status = db.Column(db.String(30), default='completed', nullable=False)
     model_name = db.Column(db.String(100))
     error_message = db.Column(db.Text)

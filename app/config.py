@@ -80,19 +80,28 @@ class Config:
     # 密钥从环境变量读取
     VOLC_APPID = os.environ.get('VOLC_APPID')
     VOLC_ACCESS_TOKEN = os.environ.get('VOLC_ACCESS_TOKEN')
+    VOLC_API_KEY = os.environ.get('VOLC_API_KEY', '')
+    VOLC_REALTIME_URL = 'wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue'
+    VOLC_REALTIME_MODEL = '1.2.6.1'
+    VOLC_REALTIME_RESOURCE_ID = os.environ.get('VOLC_REALTIME_RESOURCE_ID', 'volc.speech.dialog')
+    VOLC_REALTIME_VOICE = os.environ.get('VOLC_REALTIME_VOICE', 'zh_male_yunzhou_jupiter_bigtts')
+    # Empty uses the activated realtime service to read text without a mic.
+    # Set a resource ID to explicitly use the separately activated TTS v3 API.
+    VOLC_TTS_RESOURCE_ID = os.environ.get('VOLC_TTS_RESOURCE_ID', '')
 
     # Cluster ID 通常是 'volcano_tts'，如果控制台显示不一样请修改
     VOLC_CLUSTER_ID = "volcano_tts"
 
-    # 音色选择 (常用音色推荐)：
-    # BV700_streaming: 灿灿 (知性女声，最常用，类似豆包)
-    # BV701_streaming: 阳光 (活力男声)
-    # BV001_streaming: 姐姐 (温柔女声)
-    # BV002_streaming: 故事 (深情男声)
+    # 新增 2.0 音色同时用于 TTS 播报和全双工实时对话。
     VOLC_AVAILABLE_VOICES = {
         '大壹老师': "zh_male_dayi_saturn_bigtts",
         '晓甜老师': 'zh_female_mizai_saturn_bigtts',
-        'VV老师': 'zh_female_vv_uranus_bigtts'
+        'VV老师': 'zh_female_vv_uranus_bigtts',
+        '云舟老师': 'zh_male_m191_uranus_bigtts',
+        '小天老师': 'zh_male_taocheng_uranus_bigtts',
+        '小何老师': 'zh_female_xiaohe_uranus_bigtts',
+        '知性灿灿老师': 'zh_female_cancan_uranus_bigtts',
+        '儒雅逸辰老师': 'zh_male_ruyayichen_uranus_bigtts',
     }
 
     VOLC_DEFAULT_VOICE = "zh_male_dayi_saturn_bigtts"

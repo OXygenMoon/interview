@@ -27,14 +27,30 @@
                     <label class="label cursor-pointer justify-start gap-4">
                         <input type="checkbox" name="enable_tts" class="toggle toggle-primary" {{ 'checked' if enable_tts else '' }} />
                         <div>
-                            <span class="label-text font-bold text-slate-700">启用语音输出 (TTS)</span>
+                            <span class="label-text font-bold text-slate-700">启用文字对话语音播报 (TTS)</span>
                             <div class="text-xs text-slate-400 mt-1">
-                                开启后，AI 面试官的回复将自动转换为语音播放。关闭此功能可节省 API 成本并加快响应速度。
+                                开启后，文字对话中的面试官回复将转换为语音播放。
                             </div>
                         </div>
                     </label>
                 </div>
                 
+                <div class="divider"></div>
+
+                <!-- Realtime Voice Toggle -->
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" name="enable_realtime_voice" class="toggle toggle-primary" {{ 'checked' if enable_realtime_voice else '' }} />
+                        <div>
+                            <span class="label-text font-bold text-slate-700">启用实时语音交互</span>
+                            <div class="text-xs text-slate-400 mt-1">
+                                开启后，学生可连续与面试官语音对话，并直接开口打断回复。
+                                <br>关闭后隐藏语音交互入口，同时停止正在进行的实时语音会话；学生仍可输入文字回答。
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
                 <div class="divider"></div>
 
                 <!-- Video Toggle -->

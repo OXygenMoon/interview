@@ -7,6 +7,9 @@
 
 ## 本地运行
 
+服务器的 32 人并发生产部署、验证结果和服务管理命令见
+[部署记录](docs/deployment-32-users.md)。
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -23,22 +26,67 @@ python run.py
 `deepseek-flash`），服务地址为 `https://api.deepseek.com`。`LLM_API_KEY`
 填写 DeepSeek 密钥；模型与地址可通过 `.env.example` 中的配置覆盖。面试
 默认关闭思考模式（`LLM_THINKING=disabled`），以减少短回复延迟。
-共享的简历和能力分析功能也使用此文本模型。语音识别改为在部署机器上
-运行 SenseVoice，录音不发送给云端 ASR；转写文字进入 DeepSeek 面试对话。
-语音播放继续使用豆包／火山引擎。
+共享的简历和能力分析功能也使用此文本模型。模拟面试的「开始实时对话」
+使用豆包 3.0 全双工语音模型，持续上传麦克风音频并流式返回文字和语音，
+支持开口打断、手动打断和静音；文字回答与评分报告仍使用 DeepSeek。
+单题练习和录音转写接口保留部署机器上的 SenseVoice。
 更新配置后重启 Web 与报告 Worker，使两者使用同一模型。
+
+## 实时语音配置
+
+在服务端 `.env` 设置 `VOLC_API_KEY`（豆包语音控制台「API Key 管理」中的密钥），
+并确保该 Key 已开通实时语音服务。鉴权请求头的
+`X-Api-Key` 使用此密钥；密钥不会下发给浏览器。接口为
+`wss://openspeech.bytedance.com/api/v3/duplex/realtime/dialogue`，
+模型版本为 `1.2.6.1`，按官方 3.0 JSON 事件协议接入。
+默认男声为云舟，原 VV／晓甜选择映射为实时模型支持的 VV／小何音色。
+前台「选择面试官音色」另提供云舟、小天、小何、知性灿灿、儒雅逸辰
+五款 2.0 音色，选择后用于本场面试的实时对话和文字模式语音播报。
+音色 ID 依据[火山引擎官方音色列表](https://docs.volcengine.com/docs/DoubaoVoice/Tonelist-1?lang=zh)。
+如需覆盖默认男声，在 `.env` 设置 `VOLC_REALTIME_VOICE`。
+
+安装更新后的 `requirements.txt` 并重启 Web。浏览器需通过 HTTPS 或
+localhost 访问才能授权麦克风。使用 Nginx 时需部署更新后的
+`interview_nginx` 中的 WebSocket Upgrade／Connection 转发配置；现有
+Gunicorn `gthread` 配置支持此连接，每个实时会话占用一个服务线程。
+
+音频按 20 ms 分包，输入单声道 16 kHz PCM16，输出 24 kHz PCM16。
+用户与面试官文字记录由服务端保存，支持刷新后续接、评分和复盘。
+摄像头观察单独请求，不阻塞语音流；面试官语音仍按现有 30 天策略留存。
+管理员可在「系统设置 → AI 面试官配置」单独开关「实时语音交互」，默认开启。
+保存后立即控制新连接，已有实时会话会在约 2 秒内停止并保存最后一句回答。
+「文字对话语音播报 (TTS)」独立控制文字模式的语音输出。
+面试页面的文字输入和实时语音控件互斥显示。切回文字会停止麦克风，
+文字回复自动语音播放，点击回复可重播；开启实时通话会停止文字播报。
+新 Key 默认通过已开通的实时语音服务强制朗读文字，不访问麦克风，
+并沿用本场面试选择的音色，无需额外开通独立 TTS 资源。
+如已开通独立 TTS v3，可设置 `VOLC_TTS_RESOURCE_ID` 为对应的
+`seed-tts-1.0`／`seed-tts-2.0` 资源。未配置新 Key 时保留旧 TTS 凭证兼容。
+
+协议依据：[实时语音 3.0](https://docs.volcengine.com/docs/DoubaoVoice/endtoend-realtime-voice-full-duplex-version?lang=zh)、
+[接入必读](https://docs.volcengine.com/docs/DoubaoVoice/access-mustread?lang=zh)。
 
 本地语音识别依赖系统 `ffmpeg`（macOS：`brew install ffmpeg`；Ubuntu：
 `apt-get install ffmpeg`）。安装 Python 依赖后，在每台部署机器上执行一次：
 
 ```bash
 python scripts/prepare_local_asr.py
+python scripts/prepare_local_asr.py --check
 ```
 
 脚本下载并校验约 158 MB 的模型包，模型保存在被 Git 忽略的
 `.local/asr/sensevoice`。识别时无需联网或 API 密钥；每个 Web Worker
 首次识别时加载一次模型。可通过 `ASR_MODEL_DIR`、`ASR_LANGUAGE` 和
 `ASR_NUM_THREADS` 设置模型目录、语言及 CPU 线程数。
+Python 3.13 及以上会按依赖清单安装 `audioop-lts`，补齐 `pydub` 所需的
+音频处理模块；请使用完整的 `requirements.txt` 安装依赖。
+
+若面试转写返回 503，在服务器上使用 Web 服务相同的 Python 虚拟环境、用户
+和 `PATH` 运行上述 `--check` 命令。它不下载模型，会检查 `ffmpeg`／`ffprobe`、
+识别依赖及模型加载，并用模型自带的中文示例验证 WebM 解码和实际转写。
+缺少模型时先执行准备命令；缺少依赖时安装 `requirements.txt` 和系统 `ffmpeg`，
+然后重启 Web 服务。后端日志会保留完整异常堆栈；损坏的录音返回 400，
+不再被误报为语音服务 503。
 
 ## 凭证安全
 
@@ -75,6 +123,26 @@ flask --app run.py reconcile-report-jobs
 `REPORT_RETRY_INTERVALS` 自动重试，耗尽后才标记为失败。
 
 ## 数据库迁移
+
+### 共享测试账号
+
+```bash
+flask --app run.py bootstrap-db
+flask --app run.py seed-test-accounts
+```
+
+`seed-test-accounts` 可重复运行，在「测试组 / 测试班」中创建 10 个学生账号
+`interview_test01` 至 `interview_test10`。访问 `/test-accounts` 或点击登录页的
+「使用测试账号体验」即可查看占用状态并一键登录，无需共享密码。
+页面每 5 秒刷新状态；数据库原子占用保证每个账号同一时间只有一个浏览器登录，
+密码登录和跨站切换也遵循此限制。同一浏览器中的多个标签页共用登录。
+平台页面每 30 秒续期，退出立即释放，关闭全部页面或断网约 3 分钟后释放；
+租约过期后旧登录失效，必须重新选择账号。
+
+这些账号完成或放弃面试后均等待 5 分钟，不要求先查看上次报告；进行中的面试
+仍需续接或结束。普通学生继续使用管理员设置的间隔和复盘要求。测试账号中的
+资料、简历和练习记录由使用者共享，并可在班级管理和能力画像中按「测试班」查看。
+管理员可以停用测试账号；重复初始化不会重新启用账号、修改密码或清除记录。
 
 数据库结构由 Flask-Migrate/Alembic 统一管理，应用启动不再调用
 `db.create_all()` 或执行隐式 DDL。
@@ -121,7 +189,12 @@ pytest -q tests/e2e -m e2e
 
 正式页面共用“柔彩创意”主题：`app/static/css/playful.css` 定义视觉与响应式规则，
 `tailwind.config.cjs` 定义 Tailwind/DaisyUI 的色板。导航统一在
-`app/templates/_navbar.html`，直接挂载于 `body`，使用固定定位悬浮于顶部。
+`app/templates/_navbar.html`，直接挂载于 `body`，固定在页面顶部。
+
+全站排版与控件细化规则位于 `app/static/css/refinement.css`，新增设计变量的
+源文件为根目录 `tokens.css`；CSS 构建自动生成 `app/static/css/tokens.css`。
+登录图片使用本地 WebP。设计决定、修改项与验证记录见
+[前端优化记录](docs/frontend-refinement-2026-10-07.md)。
 
 导航中的“主题”面板支持亮色与暗色；亮色可选奶油、鼠尾草、雾蓝、薰衣草和玫瑰。
 选择保存在当前浏览器，并同步到同源标签页；暗色切回亮色时恢复上次的色调。

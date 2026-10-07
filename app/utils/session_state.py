@@ -5,7 +5,7 @@
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_
 from .. import db
-from ..models import InterviewSession, SystemConfig
+from ..models import InterviewSession, SystemConfig, TestAccount
 
 
 def _cfg_int(key, default):
@@ -126,6 +126,7 @@ def get_cooldown_status(user_id):
     """
     expire_stale_sessions(user_id)
     reap_stuck_reports(user_id)
+    is_test_account = db.session.get(TestAccount, user_id) is not None
     last = InterviewSession.query.filter(
         InterviewSession.user_id == user_id,
     ).order_by(InterviewSession.last_activity.desc()).first()
@@ -152,7 +153,7 @@ def get_cooldown_status(user_id):
 
     # 放弃 / 过期：放弃罚时
     if last.abandoned or effective_status == 'expired':
-        cd = _cfg_int('cooldown_abandon_minutes', 10)
+        cd = 5 if is_test_account else _cfg_int('cooldown_abandon_minutes', 10)
         deadline = ref_time + timedelta(minutes=cd)
         if now < deadline:
             base.update(can_start=False, reason='abandon_cooldown',
@@ -162,11 +163,12 @@ def get_cooldown_status(user_id):
     # 已完成：先复盘，再冷却
     if effective_status in ('completed', 'processing'):
         if (last.status != 'deleted' and effective_status == 'completed'
+                and not is_test_account
                 and _cfg_bool('cooldown_requires_review', True)
                 and not last.reviewed):
             base.update(can_start=False, reason='review_required')
             return base
-        cd = _cfg_int('cooldown_complete_minutes', 30)
+        cd = 5 if is_test_account else _cfg_int('cooldown_complete_minutes', 30)
         deadline = ref_time + timedelta(minutes=cd)
         if now < deadline:
             base.update(can_start=False, reason='complete_cooldown',

@@ -7,6 +7,8 @@ import runpy
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 os.environ.setdefault('APP_ENV', 'testing')
 os.environ.setdefault('SECRET_KEY', 'test-secret-key')
 os.environ.setdefault('LLM_API_KEY', 'test-llm-key')
@@ -112,7 +114,7 @@ def test_report_preserves_short_answers_and_supplies_round_context_without_visua
     data = json.loads(score_call.kwargs['messages'][1]['content'])
     assert data['difficulty'] == '压力模式'
     assert data['position_context'] == position
-    assert data['round_scope'] == ai_agent.ROUND_SCOPES[2]
+    assert data['round_scope'] == ai_agent.get_round_scope(2, '压力模式')
     transcript = json.loads(data['transcript'])
     assert transcript[3]['sender'] == 'user'
     assert transcript[3]['content'] == spoof
@@ -158,14 +160,93 @@ def test_total_cannot_exceed_weighted_dimensions_or_raise_a_lower_judgment():
     scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (60, 50, 80, 0, 60)))
     payload = {'scores': scores, 'total_score': 95, 'comment': '仅评价已展示内容。'}
     with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
-        result = ai_agent._get_overall_score('记录', '后端工程师', 3)
+        result = ai_agent._get_overall_score('记录', '后端工程师', 3, difficulty='压力模式')
     # 60*.4 + 50*.25 + 80*.2 + 0*.1 + 60*.05 = 55.5; round half up.
     assert result['total_score'] == 56
 
     payload['total_score'] = 30
     with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
-        result = ai_agent._get_overall_score('记录', '后端工程师', 3)
+        result = ai_agent._get_overall_score('记录', '后端工程师', 3, difficulty='压力模式')
     assert result['total_score'] == 30
+
+
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
+@pytest.mark.parametrize('round_num', [1, 2, 3])
+def test_student_standard_reaches_chat_overall_and_coaching(difficulty, round_num):
+    history = []
+    for question, answer in [
+        ('你做过什么文档？', '实训课上做过通知，用标题和分段排版。'),
+        ('保存时会检查什么？', '检查文件名和保存位置，再打开确认。'),
+        ('任务不会时怎么办？', '先看要求，再把不会的地方问老师。'),
+    ]:
+        history.extend([message('ai', question, len(history) + 1),
+                        message('user', answer, len(history) + 2)])
+    scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (85, 85, 85, 0, 85)))
+    payload = {'scores': scores, 'total_score': 85, 'comment': '能说明基础操作。',
+               'evaluated_dimensions': ['专业技能', '逻辑思维', '语言表达', '礼仪态度']}
+    details = {'reviews': [{'suggestion': '操作清楚。', 'reference': '示例。', 'is_good': True}] * 3}
+    with patch.object(ai_agent.client.chat.completions, 'create',
+                      side_effect=[response(payload), response(details)]) as create:
+        report = ai_agent.generate_interview_report(history, '文员', round_num, difficulty)
+    chat = ai_agent._build_interview_messages(history, '文员', difficulty, '', '', round_num)
+    scope = ai_agent.get_round_scope(round_num, difficulty)
+    assert '中职学生' in chat[0]['content']
+    assert scope in chat[0]['content']
+    for call in create.call_args_list:
+        system = call.kwargs['messages'][0]['content']
+        data = json.loads(call.kwargs['messages'][1]['content'])
+        assert '中职学生' in system and scope in system
+        assert f'【{difficulty}：' in system
+        assert '【按证据评分的共同尺度】' not in system
+        assert data['difficulty'] == difficulty and data['round_scope'] == scope
+    assert '"evaluated_dimensions": []' in create.call_args_list[0].kwargs['messages'][0]['content']
+    assert report['overall']['total_score'] == 85
+    assert '抗压能力未评估' in report['overall']['comment']
+
+
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
+def test_student_total_excludes_only_unassessed_dimensions_and_keeps_zero_evidence(difficulty):
+    scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (81, 82, 83, 0, 84)))
+    payload = {'scores': scores, 'total_score': 74, 'comment': '基础正确。',
+               'evaluated_dimensions': ['专业技能', '逻辑思维', '语言表达', '礼仪态度']}
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        report = ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)
+    assert report['total_score'] == 82  # 7370 / 90, half up; no missing-pressure penalty.
+
+    # Explicitly tested but failed pressure handling stays in the denominator.
+    payload['evaluated_dimensions'].append('抗压能力')
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        report = ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)
+    assert report['total_score'] == 74
+
+    # Fluent, polite but incorrect answers cannot earn a high overall score.
+    payload['scores']['专业技能'] = 25
+    for dimension in ('逻辑思维', '语言表达', '礼仪态度'):
+        payload['scores'][dimension] = 100
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        assert ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)['total_score'] == 59
+
+    payload.update(scores=dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 0),
+                   evaluated_dimensions=[], total_score=0)
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        assert ai_agent._get_overall_score('结束', '文员', 4, difficulty=difficulty)['total_score'] == 0
+
+
+@pytest.mark.parametrize('dimensions', [None, ['非法维度'], ['专业技能', '专业技能'], []])
+def test_student_report_rejects_invalid_coverage_or_scores_for_unassessed_dimensions(dimensions):
+    payload = {'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 80),
+               'total_score': 80, 'comment': '点评。', 'evaluated_dimensions': dimensions}
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        with pytest.raises(ai_agent.AIServiceError):
+            ai_agent._get_overall_score('记录', '文员', 4)
+
+
+def test_student_partial_interview_keeps_legacy_completion_cap():
+    payload = {'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 95),
+               'total_score': 95, 'comment': '局部证据。',
+               'evaluated_dimensions': list(ai_agent.REQUIRED_SCORE_DIMENSIONS)}
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        assert ai_agent._get_overall_score('记录', '文员', 1)['total_score'] == 60
 
 
 def test_default_provider_configuration_uses_flash_and_local_asr(monkeypatch):

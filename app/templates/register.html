@@ -11,24 +11,24 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid md:grid-cols-2 gap-4">
                     <div class="form-control w-full">
-                        <label class="label py-1"><span class="label-text text-stone-600">账号</span></label>
-                        <input type="text" name="username" placeholder="请输入用户名" class="input input-bordered w-full" required />
+                        <label for="username" class="label py-1"><span class="label-text text-stone-600">账号</span></label>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" class="input input-bordered w-full" required />
                     </div>
                     <div class="form-control w-full">
-                        <label class="label py-1"><span class="label-text text-stone-600">真实姓名</span></label>
-                        <input type="text" name="truename" placeholder="请输入姓名" class="input input-bordered w-full" required />
+                        <label for="truename" class="label py-1"><span class="label-text text-stone-600">真实姓名</span></label>
+                        <input type="text" id="truename" name="truename" placeholder="请输入姓名" class="input input-bordered w-full" required />
                     </div>
                 </div>
 
                 <div class="form-control w-full">
-                    <label class="label py-1"><span class="label-text text-stone-600">密码</span></label>
-                    <input type="password" name="password" placeholder="请输入密码" class="input input-bordered w-full" required />
+                    <label for="password" class="label py-1"><span class="label-text text-stone-600">密码</span></label>
+                    <input type="password" id="password" name="password" placeholder="请输入密码" class="input input-bordered w-full" required />
                 </div>
 
                 <div class="divider text-xs text-stone-400 my-3">身份信息</div>
 
                 <div class="form-control w-full">
-                    <label class="label py-1"><span class="label-text text-stone-600">选择身份</span></label>
+                    <label for="role" class="label py-1"><span class="label-text text-stone-600">选择身份</span></label>
                     <select id="role" name="role" class="select select-bordered" onchange="toggleFields(this.value)">
                         <option value="student">学生</option>
                         <option value="teacher">班主任</option>
@@ -39,16 +39,16 @@
 
                 <div id="org-fields" class="grid md:grid-cols-2 gap-4">
                     <div class="form-control w-full">
-                        <label class="label py-1"><span class="label-text text-stone-600">所属系部</span></label>
+                        <label for="department" class="label py-1"><span class="label-text text-stone-600">所属系部</span></label>
                         <input type="text" id="department" name="department" placeholder="如：数字经济系" class="input input-bordered w-full" />
                     </div>
                     <div class="form-control w-full">
-                        <label class="label py-1"><span class="label-text text-stone-600">所属班级</span></label>
+                        <label for="class_name" class="label py-1"><span class="label-text text-stone-600">所属班级</span></label>
                         <input type="text" id="class_name" name="class_name" placeholder="如：23计应1班" class="input input-bordered w-full" />
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-full mt-1">注 册</button>
+                <button type="submit" class="btn btn-primary w-full mt-1">注册</button>
             </form>
 
             <div class="divider text-xs text-stone-400 my-5">已有账号？</div>

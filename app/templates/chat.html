@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% from '_visual_review.html' import visual_card %}
 
 {% block title %}
     {% if is_read_only %}面试回顾{% else %}面试进行中{% endif %}
@@ -68,7 +69,11 @@
                     </span>
                     {% set _r = session.round or 1 %}
                     <span class="badge badge-outline text-xs {% if _r == 1 %}text-emerald-600{% elif _r == 2 %}text-indigo-600{% else %}text-amber-600{% endif %}">
-                        {% if _r == 1 %}初面·HR{% elif _r == 2 %}复面·技术{% else %}终面·高管{% endif %}
+                        {% if session.difficulty in ['新手模式', '标准模式'] %}
+                            {% if _r == 1 %}初面·岗位认识{% elif _r == 2 %}复面·基础实操{% else %}终面·协作成长{% endif %}
+                        {% else %}
+                            {% if _r == 1 %}初面·HR{% elif _r == 2 %}复面·技术{% else %}终面·高管{% endif %}
+                        {% endif %}
                     </span>
                 </div>
 
@@ -80,7 +85,7 @@
                             面试已结束，您可以回顾聊天记录
                         {% endif %}
                     {% else %}
-                        请尽量使用语音回答，锻炼口语能力
+                        开启实时语音后直接回答，开口即可打断面试官
                     {% endif %}
                 </p>
             </div>
@@ -121,6 +126,9 @@
                         {% if current_user.role != 'student' %}学生{% else %}我{% endif %}
                     </div>
                     <div class="chat-bubble bg-primary text-white shadow-md">{{ msg.content }}</div>
+                    {% if is_read_only and msg.id in visual_records %}
+                    <div class="w-full max-w-sm mt-2">{{ visual_card(visual_records[msg.id], session.id) }}</div>
+                    {% endif %}
                 </div>
                 {% endif %}
             {% endfor %}
@@ -137,21 +145,32 @@
                 {% endif %}
             </div>
         {% else %}
+            <div class="flex gap-2 items-center mb-2" role="group" aria-label="回答方式">
+                <button type="button" id="text-toggle" class="btn btn-primary btn-sm" aria-pressed="true" onclick="selectTextInput()">文字输入</button>
+                {% if enable_realtime_voice %}
+                <button type="button" id="realtime-toggle" class="btn btn-outline btn-sm" aria-pressed="false" onclick="startRealtimeInput()">实时语音</button>
+                {% endif %}
+            </div>
+            {% if enable_realtime_voice %}
+            <div id="realtime-controls" class="bg-white p-3 rounded-xl border border-stone-100 mb-2" hidden style="display: none;">
+                <div class="flex gap-2 items-center flex-wrap">
+                    <button type="button" id="record-btn" class="btn btn-primary btn-sm text-white">开始实时对话</button>
+                    <button type="button" id="realtime-mute" class="btn btn-outline btn-sm" disabled aria-pressed="false">静音</button>
+                    <button type="button" id="realtime-interrupt" class="btn btn-ghost btn-sm" disabled>打断面试官</button>
+                </div>
+                <p id="realtime-status" class="text-xs text-stone-500 mt-2" role="status" aria-live="polite">允许麦克风后即可连续对话。</p>
+            </div>
+            {% else %}
+            <p class="text-xs text-stone-500 mb-2" role="status">实时语音交互已由管理员关闭，可使用文字回答。</p>
+            {% endif %}
             <div class="bg-white p-3 rounded-xl border border-stone-100 flex gap-2 items-center relative">
 
-                <button class="btn btn-circle btn-ghost btn-sm" onclick="toggleInputMode()" title="切换语音/文字">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                </button>
-
-                <div id="text-mode" class="flex-1 flex gap-2">
-                    <input type="text" id="msg-input" placeholder="请输入你的回答..." class="input input-bordered w-full focus:outline-none" onkeypress="handleKeyPress(event)" />
-                    <button onclick="sendMessage()" class="btn btn-primary px-6 text-white">发送</button>
-                </div>
-
-                <div id="voice-mode" class="flex-1 hidden flex justify-center">
-                    <button id="record-btn" class="btn btn-block btn-outline border-stone-300 text-stone-600 hover:bg-stone-100 hover:border-stone-400 no-animation">
-                        <span id="record-text">按住 说话</span>
-                    </button>
+                <div id="text-mode" class="flex-1">
+                    <div class="flex gap-2">
+                        <input type="text" id="msg-input" aria-label="文字回答" placeholder="请输入你的回答..." class="input input-bordered w-full focus:outline-none" onkeypress="handleKeyPress(event)" />
+                        <button id="send-message" onclick="sendMessage()" class="btn btn-primary px-6 text-white">发送</button>
+                    </div>
+                    <p id="text-audio-status" class="text-xs text-stone-500 mt-2" role="status" aria-live="polite">{% if enable_tts %}面试官回复将自动语音播放，也可点击回复重播。{% else %}语音播报已由管理员关闭。{% endif %}</p>
                 </div>
 
                 <div id="recording-overlay" class="hidden absolute inset-0 bg-primary/90 rounded-xl flex items-center justify-center gap-2 z-10 text-white font-bold select-none pointer-events-none">
@@ -164,6 +183,7 @@
 
     <!-- 右侧：侧边栏 (视频预览 + 状态) -->
     <div class="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+        {% if enable_video and not is_read_only %}
         <!-- 视频卡片 -->
         <div class="bg-white p-1 rounded-xl shadow-sm border border-stone-100">
             <div class="bg-black rounded-lg overflow-hidden aspect-[4/3] relative">
@@ -178,7 +198,6 @@
         </div>
 
         <!-- 实时 AI 视觉评价面板 -->
-        {% if not is_read_only %}
         <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex-none animate-pulse" id="visual-feedback-card" style="display: none;">
             <h3 class="font-bold text-stone-700 mb-2 flex items-center gap-2 text-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -198,8 +217,8 @@
             </h3>
             <div class="text-sm text-stone-500 space-y-3">
                 <p>1. 请保持头部在画面中央。</p>
-                <p>2. 眼神注视摄像头，表现更自信。</p>
-                <p>3. AI 面试官会实时分析您的表情。</p>
+                <p>2. 镜头尽量与眼睛同高，保持舒适自然的姿态。</p>
+                <p>3. 开启摄像头后，每次提交回答会记录一帧，关键词与仪态点评可在报告中复盘。</p>
             </div>
         </div>
     </div>
@@ -245,6 +264,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-transport-20261007-2') }}"></script>
 <script>
     // === 计时器逻辑 (保持不变) ===
     const startTimeStr = "{{ session.start_time }}";
@@ -313,8 +333,11 @@
         if (video.readyState < 2) return null;
 
         const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        const width = video.videoWidth || 640;
+        const height = video.videoHeight || 480;
+        const scale = Math.min(1, 640 / width, 480 / height);
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
         
         // 绘制当前帧
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -338,31 +361,30 @@
         const content = document.getElementById('visual-feedback-content');
         if (!card || !content) return;
 
-        // 简单的解析逻辑：假设 feedback 是 "表情:紧张, 视线:躲闪" 这种格式
-        // 我们把它拆分成标签显示
-        // 如果后端返回的是 JSON 数组最好，如果是字符串则手动拆分
-        let tags = [];
-        if (Array.isArray(feedback)) {
-            tags = feedback;
-        } else {
-             // 尝试清理字符串中的括号和空格
-            tags = feedback.replace(/[\[\]]/g, '').split(/[,，]/).map(s => s.trim()).filter(s => s);
+        if (typeof feedback === 'string') {
+            try { feedback = JSON.parse(feedback); }
+            catch (e) { feedback = feedback.split(/[,，]/); }
         }
-
-        if (tags.length === 0) return;
-
-        let html = '';
-        tags.forEach(tag => {
-            // 根据关键词匹配颜色
-            let colorClass = "bg-stone-100 text-stone-600";
-            if (tag.includes("紧张") || tag.includes("僵硬") || tag.includes("躲闪")) colorClass = "bg-red-50 text-red-600 border-red-100";
-            else if (tag.includes("自信") || tag.includes("端正") || tag.includes("直视")) colorClass = "bg-green-50 text-green-600 border-green-100";
-            else if (tag.includes("微笑") || tag.includes("疑惑")) colorClass = "bg-blue-50 text-blue-600 border-blue-100";
-
-            html += `<span class="badge badge-sm border ${colorClass} mr-1 mb-1">${tag}</span>`;
-        });
-
-        content.innerHTML = html;
+        const tags = Array.isArray(feedback) ? feedback : (feedback?.tags || []);
+        content.replaceChildren();
+        if (feedback?.elapsed) {
+            const timestamp = document.createElement('p');
+            timestamp.className = 'font-mono text-stone-500 mb-2';
+            timestamp.textContent = `${feedback.elapsed} · 画面已记录，报告中可复盘`;
+            content.appendChild(timestamp);
+        }
+        for (const tag of tags) {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-sm border bg-stone-100 text-stone-600 mr-1 mb-1';
+            badge.textContent = tag;
+            content.appendChild(badge);
+        }
+        if (feedback?.comment) {
+            const comment = document.createElement('p');
+            comment.className = 'leading-6 mt-2';
+            comment.textContent = `仪态点评：${feedback.comment}`;
+            content.appendChild(comment);
+        }
         card.style.display = 'block';
         
         // 闪烁一下提示更新
@@ -376,8 +398,50 @@
     // 2. UI 辅助函数
     // =========================================================
     function toggleInputMode() {
-        document.getElementById('text-mode').classList.toggle('hidden');
-        document.getElementById('voice-mode').classList.toggle('hidden');
+        if (!realtimeVoice || realtimeVoice.disabled) return;
+        if (realtimeVoice.active) selectTextInput();
+        else startRealtimeInput();
+    }
+
+    function syncInputMode() {
+        const voiceMode = Boolean(realtimeVoice?.active);
+        const textMode = document.getElementById('text-mode');
+        const voiceControls = document.getElementById('realtime-controls');
+        if (textMode) {
+            textMode.hidden = voiceMode;
+            textMode.style.display = voiceMode ? 'none' : '';
+            // Hide the input's surrounding white panel as well.
+            textMode.parentElement.hidden = voiceMode;
+            textMode.parentElement.style.display = voiceMode ? 'none' : '';
+        }
+        if (voiceControls) {
+            voiceControls.hidden = !voiceMode;
+            voiceControls.style.display = voiceMode ? '' : 'none';
+        }
+        for (const [id, selected] of [['text-toggle', !voiceMode], ['realtime-toggle', voiceMode]]) {
+            const button = document.getElementById(id);
+            if (!button) continue;
+            button.setAttribute('aria-pressed', String(selected));
+            button.classList.toggle('btn-primary', selected);
+            button.classList.toggle('btn-outline', !selected);
+        }
+        const voiceToggle = document.getElementById('realtime-toggle');
+        if (voiceToggle) voiceToggle.disabled = isProcessing || Boolean(realtimeVoice?.disabled);
+        if (msgInput) msgInput.disabled = isProcessing || voiceMode;
+        const send = document.getElementById('send-message');
+        if (send) send.disabled = isProcessing || voiceMode;
+    }
+
+    async function selectTextInput() {
+        if (realtimeVoice?.active || realtimeVoice?.stopping) await realtimeVoice.stop();
+        syncInputMode();
+        if (!isProcessing) msgInput?.focus();
+    }
+
+    async function startRealtimeInput() {
+        if (!realtimeVoice || realtimeVoice.disabled || realtimeVoice.active || isProcessing) return;
+        stopAudioPlayback();
+        await realtimeVoice.start();
     }
 
     function scrollToBottom() {
@@ -401,7 +465,7 @@
 
     function playAudioResponse(url) {
         if (!url || url === 'None' || url === 'null' || url === 'undefined') return;
-        new Audio(url).play().catch(e => console.warn("自动播放受限:", e));
+        playAudioQueue([url]);
     }
 
     function appendMessage(sender, text, audioUrl=null) {
@@ -475,21 +539,54 @@
     // ====== 流式 SSE：打字机 + 音频队列 ======
     const _audioQueue = [];
     let _audioPlaying = false;
+    let _audioPlayer = null;
+    let _audioGeneration = 0;
+    function textAudioStatus(text) {
+        const status = document.getElementById('text-audio-status');
+        if (status) status.textContent = text;
+    }
+    function stopAudioPlayback() {
+        ++_audioGeneration;
+        _audioQueue.length = 0;
+        _audioPlaying = false;
+        if (_audioPlayer) {
+            _audioPlayer.onended = null;
+            _audioPlayer.onerror = null;
+            _audioPlayer.pause();
+            _audioPlayer = null;
+        }
+    }
     function enqueueAudio(url) {
         _audioQueue.push(url);
         if (!_audioPlaying) _playNextAudio();
     }
     function _playNextAudio() {
-        if (_audioQueue.length === 0) { _audioPlaying = false; return; }
+        if (_audioQueue.length === 0) {
+            _audioPlaying = false;
+            _audioPlayer = null;
+            textAudioStatus('播报结束，可点击回复重播。');
+            return;
+        }
         _audioPlaying = true;
         const url = _audioQueue.shift();
         const a = new Audio(url);
-        a.onended = _playNextAudio;
-        a.onerror = _playNextAudio;
-        a.play().catch(e => { console.warn('播放受限:', e); _playNextAudio(); });
+        _audioPlayer = a;
+        const generation = _audioGeneration;
+        a.onended = () => { if (generation === _audioGeneration) _playNextAudio(); };
+        a.onerror = () => {
+            if (generation !== _audioGeneration) return;
+            stopAudioPlayback();
+            textAudioStatus('音频加载失败，可点击面试官回复重试。');
+        };
+        textAudioStatus('面试官正在播报…');
+        a.play().catch(() => {
+            if (generation !== _audioGeneration) return;
+            stopAudioPlayback();
+            textAudioStatus('自动播放未启动，请点击面试官回复播放。');
+        });
     }
     function playAudioQueue(urls) {
-        _audioQueue.length = 0;
+        stopAudioPlayback();
         urls.forEach(u => _audioQueue.push(u));
         if (!_audioPlaying) _playNextAudio();
     }
@@ -517,6 +614,8 @@
 
         if (!text) return;
         if (isProcessing) return;
+        if (realtimeVoice?.active) return;
+        stopAudioPlayback();
 
         // 2. 立即让用户说的话上屏 (即时反馈)
         appendMessage('user', text);
@@ -526,6 +625,8 @@
         sessionStorage.removeItem(DRAFT_KEY);
         msgInput.disabled = true;
         isProcessing = true;
+        syncInputMode();
+        {% if enable_tts %}textAudioStatus('正在等待面试官回复…');{% endif %}
 
         // 4. 显示 AI 思考动画
         showTypingIndicator();
@@ -582,6 +683,8 @@
                     } else if (evt.type === 'audio') {
                         audioUrls.push(evt.url);
                         enqueueAudio(evt.url);
+                    } else if (evt.type === 'audio_unavailable') {
+                        textAudioStatus(evt.message);
                     } else if (evt.type === 'visual') {
                         updateVisualFeedbackUI(evt.feedback);
                     } else if (evt.type === 'error') {
@@ -617,6 +720,7 @@
                 if (!manualText) msgInput.focus();
             }
             isProcessing = false;
+            syncInputMode();
         }
     }
 
@@ -706,7 +810,8 @@
     }
 
     async function sendAudioMessage() {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const mimeType = mediaRecorder?.mimeType || audioChunks[0]?.type || 'audio/webm';
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
         audioChunks = [];
 
         if (audioBlob.size < 1000) {
@@ -720,7 +825,8 @@
         isProcessing = true;
 
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
+        const extension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+        formData.append('audio', audioBlob, `recording.${extension}`);
 
         try {
             // === 第一步：只调用转录接口 ===
@@ -728,7 +834,10 @@
                 method: 'POST',
                 body: formData
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok && !data.error) {
+                data.error = `语音识别请求失败（HTTP ${res.status}），请稍后重试或输入文字`;
+            }
 
             // 拿到结果后，先移除“转文字”的 Loading 气泡
             removeUserSpeakingIndicator();
@@ -747,7 +856,7 @@
             console.error("Transcribe failed:", e);
             removeUserSpeakingIndicator();
             isProcessing = false;
-            appendMessage('ai', '（语音服务连接超时）');
+            appendMessage('ai', '语音服务连接失败，请检查网络后重试或输入文字');
         }
     }
 
@@ -758,13 +867,49 @@
         if (e.key === 'Enter' && msgInput && !msgInput.disabled) sendMessage();
     }
 
-    if (recordBtn) {
-        recordBtn.addEventListener('mousedown', startRecording);
-        recordBtn.addEventListener('mouseup', stopRecording);
-        recordBtn.addEventListener('mouseleave', stopRecording);
-        recordBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
-        recordBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
-    }
+    const realtimeVoice = recordBtn ? new InterviewRealtimeVoice({
+        sessionId,
+        captureUrl: {{ url_for('static', filename='js/realtime-capture.js')|tojson }},
+        onStatus(text, voice) {
+            document.getElementById('realtime-status').textContent = text;
+            recordBtn.textContent = voice.active ? '停止实时对话' : '开始实时对话';
+            recordBtn.disabled = voice.disabled;
+            document.getElementById('realtime-toggle').disabled = voice.disabled;
+            const mute = document.getElementById('realtime-mute');
+            mute.disabled = !voice.ready || voice.disabled;
+            mute.textContent = voice.muted ? '恢复麦克风' : '静音';
+            mute.setAttribute('aria-pressed', String(voice.muted));
+            document.getElementById('realtime-interrupt').disabled = !voice.ready || voice.disabled;
+            syncInputMode();
+            if (!voice.active && text !== '实时语音已停止') textAudioStatus(text);
+        },
+        createAiBubble: appendAiStreamingBubble,
+        createUserBubble() {
+            appendMessage('user', '');
+            return chatContainer.lastElementChild.querySelector('.chat-bubble');
+        },
+        scroll: scrollToBottom,
+        playReplay(url) {
+            realtimeVoice.interrupt();
+            playAudioResponse(url);
+        },
+        async onUserSaved(messageId) {
+            const image = captureFrame();
+            if (!image) return;
+            try {
+                const response = await fetch(`/api/interview/${sessionId}/realtime/frame/${messageId}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({image}),
+                });
+                if (response.ok) updateVisualFeedbackUI((await response.json()).feedback);
+            } catch (error) { console.warn('画面观察暂不可用'); }
+        },
+    }) : null;
+    syncInputMode();
+    recordBtn?.addEventListener('click', toggleInputMode);
+    document.getElementById('realtime-mute')?.addEventListener('click', () => realtimeVoice.toggleMute());
+    document.getElementById('realtime-interrupt')?.addEventListener('click', () => realtimeVoice.interrupt());
+    window.addEventListener('pagehide', () => { stopAudioPlayback(); realtimeVoice?.stop(); });
 
     async function finishInterview() {
         if(!confirm("确定要结束面试吗？AI 将在后台生成报告。")) return;
@@ -772,6 +917,8 @@
         if(btn) { btn.innerHTML = '提交中...'; btn.disabled = true; }
 
         try {
+            stopAudioPlayback();
+            if (realtimeVoice?.active) await realtimeVoice.stop();
             const res = await fetch(`/api/interview/${sessionId}/finish`, {method: 'POST'});
             const data = await res.json().catch(() => ({}));
             if(!res.ok) {

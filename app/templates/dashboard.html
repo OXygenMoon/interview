@@ -23,7 +23,12 @@
                 <span id="current-date" class="text-xs text-stone-600"></span>
             </div>
         </div>
-        {% include "_club_illustration.html" %}
+        <aside class="practice-focus" aria-labelledby="teaching-focus-title">
+            <p class="practice-focus-label">教学指导</p>
+            <h2 id="teaching-focus-title">从回答里，找到指导方向。</h2>
+            <p>结合面试报告与班级能力分布，了解学生需要补充的知识与表达。</p>
+            <a href="{{ url_for('routes.admin_capability_profile') }}">查看能力画像 →</a>
+        </aside>
     </section>
 
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

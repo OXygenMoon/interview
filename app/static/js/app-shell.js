@@ -6,6 +6,31 @@
     const header = document.querySelector('.app-navbar');
     const menus = [...document.querySelectorAll('.app-nav-more, .app-profile-menu')];
     const reveal = document.getElementById('app-nav-reveal');
+    const passwordToggle = document.querySelector('[data-password-toggle]');
+    passwordToggle?.addEventListener('click', () => {
+        const input = document.getElementById(passwordToggle.getAttribute('aria-controls'));
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        passwordToggle.textContent = show ? '隐藏' : '显示';
+        passwordToggle.setAttribute('aria-pressed', String(show));
+        passwordToggle.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+    });
+    const loginForm = document.querySelector('[data-testid="login-page"] form');
+    loginForm?.addEventListener('submit', () => {
+        const submit = loginForm.querySelector('[type="submit"]');
+        loginForm.setAttribute('aria-busy', 'true');
+        submit.disabled = true;
+        submit.textContent = '正在登录…';
+    });
+    // Restore the native form when returning through the browser's page cache.
+    window.addEventListener('pageshow', () => {
+        if (!loginForm) return;
+        const submit = loginForm.querySelector('[type="submit"]');
+        loginForm.removeAttribute('aria-busy');
+        submit.disabled = false;
+        submit.textContent = '登录并继续 →';
+    });
     function closeMenu(restoreFocus = false) {
         nav?.classList.remove('is-open');
         button?.setAttribute('aria-expanded', 'false');

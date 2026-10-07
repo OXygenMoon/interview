@@ -4,6 +4,7 @@ import argparse
 import hashlib
 from pathlib import Path, PurePosixPath
 import shutil
+import subprocess
 import tarfile
 import tempfile
 
@@ -75,12 +76,45 @@ def prepare_model(destination):
 
 def main():
     import os
+    import sys
+    from dotenv import load_dotenv
     values = dotenv_values(ROOT / '.env')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model-dir', default=os.environ.get(
         'ASR_MODEL_DIR', values.get('ASR_MODEL_DIR') or ROOT / '.local' / 'asr' / 'sensevoice',
     ))
+    parser.add_argument('--check', action='store_true', help='Check local decoding and recognition without downloading')
     args = parser.parse_args()
+    if args.check:
+        load_dotenv(ROOT / '.env')
+        sys.path.insert(0, str(ROOT))
+        try:
+            for executable in ('ffmpeg', 'ffprobe'):
+                if not shutil.which(executable):
+                    raise RuntimeError(f'{executable} is missing from the service PATH')
+            from app.config import Config
+            from app.services.local_asr import _ffmpeg_environment, _get_recognizer, _recognizer_lock, transcribe_local_audio
+            Config.ASR_MODEL_DIR = str(Path(args.model_dir).expanduser().resolve())
+            with _recognizer_lock:
+                _get_recognizer()
+            sample = Path(Config.ASR_MODEL_DIR) / 'test_wavs' / 'zh.wav'
+            if sample.is_file():
+                with tempfile.TemporaryDirectory() as temporary:
+                    recording = Path(temporary) / 'check.webm'
+                    subprocess.run(
+                        ['ffmpeg', '-nostdin', '-hide_banner', '-loglevel', 'error',
+                         '-i', str(sample), '-acodec', 'libopus', str(recording)],
+                        env=_ffmpeg_environment(), capture_output=True, check=True, timeout=30,
+                    )
+                    if not transcribe_local_audio(str(recording)).strip():
+                        raise RuntimeError('Recognition returned an empty transcript for the speech sample')
+                print('Browser WebM decoding and speech recognition: OK')
+            else:
+                print('Model loaded; speech sample missing, end-to-end recognition not checked')
+            print(f'Local ASR ready: {Config.ASR_MODEL_DIR}')
+        except Exception as exc:
+            parser.exit(1, f'Local ASR check failed: {exc}\n')
+        return
     prepare_model(args.model_dir)
 
 

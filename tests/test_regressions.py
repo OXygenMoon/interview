@@ -127,6 +127,7 @@ class BusinessRegressionTests(unittest.TestCase):
                 round=1,
                 reviewed=True,
                 target_role='Python 工程师',
+                difficulty='标准模式',
                 llm_model='Qwen/Qwen2.5-72B-Instruct',
                 start_time=old,
                 end_time=old,
@@ -151,6 +152,10 @@ class BusinessRegressionTests(unittest.TestCase):
             )
             next_session = db.session.get(InterviewSession, first.get_json()['session_id'])
             self.assertEqual(next_session.llm_model, Config.LLM_MODEL_NAME)
+            self.assertEqual(first.get_json()['round_name'], '复面（基础实操）')
+            welcome = ChatMessage.query.filter_by(session_id=next_session.id, sender='ai').one()
+            self.assertIn('课堂或实训', welcome.content)
+            self.assertNotIn('高管', welcome.content)
 
     def test_failed_quiz_is_recorded_but_remains_retryable(self):
         with self.app.app_context():
@@ -545,7 +550,9 @@ class BusinessRegressionTests(unittest.TestCase):
             'is_current': True,
         }
         try:
-            with self.app.test_client() as client:
+            # This test isolates CSRF from the schema guard. Migration status
+            # is now checked afresh instead of trusting a cached success.
+            with patch('app.database_migrations.get_migration_status', return_value={'is_current': True}), self.app.test_client() as client:
                 client.get('/login')
                 missing = client.post('/login', data={
                     'username': 'nobody',
@@ -914,7 +921,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261006_account_links')
+        self.assertEqual(revision, '20261007_test_accounts')
         self.assertTrue(
             {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
             <= tables
@@ -992,7 +999,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261006_account_links')
+        self.assertEqual(revision, '20261007_test_accounts')
         self.assertEqual((username, truename), ('legacy-user', '需要保留'))
         self.assertIn('active', user_columns)
         self.assertIn('report_error', session_columns)

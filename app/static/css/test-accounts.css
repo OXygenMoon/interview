@@ -1,0 +1,27 @@
+.test-pool { max-width: 1120px; margin: 0 auto; }
+.test-pool-heading { display: flex; justify-content: space-between; align-items: center; gap: 32px; margin-bottom: 24px; }
+.test-pool-heading h1 { margin: 8px 0 16px; font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.3; }
+.test-pool-heading p, .test-pool-note, .test-pool-session, .test-pool-sync { color: var(--color-text-muted, currentColor); line-height: 1.7; }
+.test-pool-count { display: grid; flex-shrink: 0; justify-items: center; padding: 20px 28px; border: 1px solid currentColor; border-radius: 24px; }
+.test-pool-count strong { font-size: 2.5rem; line-height: 1.2; }
+.test-pool-count span { font-size: .875rem; }
+.test-pool-note { padding: 16px 20px; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: 16px; margin-bottom: 20px; font-size: .875rem; }
+.test-pool-note p { margin: 0; }
+.test-pool-sync { margin: 16px 0; font-size: .8125rem; }
+.test-pool-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.test-pool-card { display: flex; flex-direction: column; gap: 20px; padding: 24px; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: 24px; background: var(--color-surface, transparent); }
+.test-pool-card h2 { font-size: 1.125rem; font-weight: 700; }
+.test-pool-number { width: 40px; height: 40px; display: grid; place-items: center; background: color-mix(in srgb, currentColor 7%, transparent); border-radius: 12px; font-weight: 700; }
+.test-pool-username { font-size: .8125rem; opacity: .7; margin-top: 4px; overflow-wrap: anywhere; }
+.test-pool-state { font-size: .875rem; }
+.test-pool-state::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: #498363; }
+.test-pool-state[data-busy="true"]::before { background: #bd7c37; }
+.test-pool-card form { margin-top: auto; }
+.test-pool-card button { width: 100%; }
+@media (max-width: 900px) { .test-pool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) {
+    .test-pool-heading { align-items: flex-start; gap: 16px; }
+    .test-pool-count { padding: 12px; border-radius: 16px; }
+    .test-pool-count strong { font-size: 2rem; }
+    .test-pool-grid { grid-template-columns: 1fr; gap: 16px; }
+}

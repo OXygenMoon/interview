@@ -1,0 +1,23 @@
+[Unit]
+Description=Interview Web (Gunicorn gthread)
+After=network.target redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/projects/interview
+Environment="PATH=/root/projects/interview/venv/bin:/root/.nix-profile/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/bin/bash /root/projects/interview/run-production.sh web
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+KillSignal=SIGTERM
+KillMode=mixed
+LimitNOFILE=65536
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+import shutil
+import subprocess
 
 import pytest
 from pydub import AudioSegment
@@ -17,7 +19,7 @@ os.environ.setdefault('LLM_API_KEY', 'test-llm-key')
 from app import create_app, db
 from app.config import Config
 from app.models import User
-from app.services.ai_agent import AIServiceError
+from app.services.ai_agent import AIServiceError, transcribe_audio
 from app.services import local_asr
 
 
@@ -47,6 +49,44 @@ def test_silence_does_not_load_model_or_invent_transcript(tmp_path):
     with patch.object(local_asr, '_get_recognizer') as load:
         assert local_asr.transcribe_local_audio(str(path)) == ''
     load.assert_not_called()
+
+
+@pytest.mark.skipif(not shutil.which('ffmpeg'), reason='browser audio decoding requires ffmpeg')
+@pytest.mark.parametrize('format, codec', [('webm', 'libopus'), ('mp4', 'aac')])
+def test_browser_recording_formats_are_decoded(tmp_path, format, codec):
+    # The endpoint uses a .webm temp name even when the browser records MP4.
+    path = tmp_path / 'recording.webm'
+    Sine(440).to_audio_segment(duration=1000).export(path, format=format, codec=codec)
+    stream = Mock(result=SimpleNamespace(text='你好'))
+    recognizer = Mock()
+    recognizer.create_stream.return_value = stream
+    with patch.object(local_asr, '_get_recognizer', return_value=recognizer):
+        assert transcribe_audio(str(path)) == '你好'
+    rate, samples = stream.accept_waveform.call_args.args
+    assert rate == 16000
+    assert samples.ndim == 1
+    assert 15000 < len(samples) < 18000
+
+
+def test_missing_decoder_is_reported_as_service_configuration_error(tmp_path, caplog):
+    path = tmp_path / 'recording.webm'
+    path.write_bytes(b'webm')
+    with patch.object(local_asr.subprocess, 'run', side_effect=FileNotFoundError('ffmpeg')):
+        with pytest.raises(AIServiceError, match='服务尚未就绪'):
+            transcribe_audio(str(path))
+    assert 'ffmpeg/ffprobe' in caplog.text
+    assert 'Traceback' in caplog.text
+
+
+def test_decode_child_does_not_inherit_nix_libraries(tmp_path, monkeypatch):
+    monkeypatch.setenv('LD_LIBRARY_PATH', '/nix/store/python-runtime/lib')
+    monkeypatch.setenv('PATH', '/usr/bin:/bin')
+    decoded = subprocess.CompletedProcess([], 0, stdout=b'\0\0' * 16000, stderr=b'')
+    with patch.object(local_asr.subprocess, 'run', return_value=decoded) as run:
+        assert local_asr.transcribe_local_audio(str(tmp_path / 'recording.webm')) == ''
+    assert 'LD_LIBRARY_PATH' not in run.call_args.kwargs['env']
+    assert run.call_args.kwargs['env']['PATH'] == '/usr/bin:/bin'
+    assert os.environ['LD_LIBRARY_PATH'] == '/nix/store/python-runtime/lib'
 
 
 def test_model_is_loaded_once_from_local_files(tmp_path):
@@ -124,4 +164,33 @@ def test_unavailable_local_asr_returns_error_and_cleans_upload(transcribe_client
         })
     assert response.status_code == 503
     assert response.get_json()['status'] == 'error'
+    assert response.get_json()['code'] == 'asr_unavailable'
     assert all(not Path(path).exists() for path in uploaded)
+
+
+@pytest.mark.skipif(not shutil.which('ffmpeg'), reason='browser audio decoding requires ffmpeg')
+def test_corrupt_recording_returns_400_instead_of_service_unavailable(transcribe_client, caplog):
+    with patch.object(local_asr, '_get_recognizer') as load:
+        response = transcribe_client.post('/api/interview/transcribe', data={
+            'audio': (BytesIO(b'incomplete-browser-recording'), 'recording.webm'),
+        })
+    assert response.status_code == 400
+    assert response.get_json()['code'] == 'invalid_audio'
+    assert '重新' in response.get_json()['error']
+    assert '录音解码失败' in caplog.text
+    load.assert_not_called()
+
+
+@pytest.mark.skipif(not shutil.which('ffmpeg'), reason='browser audio decoding requires ffmpeg')
+def test_missing_model_returns_actionable_error_and_logs_cause(transcribe_client, tmp_path, caplog):
+    audio = BytesIO()
+    Sine(440).to_audio_segment(duration=1000).export(audio, format='wav')
+    with patch.object(local_asr, '_recognizer', None), patch.object(Config, 'ASR_MODEL_DIR', str(tmp_path)):
+        response = transcribe_client.post('/api/interview/transcribe', data={
+            'audio': (BytesIO(audio.getvalue()), 'recording.wav'),
+        })
+    assert response.status_code == 503
+    assert response.get_json()['code'] == 'asr_unavailable'
+    assert '管理员' in response.get_json()['error']
+    assert 'prepare_local_asr.py' in caplog.text
+    assert 'Traceback' in caplog.text

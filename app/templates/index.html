@@ -19,10 +19,10 @@
         <a id="cooldown_review_link" href="#" class="hidden btn btn-sm bg-amber-500 hover:bg-amber-600 text-white border-none whitespace-nowrap">去复盘</a>
     </div>
 
-    <section class="club-hero">
+    <section class="club-hero" aria-labelledby="practice-title">
         <div class="club-intro">
             <p class="club-eyebrow">嗨，{{ current_user.truename }} / 你的成长小站</p>
-            <h1>把紧张放一边，<br>把经验说出来。</h1>
+            <h1 id="practice-title">把紧张放一边，<br>把经验说出来。</h1>
             <p>今天也给自己一次尝试的机会。<br>练习不是考试，每次都可以重新开始。</p>
             <div class="club-actions">
                 <button data-testid="open-interview-setup" onclick="document.getElementById('setup_modal').showModal()" class="btn btn-primary">立即开始面试 →</button>
@@ -53,12 +53,12 @@
         <span>去学习 ↗</span>
     </a>
 
-    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
-                <div class="w-2 h-6 bg-orange-500 rounded-full"></div>
+    <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden" id="recent-records" aria-labelledby="recent-records-title">
+        <div class="home-records-heading p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h2 id="recent-records-title" class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <span class="w-2 h-6 bg-orange-500 rounded-full" aria-hidden="true"></span>
                 近期面试记录
-            </h3>
+            </h2>
             <span class="text-xs text-slate-400">仅显示最近记录</span>
         </div>
 
@@ -91,7 +91,7 @@
                                         {{ s.difficulty or '标准模式' }}
                                     </div>
                                     <span class="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                        {% if 'female' in s.voice_type or 'BV001' in s.voice_type %}👩 女声{% else %}👨 男声{% endif %}
+                                        {% if 'female' in s.voice_type or 'BV001' in s.voice_type %}女声{% else %}男声{% endif %}
                                     </span>
                                 </div>
                             </td>
@@ -158,12 +158,12 @@
                     {% else %}
                         <tr>
                             <td colspan="5" class="text-center py-20">
-                                <div class="flex flex-col items-center justify-center opacity-40">
+                                <div class="flex flex-col items-center justify-center">
                                     <div class="bg-slate-100 p-4 rounded-full mb-3">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     </div>
                                     <p class="text-slate-500">还没有面试记录</p>
-                                    <button onclick="document.getElementById('setup_modal').showModal()" class="btn btn-link btn-sm text-orange-500 no-underline hover:underline">去创建第一个面试</button>
+                                    <button onclick="document.getElementById('setup_modal').showModal()" class="btn btn-link btn-sm text-orange-500 no-underline hover:underline">立即开始面试 →</button>
                                 </div>
                             </td>
                         </tr>
@@ -174,7 +174,7 @@
 
         <div id="pagination-controls" class="p-4 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/30">
             </div>
-    </div>
+    </section>
 </div>
 
 <dialog id="setup_modal" class="modal modal-bottom sm:modal-middle" data-testid="interview-setup">
@@ -182,23 +182,23 @@
         <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 class="font-bold text-lg text-slate-800">创建新的面试</h3>
             <form method="dialog">
-                <button class="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-slate-600">✕</button>
+                <button class="btn btn-sm btn-circle btn-ghost setup-close" aria-label="关闭面试配置">×</button>
             </form>
         </div>
 
-        <div class="flex flex-col lg:flex-row h-[70vh]">
+        <div class="flex flex-col lg:flex-row h-[70dvh]">
             <!-- Left Side: Form -->
             <div class="flex-1 overflow-y-auto p-6 border-r border-slate-100 custom-scrollbar">
                 <form id="setup-form" class="space-y-6">
                     <div class="form-control">
-                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择公司</span></label>
+                        <label for="company-select" class="label pt-0"><span class="label-text font-bold text-slate-600">选择公司</span></label>
                         <select id="company-select" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors" required onchange="onCompanyChange()">
                             <option disabled selected value="">请选择公司</option>
                         </select>
                     </div>
 
                     <div class="form-control">
-                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择岗位</span></label>
+                        <label for="position-select" class="label pt-0"><span class="label-text font-bold text-slate-600">选择岗位</span></label>
                         <select id="position-select" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors" required onchange="onPositionChange()" disabled>
                             <option disabled selected value="">请选择岗位</option>
                         </select>
@@ -208,16 +208,16 @@
                     </div>
 
                     <div class="form-control">
-                        <label class="label"><span class="label-text font-bold text-slate-600">选择面试官风格</span></label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <span class="label" id="voice-options-label"><span class="label-text font-bold text-slate-600">选择面试官音色</span></span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" role="radiogroup" aria-labelledby="voice-options-label">
                             {% for name, voice_id in voice_options.items() %}
-                            <label class="cursor-pointer label border border-slate-200 rounded-xl p-3 hover:border-orange-400 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50 has-[:checked]:ring-1 has-[:checked]:ring-orange-500 transition-all">
+                            <label class="setup-option cursor-pointer label border border-slate-200 rounded-xl p-3 hover:border-orange-400 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/50 has-[:checked]:ring-1 has-[:checked]:ring-orange-500 transition-all">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" name="voice_type" value="{{ voice_id }}" class="radio radio-warning radio-sm" {% if loop.first %}checked{% endif %} />
+                                    <input type="radio" name="voice_type" value="{{ voice_id }}" class="radio radio-primary radio-sm" {% if loop.first %}checked{% endif %} />
                                     <div>
                                         <span class="label-text font-bold block text-slate-700">{{ name }}</span>
                                         <span class="text-xs text-slate-400">
-                                            {% if '男' in name %} 技术专家 / 严厉 {% else %} HRBP / 亲和 {% endif %}
+                                            {% if 'female' in voice_id %}女声{% else %}男声{% endif %}
                                         </span>
                                     </div>
                                 </div>
@@ -227,30 +227,30 @@
                     </div>
 
                     <div class="form-control">
-                        <label class="label"><span class="label-text font-bold text-slate-600">面试难度</span></label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
+                        <span class="label" id="difficulty-options-label"><span class="label-text font-bold text-slate-600">面试难度</span></span>
+                        <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="difficulty-options-label">
+                            <label class="setup-option cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-emerald-400 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-700 transition-all">
                                 <input type="radio" name="difficulty" value="新手模式" class="radio radio-primary radio-xs mb-2" />
-                                <div class="text-xl mb-1">🌱</div>
+                                <div class="setup-option-hint">基础引导</div>
                                 <div class="text-xs font-bold">新手模式</div>
                             </label>
-                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
+                            <label class="setup-option cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-blue-400 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-700 transition-all">
                                 <input type="radio" name="difficulty" value="标准模式" class="radio radio-primary radio-xs mb-2" checked />
-                                <div class="text-xl mb-1">👔</div>
+                                <div class="setup-option-hint">综合练习</div>
                                 <div class="text-xs font-bold">标准模式</div>
                             </label>
-                            <label class="cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
+                            <label class="setup-option cursor-pointer border border-slate-200 rounded-xl p-2 text-center hover:border-red-400 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-700 transition-all">
                                 <input type="radio" name="difficulty" value="压力模式" class="radio radio-primary radio-xs mb-2" />
-                                <div class="text-xl mb-1">🔥</div>
+                                <div class="setup-option-hint">深入追问</div>
                                 <div class="text-xs font-bold">压力模式</div>
                             </label>
                         </div>
                     </div>
 
                     <div class="form-control mt-4">
-                        <label class="label pt-0"><span class="label-text font-bold text-slate-600">选择递交的简历</span></label>
+                        <label for="resume-select" class="label pt-0"><span class="label-text font-bold text-slate-600">选择递交的简历</span></label>
                         {% if my_resumes %}
-                            <select name="resume_id" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors">
+                            <select id="resume-select" name="resume_id" class="select select-bordered w-full bg-slate-50 focus:bg-white transition-colors">
                                 <option value="" selected>不递交简历 (盲面)</option>
                                 {% for resume in my_resumes %}
                                     <option value="{{ resume.id }}">{{ resume.title }} ({{ resume.updated_at.strftime('%m-%d %H:%M') }})</option>
@@ -271,7 +271,11 @@
                     </div>
 
                     <div class="pt-4">
-                        <button type="button" data-testid="start-interview" onclick="submitSetup()" class="btn bg-orange-500 hover:bg-orange-600 text-white w-full border-none shadow-lg shadow-orange-200 text-lg">开始模拟面试</button>
+                        <div id="setup-feedback" class="setup-feedback" role="alert" tabindex="-1" hidden>
+                            <p id="setup-feedback-message"></p>
+                            <a id="setup-feedback-link" hidden></a>
+                        </div>
+                        <button type="button" data-testid="start-interview" onclick="submitSetup()" class="btn btn-primary w-full">开始模拟面试</button>
                     </div>
                 </form>
             </div>
@@ -324,16 +328,14 @@
         background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #e8dfe6;
+        background-color: var(--color-rule);
         border-radius: 20px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: #d4c8d2;
+        background-color: var(--color-muted);
     }
 
-    /* 简单的招手动画 */
-    @keyframes wave { 0% { transform: rotate(0deg); } 20% { transform: rotate(14deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(14deg); } 80% { transform: rotate(-4deg); } 100% { transform: rotate(10deg); } }
-    .animate-wave { animation: wave 2.5s infinite; }
+
 </style>
 
 <script>
@@ -360,6 +362,9 @@ async function loadCompanies() {
 }
 
 function onCompanyChange() {
+    document.getElementById('setup-feedback').hidden = true;
+    document.getElementById('position-select').removeAttribute('aria-invalid');
+    document.getElementById('position-select').removeAttribute('aria-describedby');
     const compId = parseInt(document.getElementById('company-select').value);
     const company = allCompanies.find(c => c.id === compId);
     const posSelect = document.getElementById('position-select');
@@ -491,42 +496,57 @@ document.addEventListener("DOMContentLoaded", function() {
 
 {% block scripts %}
 <script>
+function showSetupFeedback(message, destination = null, label = '') {
+    const feedback = document.getElementById('setup-feedback');
+    document.getElementById('setup-feedback-message').textContent = message;
+    const link = document.getElementById('setup-feedback-link');
+    link.hidden = !destination;
+    if (destination) { link.href = destination; link.textContent = label; }
+    else { link.removeAttribute('href'); link.textContent = ''; }
+    feedback.hidden = false;
+    feedback.focus();
+}
+
 async function submitSetup() {
     const form = document.getElementById('setup-form');
+    const btn = document.querySelector('[data-testid="start-interview"]');
+    if (btn.disabled) return;
     const formData = new FormData(form);
-    const btn = document.querySelector('button[onclick="submitSetup()"]');
-
-    if(!formData.get('target_role')) {
-        alert("请输入你想面试的岗位！");
+    document.getElementById('setup-feedback').hidden = true;
+    const position = document.getElementById('position-select');
+    position.removeAttribute('aria-invalid');
+    if (!formData.get('target_role')) {
+        position.setAttribute('aria-invalid', 'true');
+        position.setAttribute('aria-describedby', 'setup-feedback-message');
+        showSetupFeedback('请先选择公司和岗位，再开始模拟面试。');
         return;
     }
-
     btn.disabled = true;
-    btn.innerHTML = '<span class="loading loading-spinner"></span> 正在创建面试间...';
-
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = '正在创建面试间…';
     try {
-        const res = await fetch('/api/interview/create', {
-            method: 'POST',
-            body: formData
-        });
+        const res = await fetch('/api/interview/create', { method: 'POST', body: formData });
         const data = await res.json();
-
-        if(data.session_id) {
+        if (res.ok && data.session_id) {
             window.location.href = `/interview/room/${data.session_id}`;
-        } else if(res.status === 423 && data.cooldown) {
-            handleCooldownBlock(data.cooldown, btn);
-        } else {
-            alert("创建失败: " + (data.error || "未知错误"));
-            btn.disabled = false;
-            btn.innerHTML = '开始模拟面试';
+            return;
         }
-    } catch(e) {
-        console.error(e);
-        alert("网络请求失败");
+        if (res.status === 423 && data.cooldown) handleCooldownBlock(data.cooldown);
+        else showSetupFeedback('创建失败：' + (data.error || '请稍后重试，已保留你的选择。'));
+    } catch (e) {
+        showSetupFeedback('暂时无法连接服务器。请检查网络后重试，已保留你的选择。');
+    } finally {
         btn.disabled = false;
-        btn.innerHTML = '开始模拟面试';
+        btn.removeAttribute('aria-busy');
+        btn.textContent = '开始模拟面试';
     }
 }
+
+document.getElementById('position-select').addEventListener('change', event => {
+    event.target.removeAttribute('aria-invalid');
+    event.target.removeAttribute('aria-describedby');
+    document.getElementById('setup-feedback').hidden = true;
+});
 </script>
 
 <!-- 续接未完成面试的弹窗 -->
@@ -547,28 +567,20 @@ async function submitSetup() {
 
 <script>
 // 冷却/复盘拦截处理
-function handleCooldownBlock(cd, btn) {
-    if (btn) { btn.disabled = false; btn.innerHTML = '开始模拟面试'; }
-    const mins = Math.floor(cd.wait_seconds / 60);
-    const secs = cd.wait_seconds % 60;
-    const waitTxt = mins > 0 ? `${mins} 分 ${secs} 秒` : `${secs} 秒`;
-
-    if (cd.reason === 'abandon_cooldown') {
-        alert(`你上次面试中途放弃了，需等待 ${waitTxt} 后才能再次开始。请稍后再试。`);
-    } else if (cd.reason === 'review_required') {
-        alert('请先查看上一次面试的报告并复盘，之后才能开始下一次面试。');
-        if (cd.last_session_id && confirm('是否现在去复盘上次报告？')) {
-            window.location.href = `/interview/summary/${cd.last_session_id}`;
-        }
-    } else if (cd.reason === 'complete_cooldown') {
-        alert(`上次面试刚结束，建议先复盘报告再开始下一次。请等待 ${waitTxt}。`);
+function handleCooldownBlock(cd) {
+    const waitTxt = fmtTime(cd.wait_seconds || 0);
+    if (cd.reason === 'review_required') {
+        showSetupFeedback('请先查看上一次面试报告并复盘，再开始下一次练习。',
+            cd.last_session_id ? `/interview/summary/${cd.last_session_id}` : null, '去复盘');
     } else if (cd.reason === 'has_ongoing') {
-        if (confirm('你有一场进行中的面试，是否继续？')) {
-            window.location.href = `/interview/room/${cd.last_session_id}`;
-        }
+        showSetupFeedback('你还有一场进行中的面试，可以接着上次的进度继续。',
+            cd.last_session_id ? `/interview/room/${cd.last_session_id}` : null, '继续面试');
+    } else if (cd.reason === 'abandon_cooldown' || cd.reason === 'complete_cooldown') {
+        showSetupFeedback(`请等待 ${waitTxt} 后再开始下一次练习。你可以先整理回答或回顾上一次报告。`);
     } else {
-        alert('当前无法开始面试，请稍后再试。');
+        showSetupFeedback('当前无法开始面试，请稍后重试。已保留你的选择。');
     }
+    checkCooldownBanner();
 }
 
 // 页面加载：检查是否有可续接的面试

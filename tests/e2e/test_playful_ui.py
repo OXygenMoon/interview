@@ -55,7 +55,7 @@ def assert_shell(page):
     assert abs(header.bounding_box()['y'] - initial_top) < 1
 
 
-@pytest.mark.parametrize('width', [1440, 768, 390])
+@pytest.mark.parametrize('width', [1440, 1024, 768, 414, 375, 320])
 @pytest.mark.parametrize('role', list(ROUTES))
 def test_all_page_families_share_theme(page, live_server, width, role):
     page.set_viewport_size({'width': width, 'height': 1000})
@@ -96,7 +96,7 @@ def test_login_shell_at_small_mobile_size(page, live_server):
     page.goto(f'{live_server}/login')
     assert_shell(page)
     expect(page.get_by_label('账号')).to_be_visible()
-    expect(page.get_by_label('密码')).to_be_visible()
+    expect(page.get_by_label('密码', exact=True)).to_be_visible()
 
 
 def test_admin_dropdown_keeps_all_management_links(page, live_server):

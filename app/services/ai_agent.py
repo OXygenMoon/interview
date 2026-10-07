@@ -1,13 +1,16 @@
 import json
+import logging
 from urllib.parse import urlsplit
 from openai import OpenAI
 from ..config import Config
 from .interview_prompts import (
-    CHAT_PROMPT, CHAT_PROMPT_VERSION, DETAILS_PROMPT, INTERACTION_MODES,
+    CHAT_PROMPT, CHAT_PROMPT_VERSION, DETAILS_PROMPT,
     OVERALL_PROMPT, RANDOM_ANSWER_PROMPT, REPORT_PROMPT_VERSION,
-    ROUND_SCOPES, VISION_PROMPT,
+    STUDENT_MODES, VISION_PROMPT, VISION_REVIEW_PROMPT,
+    get_assessment_prompt, get_interaction_mode, get_round_scope,
 )
-from .local_asr import transcribe_local_audio
+from .local_asr import ASRUnavailableError, AudioDecodeError, transcribe_local_audio
+from .visual_review import normalize_visual_feedback
 
 # 面试文本及视觉请求使用配置的 OpenAI 兼容服务。
 client = OpenAI(
@@ -58,8 +61,8 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
     """构建面试对话的消息列表（系统提示 + 历史）。供流式/非流式共用。round_num 控制面试官人设。"""
     # Only application-owned instructions enter the system message. Candidate
     # profiles and role names remain explicitly untrusted data.
-    mode_prompt = INTERACTION_MODES.get(difficulty, INTERACTION_MODES["标准模式"])
-    round_scope = ROUND_SCOPES.get(round_num, ROUND_SCOPES[1])
+    mode_prompt = get_interaction_mode(difficulty)
+    round_scope = get_round_scope(round_num, difficulty)
     system_prompt = f"{CHAT_PROMPT}\n【本轮范围】{round_scope}\n【互动模式】{mode_prompt}"
     messages = [
         {"role": "system", "content": system_prompt},
@@ -219,7 +222,7 @@ def generate_interview_report(history_messages, target_role, round_num=1,
     overall_data = _get_overall_score(
         full_text, target_role, round_count, round_num, difficulty, position_context,
     )
-    details_list = _get_details_feedback(qa_pairs, target_role)
+    details_list = _get_details_feedback(qa_pairs, target_role, round_num, difficulty)
     identified_details = []
     for message_id, detail in zip(qa_message_ids, details_list):
         if isinstance(detail, dict):
@@ -238,10 +241,10 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
     print("📊 正在进行整体打分...")
     # Retained until report/UI support a distinct insufficient-evidence state.
     cap = 60 if round_count < 3 else 100
-    system_prompt = OVERALL_PROMPT
+    system_prompt = get_assessment_prompt(OVERALL_PROMPT, difficulty, round_num)
     user_prompt = json.dumps({
         "target_role": target_role,
-        "round_scope": ROUND_SCOPES.get(round_num, ROUND_SCOPES[1]),
+        "round_scope": get_round_scope(round_num, difficulty),
         "difficulty": difficulty,
         "position_context": position_context or {},
         "message_count": round_count,
@@ -278,25 +281,51 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         comment = str(result.get('comment') or '').strip()
         if not comment:
             raise ValueError('missing report comment')
-        weighted_points = sum(
-            clean_scores[dimension] * weight
-            for dimension, weight in zip(REQUIRED_SCORE_DIMENSIONS, SCORE_WEIGHTS)
-        )
-        weighted_score = (weighted_points + 50) // 100
+        evaluated_dimensions = list(REQUIRED_SCORE_DIMENSIONS)
+        if difficulty in STUDENT_MODES:
+            evaluated_dimensions = result.get('evaluated_dimensions')
+            if (not isinstance(evaluated_dimensions, list)
+                    or any(not isinstance(d, str) or d not in REQUIRED_SCORE_DIMENSIONS
+                           for d in evaluated_dimensions)
+                    or len(set(evaluated_dimensions)) != len(evaluated_dimensions)):
+                raise ValueError('invalid evaluated dimensions')
+            if any(clean_scores[d] != 0 for d in REQUIRED_SCORE_DIMENSIONS
+                   if d not in evaluated_dimensions):
+                raise ValueError('unassessed dimension has a score')
+            if '专业技能' not in evaluated_dimensions:
+                cap = 0
+            elif clean_scores['专业技能'] < 60:
+                cap = min(cap, 59)
+        weighted_points = 0
+        weight_sum = 0
+        for dimension, weight in zip(REQUIRED_SCORE_DIMENSIONS, SCORE_WEIGHTS):
+            if dimension in evaluated_dimensions:
+                weighted_points += clean_scores[dimension] * weight
+                weight_sum += weight
+        weighted_score = ((weighted_points + weight_sum // 2) // weight_sum
+                          if weight_sum else 0)
         result = {
             'scores': clean_scores,
-            # Never raise a conservative model judgment, or accept a total
-            # inflated beyond the dimension evidence and the legacy limit.
-            'total_score': min(total_score, weighted_score, cap),
+            # Student practice uses the declared formula, without penalizing
+            # unassessed dimensions. Legacy pressure reports retain their cap.
+            'total_score': (min(weighted_score, cap) if difficulty in STUDENT_MODES
+                            else min(total_score, weighted_score, cap)),
             'comment': comment,
         }
+        if difficulty in STUDENT_MODES:
+            result['evaluated_dimensions'] = evaluated_dimensions
+            unassessed = [d for d in REQUIRED_SCORE_DIMENSIONS if d not in evaluated_dimensions]
+            scope_note = f'本分数为{difficulty}下已考察范围的入门练习得分。'
+            if unassessed:
+                scope_note += '、'.join(unassessed) + '未评估，0为占位，不参与总分。'
+            result['comment'] = scope_note + comment
         return result
     except Exception as e:
         print(f"❌ 整体打分失败: {e}")
         raise AIServiceError('整体报告评分失败') from e
 
 
-def _get_details_feedback(user_answers, target_role):
+def _get_details_feedback(user_answers, target_role, round_num=1, difficulty="标准模式"):
     """
     内部函数：请求 AI 对用户回答列表进行逐一按顺序点评
     user_answers: 按顺序排列的 question / answer 对象列表
@@ -306,9 +335,11 @@ def _get_details_feedback(user_answers, target_role):
 
     print(f"📝 正在分析 {len(user_answers)} 组问答数据 (生成点评+范例)...")
 
-    system_prompt = DETAILS_PROMPT
+    system_prompt = get_assessment_prompt(DETAILS_PROMPT, difficulty, round_num)
     user_prompt = json.dumps({
         "target_role": target_role,
+        "round_scope": get_round_scope(round_num, difficulty),
+        "difficulty": difficulty,
         "qa_pairs": user_answers,
     }, ensure_ascii=False)
 
@@ -353,8 +384,14 @@ def transcribe_audio(audio_file_path):
     """在部署机器上识别录音，转写文字由调用方交给 DeepSeek。"""
     try:
         return transcribe_local_audio(audio_file_path)
+    except AudioDecodeError:
+        logging.getLogger(__name__).exception('录音解码失败')
+        raise
+    except ASRUnavailableError as e:
+        logging.getLogger(__name__).exception('本地语音识别组件不可用')
+        raise AIServiceError('语音识别服务尚未就绪，请联系管理员检查本地模型和录音解码组件') from e
     except Exception as e:
-        print(f"❌ 本地语音识别失败: {e}")
+        logging.getLogger(__name__).exception('本地语音识别失败')
         raise AIServiceError('语音识别暂时不可用，请稍后重试或输入文字') from e
 
 
@@ -420,7 +457,7 @@ def anonymize_resume_pii(resume_text):
         return resume_text  # 失败则返回原位
 
 
-def analyze_image(image_base64):
+def analyze_image(image_base64, detailed=False):
     """
     功能：调用配置的视觉模型分析图片
     image_base64: Base64 编码的图片字符串 (带前缀 data:image/jpeg;base64,...)
@@ -430,7 +467,7 @@ def analyze_image(image_base64):
 
     print("🖼️ 正在进行视觉分析...")
 
-    system_prompt = VISION_PROMPT
+    system_prompt = VISION_REVIEW_PROMPT if detailed else VISION_PROMPT
 
     try:
         response = client.chat.completions.create(
@@ -451,11 +488,16 @@ def analyze_image(image_base64):
                 }
             ],
             temperature=0.1,
-            max_tokens=100
+            max_tokens=350 if detailed else 100
         )
         result = response.choices[0].message.content
         # 尝试清理可能存在的 markdown 标记
         cleaned_result = result.replace('```json', '').replace('```', '').strip()
+        if detailed:
+            review = json.loads(cleaned_result)
+            if not isinstance(review, dict) or not isinstance(review.get('tags'), list) or not isinstance(review.get('comment'), str) or not review['comment'].strip():
+                raise ValueError('invalid visual review')
+            cleaned_result = json.dumps(normalize_visual_feedback(review), ensure_ascii=False)
         print(f"👁️ 视觉分析结果: {cleaned_result}")
         return cleaned_result
 

@@ -48,6 +48,8 @@ SQLITE_COLUMNS = {
         'prompt_version': 'VARCHAR(50)',
     },
     'chat_messages': {
+        'visual_image': 'BLOB',
+        'visual_captured_at': 'DATETIME',
         'audio_urls': 'TEXT',
         'generation_status': "VARCHAR(30) NOT NULL DEFAULT 'completed'",
         'model_name': 'VARCHAR(100)',

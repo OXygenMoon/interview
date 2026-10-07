@@ -1,0 +1,25 @@
+{% macro visual_card(record, session_id, link_answer=false) %}
+<article id="visual-{{ record.message_id }}" class="bg-white border border-stone-200 rounded-xl overflow-hidden" style="scroll-margin-top: 100px;" data-testid="visual-record">
+    {% if record.has_image %}
+    <a href="{{ url_for('routes.interview_frame', session_id=session_id, message_id=record.message_id) }}" target="_blank" rel="noopener" aria-label="查看 {{ record.elapsed }} 的完整画面">
+        <img src="{{ url_for('routes.interview_frame', session_id=session_id, message_id=record.message_id) }}" alt="面试 {{ record.elapsed }} 时的摄像头截图" loading="lazy" class="w-full object-contain bg-stone-100" style="height: 180px;" />
+    </a>
+    {% else %}
+    <div class="bg-stone-100 px-4 py-3 text-xs text-stone-500">历史记录未保存截图</div>
+    {% endif %}
+    <div class="p-4 text-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span class="font-mono font-bold text-stone-700">{{ record.elapsed }}</span>
+            <span class="text-xs text-stone-500">{{ record.clock_time }}{% if record.estimated_time %} · 按回答时间定位{% endif %}</span>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3" aria-label="画面关键词">
+            {% for tag in record.tags %}<span class="badge badge-outline text-xs text-stone-600 h-auto py-1" style="white-space: normal; overflow-wrap: anywhere;">{{ tag }}</span>{% endfor %}
+        </div>
+        <h4 class="font-bold text-stone-700 mb-1">仪态点评</h4>
+        <p class="text-stone-600 leading-6" style="overflow-wrap: anywhere;">{{ record.comment }}</p>
+        {% if link_answer %}
+        <a href="#answer-{{ record.message_id }}" class="link text-primary inline-block mt-3 text-xs">查看对应回答 →</a>
+        {% endif %}
+    </div>
+</article>
+{% endmacro %}

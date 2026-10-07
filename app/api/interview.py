@@ -16,6 +16,9 @@ from ..config import Config
 # 引入 AI 服务
 from ..services.ai_agent import AIServiceError, CHAT_PROMPT_VERSION, REPORT_PROMPT_VERSION, generate_interview_report, transcribe_audio, analyze_image, evaluate_random_answer
 from ..services.question_bank import get_random_interview_questions
+from ..services.interview_prompts import STUDENT_MODES
+from ..services.local_asr import AudioDecodeError
+from ..services.visual_review import decode_frame, normalize_visual_feedback, visual_record, UNAVAILABLE_COMMENT
 # 引入 TTS 服务
 from ..services.tts_service import text_to_speech
 # 引入文件解析服务 (解析简历用)
@@ -300,24 +303,42 @@ def chat(session_id):
     if session.status != 'ongoing':
         return jsonify({'error': '该面试已结束，无法继续对话'}), 400
 
-    # 2. 视觉分析 (同步先做，结果拼到上下文)
-    visual_context_str = ""
-    if user_image:
+    # Record capture time before the synchronous visual request adds latency.
+    received_at = datetime.now()
+    frame_bytes = None
+    if user_image and SystemConfig.get('enable_video', 'true') == 'true':
         try:
-            visual_context_str = analyze_image(user_image)
+            frame_bytes = decode_frame(user_image)
+        except ValueError as error:
+            return jsonify({'error': str(error)}), 400
+
+    # Visual coaching remains separate from interview questioning and scoring.
+    visual_context_str = ""
+    if frame_bytes:
+        feedback = {'tags': [], 'comment': UNAVAILABLE_COMMENT}
+        try:
+            observed = normalize_visual_feedback(analyze_image(user_image, detailed=True))
+            if observed['tags'] or observed['comment']:
+                feedback = observed
+                if not feedback['comment']:
+                    feedback['comment'] = '本帧仅获得画面关键词，未生成仪态点评。'
         except Exception as e:
             print(f"Visual analyze error: {e}")
+        visual_context_str = json.dumps(feedback, ensure_ascii=False)
 
     # 3. 保存用户消息 + 刷新活跃时间
     user_msg = ChatMessage(
         session_id=session_id,
         sender="user",
         content=user_text,
-        timestamp=datetime.now(),
-        visual_context=visual_context_str
+        timestamp=received_at,
+        visual_context=visual_context_str,
+        visual_image=frame_bytes,
+        visual_captured_at=received_at if frame_bytes else None,
     )
     db.session.add(user_msg)
     session.last_activity = datetime.now()
+    session.llm_model = Config.LLM_MODEL_NAME
     db.session.commit()
 
     # 4. 取上下文
@@ -363,7 +384,7 @@ def chat(session_id):
         generation_error = None
         try:
             if visual_context_str:
-                yield sse({'type': 'visual', 'feedback': visual_context_str})
+                yield sse({'type': 'visual', 'feedback': visual_record(user_msg, session)})
             # ① 流式输出 AI token（打字机效果）
             try:
                 for token in stream_ai_response(
@@ -390,6 +411,8 @@ def chat(session_id):
                         yield sse({'type': 'audio', 'url': url, 'index': idx})
                 except Exception as e:
                     print(f"TTS stream error: {e}")
+                if not audio_urls:
+                    yield sse({'type': 'audio_unavailable', 'message': '语音播报暂不可用，本条回复已显示为文字。'})
 
             # ③ 保存 AI 消息（完整文本 + 音频片段）
             ai_msg = ChatMessage(
@@ -711,6 +734,11 @@ def next_round(session_id):
 
     round_name = {2: "复面（技术面）", 3: "终面（高管面）"}.get(next_round_num, f"第{next_round_num}轮")
     first_msg = f"你好，我是本轮的面试官。这是你的{round_name}。我们将重点考察与上一轮不同的方面。请先做一个简短的自我介绍，并说说你希望在本轮展示什么。"
+    if session.difficulty in STUDENT_MODES:
+        round_name = {2: '复面（基础实操）', 3: '终面（协作与成长）'}[next_round_num]
+        question = ('请说说你在课堂或实训中用过的一项岗位相关技能。'
+                    if next_round_num == 2 else '如果分配给你一项还不会的任务，你会怎么办？')
+        first_msg = f'你好，欢迎来到{round_name}。我们继续练习入门问题。{question}'
     welcome = ChatMessage(
         session_id=session.id,
         sender="ai",
@@ -923,11 +951,13 @@ def transcribe_audio_only():
 
         return jsonify({'status': 'success', 'text': user_text})
 
+    except AudioDecodeError as e:
+        return jsonify({'status': 'error', 'code': 'invalid_audio', 'error': str(e)}), 400
     except AIServiceError as e:
-        return jsonify({'status': 'error', 'error': str(e)}), 503
-    except Exception as e:
-        print(f"❌ Transcription Error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'status': 'error', 'code': 'asr_unavailable', 'error': str(e)}), 503
+    except Exception:
+        current_app.logger.exception('Transcription Error')
+        return jsonify({'status': 'error', 'error': '语音识别失败，请稍后重试或输入文字'}), 500
     finally:
         for path in {filepath}:
             if not path:
