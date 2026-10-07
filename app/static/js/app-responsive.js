@@ -145,7 +145,7 @@
     }
     function refresh() {
         main.querySelectorAll('table').forEach(table => {
-            if (table.closest('#resume-preview, .mobile-record-dialog')) return;
+            if (table.closest('#resume-preview, .mobile-record-dialog, .setup-description')) return;
             if (!tables.has(table)) {
                 let wrapper = table.parentElement;
                 if (!wrapper.classList.contains('overflow-x-auto')) {

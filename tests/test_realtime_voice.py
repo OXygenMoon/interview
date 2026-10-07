@@ -256,6 +256,9 @@ def test_real_websocket_bridge_saves_before_close_and_never_leaks_key(voice_app,
             while json.loads(ws.recv()).get('type') != 'ready':
                 pass
             ws.send_binary(b'\0' * 640)
+            # This fixture uploads one frame rather than a continuous mic.
+            # Muting makes the absence of subsequent frames explicit.
+            ws.send(json.dumps({'type': 'input_audio_mute.commit'}))
             received = []
             while True:
                 event = json.loads(ws.recv())

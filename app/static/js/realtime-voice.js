@@ -186,7 +186,7 @@ class InterviewRealtimeVoice {
             this.completedUserBubbles.set(id, bubble);
             this.userBubbles.delete(id);
             this.options.scroll();
-            this.status('面试官正在回应…');
+            this.status('等待连续安静 3 秒后，面试官开始回答…');
         } else if (kind === 'conversation.item.input_audio_transcription.failed') {
             const id = event.item_id || 'current';
             this.userBubbles.get(id)?.closest('.chat')?.remove();

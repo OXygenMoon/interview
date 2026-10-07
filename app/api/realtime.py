@@ -21,6 +21,7 @@ from ..services.realtime_voice import (
     TranscriptRecorder, connect_provider, provider_error, session_payload,
 )
 from ..services.websocket_transport import prepare_websocket_transport, close_websocket_transport
+from ..services.realtime_turns import ReplySilenceGate
 
 
 def authorize_browser(interview_id, hello):
@@ -101,6 +102,7 @@ def relay(ws, interview_id, hello):
     events = queue.Queue(maxsize=256)
     stopped = threading.Event()
     recorder = TranscriptRecorder(interview_id)
+    reply_gate = ReplySilenceGate()
     ready = False
     closing = False
     close_sent = False
@@ -113,6 +115,7 @@ def relay(ws, interview_id, hello):
         nonlocal closing, close_sent, finish_input_at, deadline
         if closing:
             return
+        reply_gate.discard_pending()
         # Finalize the last microphone utterance before releasing the session.
         if sent_audio:
             upstream.send(json.dumps({'type': 'input_audio_mute.commit'}))
@@ -123,6 +126,19 @@ def relay(ws, interview_id, hello):
         closing = True
         finish_input_at = time.monotonic() + 1.5
         deadline = time.monotonic() + 3.5
+
+    def forward(event):
+        nonlocal close_sent
+        saved = recorder.handle(event)
+        if saved and saved.get('sender') == 'user':
+            # completed may be only an end marker; include the final snapshot.
+            event = {**event, 'transcript': saved['text']}
+        ws.send(json.dumps(event, ensure_ascii=False))
+        if saved:
+            ws.send(json.dumps(saved, ensure_ascii=False))
+        if closing and not close_sent and event.get('type') == 'conversation.item.input_audio_transcription.completed':
+            upstream.send(json.dumps({'type': 'session.close'}))
+            close_sent = True
 
     try:
         interview = db.session.get(InterviewSession, interview_id)
@@ -153,19 +169,21 @@ def relay(ws, interview_id, hello):
                     ws.send(json.dumps({'type': 'ready', 'sample_rate': 24000}))
                     if greeting:
                         upstream.send(json.dumps({'type': 'speech_text_buffer.commit', 'text': greeting}, ensure_ascii=False))
-                saved = recorder.handle(event)
-                if saved and saved.get('sender') == 'user':
-                    # completed can be only an end marker. Forward the final
-                    # snapshot explicitly, including to already-open clients.
-                    event = {**event, 'transcript': saved['text']}
-                ws.send(json.dumps(event, ensure_ascii=False))
-                if saved:
-                    ws.send(json.dumps(saved, ensure_ascii=False))
-                if closing and not close_sent and kind == 'conversation.item.input_audio_transcription.completed':
-                    upstream.send(json.dumps({'type': 'session.close'}))
-                    close_sent = True
+                resumed = False
+                if not closing:
+                    if kind == 'conversation.item.input_audio_transcription.started':
+                        resumed = reply_gate.speech_started(time.monotonic())
+                    elif kind == 'conversation.item.input_audio_transcription.delta':
+                        resumed = reply_gate.speech_progress(event, time.monotonic())
+                if resumed:
+                    upstream.send(json.dumps({'type': 'response.cancel', 'event_id': str(uuid.uuid4())}))
+                if reply_gate.accept(event, time.monotonic()):
+                    forward(event)
                 if kind == 'session.closed':
                     return
+            if not closing:
+                for event in reply_gate.release(time.monotonic()):
+                    forward(event)
             if stopped.is_set() and events.empty():
                 break
             if (not ready or closing) and time.monotonic() > deadline:
@@ -199,6 +217,9 @@ def relay(ws, interview_id, hello):
             if isinstance(incoming, bytes):
                 if len(incoming) != 640:
                     raise ValueError('Expected 20 ms mono PCM16 at 16 kHz')
+                if reply_gate.audio(incoming, time.monotonic()):
+                    # A short pause is not permission to play an early reply.
+                    upstream.send(json.dumps({'type': 'response.cancel', 'event_id': str(uuid.uuid4())}))
                 upstream.send(json.dumps({'type': 'input_audio_buffer.append',
                                           'audio': base64.b64encode(incoming).decode('ascii')}))
                 sent_audio = True
@@ -213,6 +234,14 @@ def relay(ws, interview_id, hello):
             if kind == 'session.close':
                 begin_close()
             else:
+                if kind == 'input_audio_mute.commit':
+                    reply_gate.muted = True
+                    reply_gate.voiced_frames = 0
+                elif kind == 'input_audio_unmute.commit':
+                    reply_gate.muted = False
+                    reply_gate.last_frame = None
+                elif kind == 'response.cancel':
+                    reply_gate.discard_pending()
                 upstream.send(json.dumps({'type': kind, 'event_id': str(uuid.uuid4())}))
     except websocket.WebSocketBadStatusException as exc:
         current_app.logger.warning('Realtime handshake rejected: HTTP %s', exc.status_code)
@@ -235,7 +264,8 @@ def relay(ws, interview_id, hello):
                     while time.monotonic() < until and not stopped.is_set():
                         try:
                             event = events.get(timeout=0.1)
-                            recorder.handle(event)
+                            if reply_gate.accept(event, time.monotonic()):
+                                recorder.handle(event)
                             if event.get('type') == 'session.closed':
                                 break
                         except queue.Empty:
@@ -249,7 +279,9 @@ def relay(ws, interview_id, hello):
         # Process any queued final transcript before report generation starts.
         try:
             while not events.empty():
-                recorder.handle(events.get_nowait())
+                event = events.get_nowait()
+                if reply_gate.accept(event, time.monotonic()):
+                    recorder.handle(event)
             recorder.flush()
         except Exception:
             db.session.rollback()

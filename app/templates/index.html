@@ -285,17 +285,17 @@
                  <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
                      <h3 class="font-bold text-slate-700 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        岗位详情
+                        <span id="desc-panel-title">公司信息</span>
                      </h3>
-                     <button onclick="toggleDescContent()" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600" title="折叠/展开">
+                     <button id="desc-toggle" onclick="toggleDescContent()" class="btn btn-xs btn-ghost text-slate-400 hover:text-slate-600" title="折叠/展开" aria-label="折叠/展开公司与岗位信息" aria-controls="desc-content-wrapper" aria-expanded="true">
                         <svg xmlns="http://www.w3.org/2000/svg" id="collapse-icon" class="h-4 w-4 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                      </button>
                  </div>
                  <div class="flex-1 overflow-y-auto p-5 custom-scrollbar" id="desc-content-wrapper">
-                    <div id="position-desc-content" class="prose prose-sm max-w-none text-slate-600">
+                    <div id="position-desc-content" class="setup-description prose prose-sm max-w-none text-slate-600">
                         <div class="flex flex-col items-center justify-center h-40 text-slate-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <p class="text-sm">请先选择公司和岗位</p>
+                            <p class="text-sm">选择公司后查看公司介绍</p>
                         </div>
                     </div>
                  </div>
@@ -316,6 +316,7 @@
             wrapper.style.display = 'none';
             icon.style.transform = 'rotate(180deg)';
         }
+        document.getElementById('desc-toggle').setAttribute('aria-expanded', wrapper.style.display !== 'none');
     }
 </script>
 
@@ -335,11 +336,87 @@
         background-color: var(--color-muted);
     }
 
+    .setup-description { min-width: 0; font-size: 0.875rem; line-height: 1.8; overflow-wrap: anywhere; }
+    .setup-description section + section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-rule); }
+    .setup-description :is(h1, h2, h3, h4, h5, h6) { margin: 1.25rem 0 0.6rem; color: var(--color-ink); font-weight: 700; line-height: 1.4; }
+    .setup-description h1 { font-size: 1.5rem; }
+    .setup-description h2 { font-size: 1.25rem; }
+    .setup-description h3 { font-size: 1.1rem; }
+    .setup-description section > h3 { margin-top: 0; }
+    .setup-description p { margin: 0.75rem 0; }
+    .setup-description :is(ul, ol) { margin: 0.75rem 0; padding-left: 1.5rem; }
+    .setup-description ul { list-style: disc; }
+    .setup-description ol { list-style: decimal; }
+    .setup-description li + li { margin-top: 0.25rem; }
+    .setup-description a { color: var(--color-accent); text-decoration: underline; }
+    .setup-description blockquote { margin: 1rem 0; border-left: 3px solid var(--color-accent); padding: 0.25rem 1rem; color: var(--color-muted); }
+    .setup-description code { padding: 0.15rem 0.3rem; border-radius: 0.25rem; background: var(--color-soft); font-size: 0.9em; }
+    .setup-description pre { max-width: 100%; overflow-x: auto; padding: 0.75rem; background: var(--color-soft); border-radius: 0.5rem; }
+    .setup-description pre code { padding: 0; background: transparent; }
+    .setup-description table { display: block; max-width: 100%; overflow-x: auto; margin: 1rem 0; border-collapse: collapse; }
+    .setup-description :is(th, td) { border: 1px solid var(--color-rule); padding: 0.5rem 0.75rem; }
+    .setup-description th { background: var(--color-soft); font-weight: 700; }
+    .setup-description hr { margin: 1rem 0; border-color: var(--color-rule); }
+    .setup-description img { max-width: 100%; height: auto; }
 
 </style>
 
 <script>
 let allCompanies = [];
+
+function renderSetupMarkdown(source) {
+    const template = document.createElement('template');
+    if (typeof marked === 'undefined') {
+        const fallback = document.createElement('p');
+        fallback.style.whiteSpace = 'pre-wrap';
+        fallback.textContent = source;
+        return fallback;
+    }
+    const renderer = new marked.Renderer();
+    // Treat embedded HTML as text; Markdown still supports headings, lists and quotes.
+    renderer.html = html => {
+        const escaped = document.createElement('div');
+        escaped.textContent = html;
+        return escaped.innerHTML;
+    };
+    template.innerHTML = marked.parse(source, { renderer, gfm: true });
+    template.content.querySelectorAll('a[href], img[src]').forEach(element => {
+        const attribute = element.tagName === 'A' ? 'href' : 'src';
+        const protocols = attribute === 'href' ? ['http:', 'https:', 'mailto:'] : ['http:', 'https:'];
+        try {
+            if (protocols.includes(new URL(element.getAttribute(attribute), window.location.href).protocol)) return;
+        } catch (error) { /* Invalid URLs are displayed without a link or image source. */ }
+        element.removeAttribute(attribute);
+    });
+    return template.content;
+}
+
+function renderSetupDescription(company, position = null) {
+    const contentDiv = document.getElementById('position-desc-content');
+    document.getElementById('desc-panel-title').textContent = position ? '公司与岗位信息' : '公司信息';
+    contentDiv.replaceChildren();
+    if (!company) {
+        const empty = document.createElement('p');
+        empty.textContent = '选择公司后查看公司介绍';
+        contentDiv.appendChild(empty);
+    } else {
+        const addSection = (title, description, emptyText) => {
+            const section = document.createElement('section');
+            const heading = document.createElement('h3');
+            heading.textContent = title;
+            section.appendChild(heading);
+            section.appendChild(renderSetupMarkdown(description?.trim() || emptyText));
+            contentDiv.appendChild(section);
+        };
+        addSection(`${company.name}简介`, company.description, '暂无公司介绍');
+        if (position) addSection(`${position.name}岗位要求`, position.description, '暂无岗位要求');
+    }
+    const wrapper = document.getElementById('desc-content-wrapper');
+    wrapper.style.display = 'block';
+    wrapper.scrollTop = 0;
+    document.getElementById('collapse-icon').style.transform = 'rotate(0deg)';
+    document.getElementById('desc-toggle').setAttribute('aria-expanded', 'true');
+}
 
 async function loadCompanies() {
     try {
@@ -373,14 +450,7 @@ function onCompanyChange() {
     document.getElementById('target_role_input').value = "";
     document.getElementById('position_id_input').value = "";
 
-    // Reset description panel
-    const contentDiv = document.getElementById('position-desc-content');
-    contentDiv.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-40 text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <p class="text-sm">请先选择公司和岗位</p>
-        </div>
-    `;
+    renderSetupDescription(company);
 
     if (company && company.positions && company.positions.length > 0) {
         company.positions.forEach(pos => {
@@ -400,24 +470,13 @@ function onPositionChange() {
     const compId = parseInt(document.getElementById('company-select').value);
     const posId = parseInt(document.getElementById('position-select').value);
     const company = allCompanies.find(c => c.id === compId);
-    const position = company ? company.positions.find(p => p.id === posId) : null;
+    const position = company?.positions?.find(p => p.id === posId);
 
     if (position) {
         document.getElementById('target_role_input').value = position.name;
         document.getElementById('position_id_input').value = position.id;
-
-        // Combine Company Description and Position Description
-        let desc = "";
-        if (company.description) desc += `### ${company.name}简介\n\n${company.description}\n\n---\n\n`;
-        if (position.description) desc += `### ${position.name}岗位要求\n\n${position.description}`;
-
-        const contentDiv = document.getElementById('position-desc-content');
-        if (desc.trim()) {
-            contentDiv.innerHTML = marked.parse(desc);
-        } else {
-            contentDiv.innerHTML = '<div class="text-center text-slate-400 py-10">暂无详细描述</div>';
-        }
     }
+    renderSetupDescription(company, position);
 }
 
 // === 自动分页逻辑 (Client-side Pagination) ===

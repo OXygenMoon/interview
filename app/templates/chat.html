@@ -85,7 +85,7 @@
                             面试已结束，您可以回顾聊天记录
                         {% endif %}
                     {% else %}
-                        开启实时语音后直接回答，开口即可打断面试官
+                        开启实时语音后直接回答，停顿 3 秒后面试官回答，开口即可打断
                     {% endif %}
                 </p>
             </div>
@@ -264,7 +264,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-transport-20261007-2') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-silence-20261007-3') }}"></script>
 <script>
     // === 计时器逻辑 (保持不变) ===
     const startTimeStr = "{{ session.start_time }}";

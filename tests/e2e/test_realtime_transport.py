@@ -165,3 +165,72 @@ def test_audio_and_heartbeats_survive_short_socket_writes(voice_app, transport_p
     assert frame_errors == []
     with voice_app.app_context():
         assert ChatMessage.query.filter_by(sender='user').one().content == '我的项目使用数据库事务。'
+
+
+def test_replies_wait_for_three_seconds_and_short_pause_cancels_unheard_reply(voice_app, transport_page):
+    page, frame_errors = transport_page
+    provider = FakeProvider(deferred=True)
+    original_send = provider.send
+    turn = 0
+    talking = False
+
+    def send(raw):
+        nonlocal turn, talking
+        event = json.loads(raw)
+        if event['type'] != 'input_audio_buffer.append':
+            original_send(raw)
+            return
+        provider.sent.append(event)
+        voiced = base64.b64decode(event['audio'])[:2] != b'\0\0'
+        if voiced and not talking:
+            turn += 1
+            talking = True
+            provider.events.put({'type': 'conversation.item.input_audio_transcription.started', 'item_id': f'q{turn}'})
+            provider.events.put({'type': 'conversation.item.input_audio_transcription.delta', 'item_id': f'q{turn}', 'delta': f'回答{turn}'})
+        elif talking and not voiced:
+            talking = False
+            provider.events.put({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': f'q{turn}', 'text': f'回答{turn}'})
+            for kind, data in [
+                ('response.output_text.delta', {'delta': f'追问{turn}'}),
+                ('response.output_text.done', {'text': f'追问{turn}'}),
+                ('response.output_audio.delta', {'delta': base64.b64encode(bytes(960)).decode()}),
+                ('response.output_audio.done', {}),
+            ]:
+                provider.events.put({'type': kind, 'response_id': f'r{turn}', **data})
+
+    provider.send = send
+    with patch('app.api.realtime.connect_provider', return_value=provider):
+        result = page.evaluate('''() => new Promise(resolve => {
+            const result = {output:[], errors:[]};
+            const ws = new WebSocket(location.origin.replace('http','ws')+'/api/interview/1/realtime');
+            let upload, started, lastVoice=0;
+            const timeout=setTimeout(()=>{clearInterval(upload);ws.close();resolve({...result,timeout:true});},12000);
+            ws.onopen=()=>ws.send(JSON.stringify({type:'connect',csrf_token:'csrf'}));
+            ws.onmessage=({data})=>{
+                const e=JSON.parse(data);
+                if(e.type==='ready') {
+                    started=performance.now();
+                    upload=setInterval(()=>{
+                        const t=performance.now()-started;
+                        if(t>6500){clearInterval(upload);ws.send(JSON.stringify({type:'session.close'}));return;}
+                        const frame=new Int16Array(320);
+                        if(t<400 || (t>=2400 && t<2800)){frame.fill(4000);lastVoice=t;}
+                        ws.send(frame.buffer);
+                    },20);
+                }
+                if(e.type.startsWith('response.output_'))result.output.push({type:e.type,id:e.response_id,after:performance.now()-started-lastVoice});
+                if(e.type==='error')result.errors.push(e.message);
+            };
+            ws.onclose=e=>{clearInterval(upload);clearTimeout(timeout);resolve({...result,code:e.code});};
+        })''')
+    assert result.get('timeout') is None
+    assert result['errors'] == []
+    assert result['code'] == 1000
+    assert result['output']
+    assert {event['id'] for event in result['output']} == {'r2'}
+    assert min(event['after'] for event in result['output']) >= 2980
+    assert any(event['type'] == 'response.cancel' for event in provider.sent)
+    with voice_app.app_context():
+        assert ChatMessage.query.filter_by(content='追问1').count() == 0
+        assert ChatMessage.query.filter_by(content='追问2').one().audio_url
+    assert frame_errors == []
