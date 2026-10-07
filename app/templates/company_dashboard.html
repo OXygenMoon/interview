@@ -1,0 +1,15 @@
+{% extends 'company_base.html' %}
+{% from '_company_records.html' import records_table %}
+{% block title %}公司概览{% endblock %}
+{% block content %}
+<section class="company-header">
+    <div><p class="club-eyebrow">校企合作 / 企业招聘工作台</p><h1>{{ company.name }}</h1><p>管理面试岗位，从学生的实际回答中发现合适的人选。</p></div>
+    <a class="btn btn-primary" href="{{ url_for('company_portal.edit_position') }}">+ 新增面试岗位</a>
+</section>
+<div class="company-grid">
+    <div class="company-panel"><p class="company-note">面试岗位</p><p class="company-metric">{{ company.positions|length }}</p><a href="{{ url_for('company_portal.positions') }}">管理岗位 →</a></div>
+    <div class="company-panel"><p class="company-note">面试记录</p><p class="company-metric">{{ interview_count }}</p><a href="{{ url_for('company_portal.interviews') }}">查看记录 →</a></div>
+    <div class="company-panel"><p class="company-note">参与学生</p><p class="company-metric">{{ candidate_count }}</p><p class="company-note">同一学生多轮面试计为一人</p></div>
+</div>
+<section class="company-panel"><div class="company-header"><h2>最近面试</h2><a href="{{ url_for('company_portal.interviews') }}">全部记录 →</a></div>{{ records_table(recent) }}</section>
+{% endblock %}

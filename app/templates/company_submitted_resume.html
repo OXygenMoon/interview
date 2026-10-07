@@ -1,0 +1,6 @@
+{% extends 'company_base.html' %}
+{% block title %}递交简历{% endblock %}
+{% block content %}
+<section class="company-header"><div><p class="club-eyebrow">{{ (record.position_snapshot or {}).get('position_name') or record.target_role }}</p><h1>{{ record.user.truename or record.user.username }}的递交简历</h1><p>保留 {{ record.start_time.strftime('%Y-%m-%d %H:%M') }} 面试时递交的内容。</p></div><a class="btn" href="{{ url_for('company_portal.interview_detail', session_id=record.id) }}">返回面试详情</a></section>
+<section class="company-panel">{% if record.resume_snapshot %}<p class="company-text" data-testid="submitted-resume">{{ record.resume_snapshot }}</p>{% else %}<div class="company-empty"><h2>本次面试未保存递交简历</h2><p class="company-note">学生未递交简历，或历史面试没有简历快照。</p></div>{% endif %}</section>
+{% endblock %}

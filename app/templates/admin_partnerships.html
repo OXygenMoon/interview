@@ -1,0 +1,28 @@
+{% extends 'company_base.html' %}
+{% block title %}校企合作管理{% endblock %}
+{% block content %}
+<section class="company-header"><div><p class="club-eyebrow">管理员 / 校企合作</p><h1>校企合作管理</h1><p>为合作公司开通账号、维护联系人与登录状态。每个公司账号只可访问所属公司的岗位和面试记录。</p></div><a class="btn" href="{{ url_for('routes.admin_company') }}">管理公司资料与岗位库 →</a></section>
+<section class="company-panel"><h2>开通公司账号</h2><form method="post" class="company-form" id="company-account-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div><label for="company_id">所属公司</label><select class="select select-bordered" id="company_id" name="company_id"><option value="">新增合作公司</option>{% for company in companies %}<option value="{{ company.id }}" {{ 'selected' if request.form.get('company_id') == company.id|string else '' }}>{{ company.name }}</option>{% endfor %}</select><p class="company-note">可为已有公司开通多个联系人账号。</p></div>
+<div id="new-company-fields"><div><label for="company_name">新公司名称</label><input class="input input-bordered" id="company_name" name="company_name" maxlength="100" value="{{ request.form.get('company_name', '') }}"></div><div class="mt-4"><label for="description">公司介绍</label><textarea class="textarea textarea-bordered" id="description" name="description" rows="3" maxlength="20000">{{ request.form.get('description', '') }}</textarea></div></div>
+<div class="company-account"><div><label for="username">登录账号</label><input class="input input-bordered" id="username" name="username" required maxlength="50" autocomplete="off" value="{{ request.form.get('username', '') }}"></div><div><label for="truename">联系人</label><input class="input input-bordered" id="truename" name="truename" required maxlength="50" value="{{ request.form.get('truename', '') }}"></div></div>
+<div><label for="password">初始密码</label><input class="input input-bordered" id="password" name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"><p class="company-note">至少 10 个字符，首次登录需修改密码。</p></div>
+<div><button type="submit" class="btn btn-primary">开通公司账号</button></div>
+</form></section>
+<section><div class="company-header"><h2 class="text-xl font-bold">公司账号 · {{ accounts|length }}</h2></div>
+{% for account in accounts %}<article class="company-panel"><div class="company-header"><div><h2>{{ account.company.name }}</h2><p>@{{ account.user.username }} · {{ account.user.truename }}</p><p class="company-note">{{ '启用中' if account.user.active else '已停用' }}{% if account.user.must_change_password %} · 登录后需修改密码{% endif %} · {{ account.company.positions|length }} 个岗位</p></div><form method="post" action="{{ url_for('company_portal.manage_account', user_id=account.user_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="toggle"><button class="btn btn-sm" type="submit">{{ '停用账号' if account.user.active else '启用账号' }}</button></form></div>
+<div class="company-account"><form method="post" class="company-form" action="{{ url_for('company_portal.manage_account', user_id=account.user_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="contact"><div><label for="contact-{{ account.user_id }}">联系人</label><input class="input input-bordered" id="contact-{{ account.user_id }}" name="truename" value="{{ account.user.truename }}" required maxlength="50"></div><div><button class="btn btn-sm" type="submit">更新联系人</button></div></form>
+<form method="post" class="company-form" action="{{ url_for('company_portal.manage_account', user_id=account.user_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="reset"><div><label for="reset-{{ account.user_id }}">新临时密码</label><input class="input input-bordered" type="password" id="reset-{{ account.user_id }}" name="password" required minlength="10" maxlength="128" autocomplete="new-password"></div><div><button class="btn btn-sm" type="submit">重置密码</button></div></form></div>
+</article>{% else %}<div class="company-panel company-empty"><h2>尚未开通公司账号</h2><p class="company-note">在上方选择已有公司或新增公司，填写联系人和登录信息即可开通。</p></div>{% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}<script>
+(() => {
+    const select = document.getElementById('company_id');
+    const fields = document.getElementById('new-company-fields');
+    const name = document.getElementById('company_name');
+    const update = () => { fields.hidden = !!select.value; name.required = !select.value; };
+    select.addEventListener('change', update); update();
+})();
+</script>{% endblock %}

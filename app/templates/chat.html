@@ -152,6 +152,7 @@
                 {% endif %}
             </div>
             {% if enable_realtime_voice %}
+            <p id="voice-environment-status" class="text-xs text-stone-500 mb-2" role="status" aria-live="polite" hidden></p>
             <div id="realtime-controls" class="bg-white p-3 rounded-xl border border-stone-100 mb-2" hidden style="display: none;">
                 <div class="flex gap-2 items-center flex-wrap">
                     <button type="button" id="record-btn" class="btn btn-primary btn-sm text-white">开始实时对话</button>
@@ -239,17 +240,8 @@
             <code id="current-origin" class="text-primary font-mono select-all"></code>
         </div>
 
-        <p class="font-bold text-sm">解决方案（Chrome / Edge）：</p>
-        <ol class="list-decimal list-inside text-sm space-y-3 mt-2 text-stone-600">
-            <li>在地址栏输入并回车：
-                <div class="mockup-code bg-stone-800 text-white text-xs mt-1 p-2 min-w-0">
-                    <pre data-prefix="$"><code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></pre>
-                </div>
-            </li>
-            <li>将高亮选项设置为 <span class="badge badge-sm badge-success text-white">Enabled</span></li>
-            <li>在下方文本框输入上面的当前地址（IP+端口）</li>
-            <li>点击右下角的 <span class="btn btn-xs btn-outline">Relaunch</span> 重启浏览器</li>
-        </ol>
+        <p class="text-sm text-stone-600">请使用平台的 HTTPS 地址，并在浏览器中允许麦克风权限。iPhone / iPad 请使用 Safari；如果从微信等应用打开，可选择“在浏览器中打开”。</p>
+        <p class="text-sm text-stone-600 mt-2">如果目前只有 HTTP 地址，请联系管理员配置 HTTPS。你可以先切换到文字输入继续面试。</p>
         
         <div class="modal-action">
             <form method="dialog">
@@ -264,23 +256,24 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-silence-20261007-3') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-mobile-20261007-1') }}"></script>
 <script>
-    // === 计时器逻辑 (保持不变) ===
-    const startTimeStr = "{{ session.start_time }}";
-    const startTime = new Date(startTimeStr.replace(/-/g, "/")).getTime();
+    // Use server-computed duration: no browser date parsing or device timezone dependency.
+    const initialElapsed = {{ elapsed_seconds|tojson }};
+    const timerRunning = {{ timer_running|tojson }};
+    const timerLoadedAt = Date.now();
     const timerElement = document.getElementById('interview-timer');
-
-    if (timerElement) {
-        setInterval(() => {
-            const now = new Date().getTime();
-            const diff = now - startTime;
-            if (diff < 0) return;
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            timerElement.innerText = `${minutes < 10 ? "0"+minutes : minutes}:${seconds < 10 ? "0"+seconds : seconds}`;
-        }, 1000);
+    function updateInterviewTimer() {
+        if (!timerElement) return;
+        const elapsed = Math.max(0, initialElapsed + (timerRunning
+            ? Math.floor((Date.now() - timerLoadedAt) / 1000) : 0));
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
+    updateInterviewTimer();
+    if (timerRunning && timerElement) setInterval(updateInterviewTimer, 1000);
+    document.addEventListener('visibilitychange', updateInterviewTimer);
 
     // =========================================================
     // 1. 全局变量
@@ -622,7 +615,8 @@
 
         // 3. 清理输入框状态
         msgInput.value = '';
-        sessionStorage.removeItem(DRAFT_KEY);
+        // Keep the answer until the server has accepted the request.
+        sessionStorage.setItem(DRAFT_KEY, text);
         msgInput.disabled = true;
         isProcessing = true;
         syncInputMode();
@@ -631,6 +625,9 @@
         // 4. 显示 AI 思考动画
         showTypingIndicator();
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90000);
+        let accepted = false;
         try {
             // 4.5 捕获当前视频帧
             const imageBase64 = captureFrame();
@@ -639,66 +636,93 @@
             const res = await fetch(`/api/interview/${sessionId}/chat`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: text, image: imageBase64 })
+                body: JSON.stringify({ message: text, image: imageBase64 }),
+                signal: controller.signal
             });
 
-            if (!res.ok) {
-                removeTypingIndicator();
-                appendMessage('ai', '（连接中断，请重试）');
-                return;
+            if (!res.ok || !(res.headers.get('Content-Type') || '').includes('text/event-stream')) {
+                let message = res.ok ? '回复格式异常，请刷新页面后重试；回答已保留。'
+                    : `请求失败（HTTP ${res.status}），请稍后重试。`;
+                if (res.status === 401 || res.redirected) {
+                    message = '登录已失效，请重新登录后继续面试。';
+                } else {
+                    const body = await res.text();
+                    try { message = JSON.parse(body).error || message; } catch (_) {
+                        if (body.includes('CSRF token')) message = '页面验证已失效，请刷新页面后重试；回答已保留。';
+                    }
+                }
+                throw new Error(message);
             }
-
+            accepted = true;
+            sessionStorage.removeItem(DRAFT_KEY);
             removeTypingIndicator();
             const { contentEl, bubbleEl } = appendAiStreamingBubble();
             let fullText = '';
+            let streamError = '';
+            let completed = false;
+            let audioUnavailable = false;
             const audioUrls = [];
-
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
             let buffer = '';
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                let idx;
-                while ((idx = buffer.indexOf('\n\n')) !== -1) {
-                    const raw = buffer.slice(0, idx);
-                    buffer = buffer.slice(idx + 2);
-                    // 提取 data: 行
-                    const payload = raw.split('\n')
-                        .map(l => l.trim())
-                        .filter(l => l.startsWith('data:'))
-                        .map(l => l.slice(5).trim())
-                        .join('');
+            function consumeEvents(chunk) {
+                buffer += chunk;
+                let match;
+                while ((match = /\r?\n\r?\n/.exec(buffer))) {
+                    const raw = buffer.slice(0, match.index);
+                    buffer = buffer.slice(match.index + match[0].length);
+                    const payload = raw.split(/\r?\n/)
+                        .filter(line => line.startsWith('data:'))
+                        .map(line => line.slice(5).trimStart()).join('\n');
                     if (!payload) continue;
                     let evt;
-                    try { evt = JSON.parse(payload); } catch (e) { continue; }
-
+                    try { evt = JSON.parse(payload); } catch (_) { continue; }
                     if (evt.type === 'token') {
                         fullText += evt.content;
-                        // 安全追加（文本节点，不解析 HTML）
                         contentEl.appendChild(document.createTextNode(evt.content));
                         scrollToBottom();
                     } else if (evt.type === 'audio') {
                         audioUrls.push(evt.url);
                         enqueueAudio(evt.url);
                     } else if (evt.type === 'audio_unavailable') {
+                        audioUnavailable = true;
                         textAudioStatus(evt.message);
                     } else if (evt.type === 'visual') {
                         updateVisualFeedbackUI(evt.feedback);
                     } else if (evt.type === 'error') {
-                        console.warn('SSE error:', evt.message);
-                        if (!fullText) {
-                            contentEl.textContent = evt.message || 'AI 响应失败，请重试。';
-                            bubbleEl.classList.add('border-error', 'text-error');
-                        }
+                        streamError = evt.message || 'AI 响应失败，请重试。';
+                        textAudioStatus(streamError);
+                    } else if (evt.type === 'done') {
+                        completed = true;
                     }
                 }
             }
+            if (res.body?.getReader) {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        consumeEvents(decoder.decode(value, { stream: true }));
+                    }
+                    consumeEvents(decoder.decode());
+                } finally {
+                    reader.releaseLock();
+                }
+            } else {
+                // Older mobile browsers can still answer without streaming Fetch support.
+                consumeEvents(await res.text());
+            }
+            if (!completed && !streamError) streamError = '回复连接中断，请重新进入面试查看已保存的记录。';
+            if (streamError) {
+                contentEl.textContent = fullText + (fullText ? '\n' : '') + streamError;
+                bubbleEl.classList.add('border-error', 'text-error');
+                textAudioStatus(streamError);
+            } else if (!audioUrls.length && !audioUnavailable) {
+                textAudioStatus('面试官已回复，可以继续回答。');
+            }
 
             // 流结束后用 markdown 重渲染（兼顾排版与 XSS 防护）
-            if (fullText) {
+            if (fullText && !streamError) {
                 contentEl.innerHTML = renderAiContent(fullText);
             }
             // 挂载点击重播
@@ -712,8 +736,17 @@
         } catch (e) {
             console.error(e);
             removeTypingIndicator();
-            appendMessage('ai', '（网络请求失败）');
+            const message = e.name === 'AbortError'
+                ? '回复等待超时，请检查网络并重新进入面试查看记录。'
+                : (e instanceof TypeError ? '网络连接失败，请检查网络后重试。' : e.message);
+            appendMessage('ai', message);
+            textAudioStatus(message);
+            if (!accepted) {
+                msgInput.value = text;
+                sessionStorage.setItem(DRAFT_KEY, text);
+            }
         } finally {
+            clearTimeout(timeout);
             if(msgInput) {
                 msgInput.disabled = false;
                 // 只有当是手动打字时，才自动聚焦，语音时键盘弹出会遮挡
@@ -905,6 +938,11 @@
             } catch (error) { console.warn('画面观察暂不可用'); }
         },
     }) : null;
+    const voiceEnvironmentStatus = document.getElementById('voice-environment-status');
+    if (voiceEnvironmentStatus && !window.isSecureContext) {
+        voiceEnvironmentStatus.hidden = false;
+        voiceEnvironmentStatus.textContent = '当前为 HTTP 访问，手机浏览器无法使用麦克风。请使用 HTTPS 地址；现在可输入文字继续面试。';
+    }
     syncInputMode();
     recordBtn?.addEventListener('click', toggleInputMode);
     document.getElementById('realtime-mute')?.addEventListener('click', () => realtimeVoice.toggleMute());

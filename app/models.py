@@ -210,6 +210,16 @@ class Company(db.Model):
     positions = db.relationship('Position', backref='company', cascade='all, delete-orphan')
 
 
+class CompanyAccount(db.Model):
+    """An account can access exactly one administrator-assigned company."""
+    __tablename__ = 'company_accounts'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    user = db.relationship('User', backref=db.backref('company_account', uselist=False))
+    company = db.relationship('Company', backref='accounts')
+
+
 class Position(db.Model):
     """岗位表（二级分类）"""
     __tablename__ = 'positions'

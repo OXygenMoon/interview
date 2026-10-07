@@ -11,7 +11,7 @@ pytestmark = pytest.mark.e2e
 
 def setup_mic(page):
     page.add_init_script('''
-        navigator.mediaDevices.getUserMedia = async () => {
+        MediaDevices.prototype.getUserMedia = async () => {
             const context = new AudioContext();
             const destination = context.createMediaStreamDestination();
             const source = context.createOscillator();
@@ -177,4 +177,4 @@ def test_asr_final_save_corrects_preview_and_duplicate_events_do_not_add_bubbles
     expect(user_bubbles).to_have_count(initial_count + 1)
     expect(user_bubbles.last).to_have_text(final)
     scripts = page.locator('script[src*="realtime-voice.js"]')
-    assert 'v=voice-silence-20261007-3' in scripts.get_attribute('src')
+    assert 'v=voice-mobile-20261007-1' in scripts.get_attribute('src')

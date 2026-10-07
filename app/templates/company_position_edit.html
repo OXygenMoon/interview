@@ -1,0 +1,11 @@
+{% extends 'company_base.html' %}
+{% block title %}{{ '编辑' if position else '新增' }}面试岗位{% endblock %}
+{% block content %}
+<section class="company-header"><div><h1>{{ '编辑' if position else '新增' }}面试岗位</h1><p>描述岗位职责、基础技能与招聘要求，让面试更贴近公司需求。</p></div><a class="btn" href="{{ url_for('company_portal.positions') }}">返回岗位</a></section>
+<section class="company-panel"><form method="post" class="company-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div><label for="name">岗位名称</label><input class="input input-bordered" id="name" name="name" required maxlength="100" value="{{ request.form.get('name', position.name if position else '') }}"></div>
+<div><label for="description">岗位职责与要求</label><textarea class="textarea textarea-bordered" id="description" name="description" rows="12" maxlength="20000" placeholder="工作职责、必备技能、适合的专业、面试考察重点…">{{ request.form.get('description', position.description if position else '') or '' }}</textarea><p class="company-note">支持 Markdown 文本，内容对学生可见。历史面试会保留面试时的岗位要求。</p></div>
+<div class="company-actions"><button class="btn btn-primary" type="submit">保存岗位</button><a class="btn btn-ghost" href="{{ url_for('company_portal.positions') }}">取消</a></div>
+</form></section>
+{% endblock %}

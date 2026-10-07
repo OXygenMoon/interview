@@ -9,6 +9,8 @@ auth_bp = Blueprint('auth', __name__)
 def _redirect_for_role(user):
     if user.must_change_password:
         return redirect(url_for('auth.change_password'))
+    if user.role == 'company':
+        return redirect(url_for('company_portal.dashboard'))
     if session.get('account_link_pending'):
         return redirect(url_for('account_link.authorize'))
     if user.role == 'student':

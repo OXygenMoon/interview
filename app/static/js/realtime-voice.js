@@ -22,8 +22,12 @@ class InterviewRealtimeVoice {
     async start() {
         if (this.stopping) await this.stopping;
         if (this.active || this.disabled) return;
+        if (!window.isSecureContext) {
+            this.status('当前为 HTTP 访问，手机浏览器无法使用麦克风。请使用 HTTPS 地址，或输入文字继续面试。');
+            return;
+        }
         if (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode) {
-            this.status('请使用支持麦克风的浏览器，通过 HTTPS 或 localhost 访问。');
+            this.status('当前浏览器不支持实时语音，请使用新版 Safari、Chrome 或 Edge，或输入文字继续面试。');
             return;
         }
         this.active = true;
@@ -35,10 +39,17 @@ class InterviewRealtimeVoice {
         this.completedUserBubbles.clear();
         const generation = ++this.generation;
         this.status('正在连接实时语音…');
+        // Permission prompts and AudioContext/Worklet initialization may never resolve.
+        this.connectTimer = setTimeout(() => {
+            if (generation === this.generation && !this.ready) {
+                this.fail('麦克风启动超时，请确认浏览器权限后重新连接，或输入文字继续面试。');
+            }
+        }, 30000);
         try {
             const Context = window.AudioContext || window.webkitAudioContext;
             this.context = new Context();
             await this.context.resume();
+            if (generation !== this.generation) return;
             const mic = await navigator.mediaDevices.getUserMedia({audio: {
                 channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true,
             }});
@@ -92,6 +103,7 @@ class InterviewRealtimeVoice {
                     this.fail('实时语音已断开，点击重新连接。');
                 }
             };
+            clearTimeout(this.connectTimer);
             this.connectTimer = setTimeout(() => {
                 if (generation === this.generation && !this.ready) this.fail('语音连接超时，请重新连接。');
             }, 15000);

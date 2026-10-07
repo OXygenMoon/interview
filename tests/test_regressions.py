@@ -921,7 +921,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261007_test_accounts')
+        self.assertEqual(revision, '20261007_company_portal')
         self.assertTrue(
             {'users', 'interview_sessions', 'chat_messages', 'learning_attempts'}
             <= tables
@@ -999,7 +999,7 @@ class SchemaMigrationTests(unittest.TestCase):
             finally:
                 Config.SQLALCHEMY_DATABASE_URI = original_uri
 
-        self.assertEqual(revision, '20261007_test_accounts')
+        self.assertEqual(revision, '20261007_company_portal')
         self.assertEqual((username, truename), ('legacy-user', '需要保留'))
         self.assertIn('active', user_columns)
         self.assertIn('report_error', session_columns)

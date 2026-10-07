@@ -1,0 +1,9 @@
+{% extends 'company_base.html' %}
+{% block title %}岗位学生推荐{% endblock %}
+{% block content %}
+<section class="company-header"><div><p class="club-eyebrow">{{ position.company.name }}</p><h1>{{ position.name }} · 学生推荐</h1><p>根据每位学生在该岗位的最近一次已完成面试，按适配参考分排序。</p></div><a class="btn" href="{{ url_for('company_portal.positions') }}">返回岗位</a></section>
+<section class="company-panel"><h2>推荐依据</h2><p class="company-note">适配参考分 = 岗位专业技能 × 60% + 面试综合得分 × 40%。参考分达到 75 分、专业技能达到 60 分的学生进入推荐名单。仅使用本岗位的有效面试评分，每位学生保留最新已完成的一次面试；停用账号、规则兜底评分和缺失评分的记录不参与推荐。</p></section>
+{% for candidate in candidates %}{% set record = candidate.record %}
+<article class="company-panel"><div class="company-header"><div><h2>{{ loop.index }}. {{ record.user.truename or record.user.username }}</h2><p class="company-note">{{ record.user.department or '' }} {{ record.user.class_name or '' }} · {{ record.start_time.strftime('%Y-%m-%d') }} · 第 {{ record.round or 1 }} 轮</p></div><div><p class="company-note">适配参考分</p><p class="company-metric">{{ candidate.match }}</p></div></div><p>岗位专业技能 {{ candidate.skills|int }} 分，面试综合 {{ candidate.total|int }} 分，达到推荐标准。</p><p class="company-text company-note">{{ record.summary_comment or '' }}</p><div class="company-actions mt-4"><a class="btn btn-sm" href="{{ url_for('company_portal.interview_detail', session_id=record.id) }}">查看面试证据</a>{% if record.resume_snapshot %}<a class="btn btn-sm btn-primary" href="{{ url_for('company_portal.submitted_resume', session_id=record.id) }}">查看递交简历</a>{% else %}<span class="company-note">本次未递交简历</span>{% endif %}</div></article>
+{% else %}<section class="company-panel company-empty"><h2>暂时没有达到推荐标准的学生</h2><p class="company-note">更多学生完成该岗位面试后，可再次点击推荐查看。</p><a class="btn mt-4" href="{{ url_for('company_portal.interviews', position_id=position.id) }}">查看全部面试记录</a></section>{% endfor %}
+{% endblock %}

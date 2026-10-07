@@ -29,7 +29,7 @@ jobs:
           flake8 app tests run.py worker.py --select=E9,F63,F7,F82
 
       - name: Unit and service regression tests
-        run: pytest -q tests/test_regressions.py
+        run: pytest -q tests/test_regressions.py tests/test_company_portal.py tests/test_migration_guard.py
 
       - name: Chromium end-to-end tests
         run: pytest -q tests/e2e -m e2e

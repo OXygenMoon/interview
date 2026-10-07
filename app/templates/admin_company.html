@@ -24,7 +24,7 @@
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1">
                 {% for comp in companies %}
-                <div onclick='selectCompany({{ comp.id }}, { "name": "{{ comp.name }}" })'
+                <div onclick='selectCompany({{ comp.id }}, {{ {"name": comp.name}|tojson }})'
                      class="company-item flex justify-between items-center p-3 rounded-lg cursor-pointer hover:bg-base-200 transition-colors group"
                      id="comp-{{ comp.id }}">
                     <div class="flex-1 min-w-0">
@@ -32,7 +32,7 @@
                         <div class="text-xs text-base-content/50 truncate">{{ comp.positions|length }}个岗位</div>
                     </div>
                     <div class="flex items-center gap-1">
-                         <button onclick='event.stopPropagation(); editCompany({ "id": {{ comp.id }}, "name": "{{ comp.name }}", "description": {{ comp.description | tojson }} })' class="btn btn-square btn-xs btn-ghost text-base-content/50 hover:text-primary">
+                         <button onclick='event.stopPropagation(); editCompany({{ {"id": comp.id, "name": comp.name, "description": comp.description}|tojson }})' class="btn btn-square btn-xs btn-ghost text-base-content/50 hover:text-primary">
                             ✎
                         </button>
                         <button onclick="event.stopPropagation(); deleteCompany({{ comp.id }})" class="btn btn-square btn-xs btn-ghost text-base-content/30 hover:text-error opacity-0 group-hover:opacity-100">
@@ -180,6 +180,7 @@
         try {
             const res = await fetch(`/api/company/${id}`, { method: 'DELETE' });
             if(res.ok) location.reload();
+            else alert((await res.json()).error || '操作失败');
         } catch(e) { alert("网络错误"); }
     }
 
@@ -213,23 +214,30 @@
         positions.forEach(pos => {
             const div = document.createElement('div');
             div.className = "card bg-base-100 shadow-sm border border-slate-200";
-            // Escape the JSON for onclick
-            const posJson = JSON.stringify(pos).replace(/"/g, '&quot;');
-            
-            div.innerHTML = `
-                <div class="card-body p-5">
-                    <div class="flex justify-between items-start">
-                        <h4 class="card-title text-base">${pos.name}</h4>
-                        <div class="flex gap-2">
-                            <button onclick="editPosition(${posJson})" class="btn btn-xs btn-ghost text-blue-500">编辑</button>
-                            <button onclick="deletePosition(${pos.id})" class="btn btn-xs btn-ghost text-red-500">删除</button>
-                        </div>
-                    </div>
-                    <div class="text-xs text-slate-500 line-clamp-3 mt-2 bg-slate-50 p-2 rounded">
-                        ${pos.description ? pos.description.slice(0, 100) + '...' : '无描述'}
-                    </div>
-                </div>
-            `;
+            const body = document.createElement('div');
+            body.className = 'card-body p-5';
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-start';
+            const title = document.createElement('h4');
+            title.className = 'card-title text-base';
+            title.textContent = pos.name;
+            const actions = document.createElement('div');
+            actions.className = 'flex gap-2';
+            const edit = document.createElement('button');
+            edit.className = 'btn btn-xs btn-ghost text-blue-500';
+            edit.textContent = '编辑';
+            edit.addEventListener('click', () => editPosition(pos));
+            const remove = document.createElement('button');
+            remove.className = 'btn btn-xs btn-ghost text-red-500';
+            remove.textContent = '删除';
+            remove.addEventListener('click', () => deletePosition(pos.id));
+            actions.append(edit, remove);
+            header.append(title, actions);
+            const description = document.createElement('div');
+            description.className = 'text-xs text-slate-500 line-clamp-3 mt-2 bg-slate-50 p-2 rounded';
+            description.textContent = pos.description ? pos.description.slice(0, 100) : '无描述';
+            body.append(header, description);
+            div.append(body);
             container.appendChild(div);
         });
     }
@@ -282,6 +290,7 @@
         try {
             const res = await fetch(`/api/company/position/${id}`, { method: 'DELETE' });
             if(res.ok) loadPositions(currentCompId);
+            else alert((await res.json()).error || '操作失败');
         } catch(e) { alert("网络错误"); }
     }
 

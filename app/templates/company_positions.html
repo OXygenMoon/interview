@@ -1,0 +1,8 @@
+{% extends 'company_base.html' %}
+{% block title %}面试岗位{% endblock %}
+{% block content %}
+<section class="company-header"><div><p class="club-eyebrow">{{ company.name }}</p><h1>面试岗位</h1><p>岗位要求用于学生选岗及 AI 面试，保存后立即生效。</p></div><a class="btn btn-primary" href="{{ url_for('company_portal.edit_position') }}">+ 新增岗位</a></section>
+{% for position in company.positions %}
+<article class="company-panel"><div class="company-header"><h2>{{ position.name }}</h2><a class="btn btn-sm" href="{{ url_for('company_portal.edit_position', position_id=position.id) }}">编辑岗位</a></div><p class="company-text">{{ position.description or '暂未填写岗位要求' }}</p><div class="company-actions mt-4"><a class="btn btn-sm" href="{{ url_for('company_portal.interviews', position_id=position.id) }}">查看面试记录</a><a class="btn btn-sm btn-primary" href="{{ url_for('company_portal.recommendations', position_id=position.id) }}">一键推荐学生 →</a></div></article>
+{% else %}<section class="company-panel company-empty"><h2>发布第一个面试岗位</h2><p class="company-note">填写岗位职责和要求，学生就可以选择该岗位参加面试。</p><a class="btn btn-primary mt-4" href="{{ url_for('company_portal.edit_position') }}">新增岗位</a></section>{% endfor %}
+{% endblock %}

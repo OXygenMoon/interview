@@ -1,32 +1,38 @@
 {% set endpoint = request.endpoint or '' %}
 {% set signed_in = current_user.is_authenticated %}
+{% set company_user = signed_in and current_user.role == 'company' %}
 {% set teaching = signed_in and current_user.role in ['teacher', 'dept_head', 'admin'] %}
 {% macro nav_link(label, destination, active=false) -%}
 <a href="{{ url_for(destination) }}" class="app-nav-link {{ 'is-active' if active else '' }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
 {%- endmacro %}
 <header class="app-navbar" id="app-navbar" data-testid="app-navbar">
-    <a class="app-brand" href="{{ url_for('routes.dashboard' if teaching else 'routes.home') }}" aria-label="AI 智聘 {{ '教学工作空间' if teaching else '你的成长练习站' }}首页">
+    <a class="app-brand" href="{{ url_for('company_portal.dashboard' if company_user else ('routes.dashboard' if teaching else 'routes.home')) }}" aria-label="AI 智聘 {{ '企业招聘工作台' if company_user else ('教学工作空间' if teaching else '你的成长练习站') }}首页">
         <span class="app-brand-mark" aria-hidden="true">✳</span>
-        <span>AI 智聘<span class="app-brand-caption">{{ '教学工作空间' if teaching else '你的成长练习站' }}</span></span>
+        <span>AI 智聘<span class="app-brand-caption">{{ '企业招聘工作台' if company_user else ('教学工作空间' if teaching else '你的成长练习站') }}</span></span>
     </a>
     <button class="app-menu-toggle" type="button" id="app-menu-toggle" aria-label="打开导航菜单" aria-controls="app-navigation" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     <nav class="app-navigation" id="app-navigation" aria-label="主导航">
         {% if signed_in and not current_user.must_change_password %}
-            {% if teaching %}
+            {% if company_user %}
+                {{ nav_link('公司概览', 'company_portal.dashboard', endpoint == 'company_portal.dashboard') }}
+                {{ nav_link('面试岗位', 'company_portal.positions', endpoint in ['company_portal.positions', 'company_portal.edit_position', 'company_portal.recommendations']) }}
+                {{ nav_link('学生面试记录', 'company_portal.interviews', endpoint in ['company_portal.interviews', 'company_portal.interview_detail', 'company_portal.submitted_resume']) }}
+            {% elif teaching %}
                 {{ nav_link('教学概览', 'routes.dashboard', endpoint == 'routes.dashboard') }}
                 {{ nav_link('学生名册', 'routes.teacher_students', endpoint in ['routes.teacher_students', 'routes.teacher_student_detail']) }}
                 {{ nav_link('面试记录', 'routes.admin_interviews', endpoint in ['routes.admin_interviews', 'routes.interview_summary', 'routes.interview_room']) }}
                 {{ nav_link('能力画像', 'routes.admin_capability_profile', endpoint == 'routes.admin_capability_profile') }}
                 <details class="app-nav-more">
-                    <summary class="app-nav-link {{ 'is-active' if endpoint in ['routes.dashboard_compare', 'routes.admin_resumes', 'routes.admin_resume_preview', 'routes.admin_learning', 'routes.admin_organization', 'routes.admin_company', 'routes.admin_random_questions', 'routes.admin_settings'] else '' }}">{{ '教学管理' if current_user.role == 'admin' else '更多分析' }} <span aria-hidden="true">⌄</span></summary>
+                    <summary class="app-nav-link {{ 'is-active' if endpoint in ['routes.dashboard_compare', 'routes.admin_resumes', 'routes.admin_resume_preview', 'routes.admin_learning', 'routes.admin_organization', 'routes.admin_company', 'company_portal.partnerships', 'routes.admin_random_questions', 'routes.admin_settings'] else '' }}">{{ '教学管理' if current_user.role == 'admin' else '更多分析' }} <span aria-hidden="true">⌄</span></summary>
                     <div class="app-nav-dropdown">
                         {{ nav_link('班级对比看板', 'routes.dashboard_compare', endpoint == 'routes.dashboard_compare') }}
                         {% if current_user.role == 'admin' %}
                             {{ nav_link('学生简历预览', 'routes.admin_resumes', endpoint in ['routes.admin_resumes', 'routes.admin_resume_preview']) }}
                             {{ nav_link('课程内容管理', 'routes.admin_learning', endpoint == 'routes.admin_learning') }}
                             {{ nav_link('组织与学生管理', 'routes.admin_organization', endpoint == 'routes.admin_organization') }}
+                            {{ nav_link('校企合作管理', 'company_portal.partnerships', endpoint == 'company_portal.partnerships') }}
                             {{ nav_link('企业与岗位管理', 'routes.admin_company', endpoint == 'routes.admin_company') }}
                             {{ nav_link('随机问题题库', 'routes.admin_random_questions', endpoint == 'routes.admin_random_questions') }}
                             {{ nav_link('系统设置', 'routes.admin_settings', endpoint == 'routes.admin_settings') }}
@@ -61,7 +67,8 @@
             </summary>
             <div class="app-profile-dropdown" id="app-account-menu" role="group" aria-label="个人账号菜单">
                 <div class="app-profile-identity"><strong>{{ current_user.truename or current_user.username }}</strong><span>@{{ current_user.username }}</span></div>
-                {% if not current_user.must_change_password %}
+                <a class="app-profile-action" href="{{ url_for('auth.change_password') }}">修改密码</a>
+                {% if not current_user.must_change_password and not company_user %}
                 <p class="app-profile-status" data-link-status role="status">正在读取关联状态…</p>
                 <button class="app-profile-action" type="button" data-link-start disabled>关联 WikiBook 账号</button>
                 <button class="app-profile-action" type="button" data-account-switch hidden>切换 WikiBook</button>

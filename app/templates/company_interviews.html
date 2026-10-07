@@ -1,0 +1,9 @@
+{% extends 'company_base.html' %}
+{% from '_company_records.html' import records_table %}
+{% block title %}学生面试记录{% endblock %}
+{% block content %}
+<section class="company-header"><div><p class="club-eyebrow">{{ company.name }}</p><h1>学生面试记录</h1><p>学生结束本公司岗位面试后，记录自动汇入；报告生成中可稍后刷新查看。</p></div></section>
+<section class="company-panel"><form method="get" class="company-actions"><label for="position-filter">面试岗位</label><select class="select select-bordered" name="position_id" id="position-filter"><option value="">全部岗位</option>{% for position in company.positions %}<option value="{{ position.id }}" {{ 'selected' if selected and selected.id == position.id else '' }}>{{ position.name }}</option>{% endfor %}</select><button class="btn" type="submit">筛选</button>{% if selected %}<a class="btn btn-primary" href="{{ url_for('company_portal.recommendations', position_id=selected.id) }}">一键推荐学生 →</a>{% endif %}</form></section>
+<section class="company-panel"><p class="company-note">共 {{ pagination.total }} 条面试记录</p>{{ records_table(pagination.items) }}</section>
+{% if pagination.pages > 1 %}<nav class="company-pagination" aria-label="面试记录分页">{% if pagination.has_prev %}<a class="btn btn-sm" href="{{ url_for('company_portal.interviews', position_id=selected.id if selected else '', page=pagination.prev_num) }}">上一页</a>{% endif %}<span>{{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.has_next %}<a class="btn btn-sm" href="{{ url_for('company_portal.interviews', position_id=selected.id if selected else '', page=pagination.next_num) }}">下一页</a>{% endif %}</nav>{% endif %}
+{% endblock %}

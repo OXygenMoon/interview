@@ -1,0 +1,20 @@
+{% macro records_table(records) %}
+<div class="company-table-wrap">
+<table class="company-table">
+    <thead><tr><th>学生</th><th>面试岗位</th><th>时间 / 轮次</th><th>状态 / 得分</th><th>查看</th></tr></thead>
+    <tbody>
+    {% for record in records %}
+    <tr>
+        <td><strong>{{ record.user.truename or record.user.username }}</strong><br><span class="company-note">{{ record.user.department or '' }} {{ record.user.class_name or '' }}</span></td>
+        <td>{{ (record.position_snapshot or {}).get('position_name') or record.target_role }}</td>
+        <td>{{ record.start_time.strftime('%Y-%m-%d %H:%M') }}<br>第 {{ record.round or 1 }} 轮</td>
+        <td>{{ {'processing':'报告生成中', 'completed':'已完成', 'failed':'报告生成失败'}.get(record.status, record.status) }}<br>{{ (record.total_score|string + ' 分') if record.total_score is not none else '暂无评分' }}</td>
+        <td><div class="company-actions"><a class="btn btn-sm btn-ghost" href="{{ url_for('company_portal.interview_detail', session_id=record.id) }}">面试详情</a>{% if record.resume_snapshot %}<a class="btn btn-sm btn-ghost" href="{{ url_for('company_portal.submitted_resume', session_id=record.id) }}">递交简历</a>{% else %}<span class="company-note">未递交简历</span>{% endif %}</div></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="company-empty">尚无学生完成该公司的岗位面试。学生结束面试后，记录会自动出现在这里。</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endmacro %}

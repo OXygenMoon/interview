@@ -22,8 +22,9 @@ def pool_app(tmp_path, monkeypatch):
     monkeypatch.setattr(Config, 'SQLALCHEMY_DATABASE_URI', f'sqlite:///{tmp_path / "pool.db"}')
     app = create_app()
     app.config.update(TESTING=True, SESSION_COOKIE_SECURE=False)
+    result = app.test_cli_runner().invoke(args=['bootstrap-db'])
+    assert result.exit_code == 0, result.output
     with app.app_context():
-        db.create_all()
         seed_test_accounts()
         user = User(username='ordinary', role='student', active=True)
         user.set_password('OrdinaryPass123!')
@@ -158,7 +159,6 @@ def test_pool_cannot_login_ordinary_disabled_or_switch_authenticated_user(pool_a
 
 def test_claim_requires_csrf_in_runtime(pool_app):
     pool_app.config.update(TESTING=False)
-    pool_app.extensions['database_migration_status'] = {'is_current': True}
     client = pool_app.test_client()
     user_id = pool_app.config['TEST_POOL_IDS'][0]
     assert claim(client, user_id).status_code == 400

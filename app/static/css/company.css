@@ -1,0 +1,31 @@
+.company-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1.25rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.company-header h1 { font-size:clamp(1.5rem, 3vw, 2.25rem); font-weight:800; line-height:1.25; margin:.5rem 0; }
+.company-header p, .company-note { color:var(--app-muted, #71685f); font-size:.9rem; line-height:1.7; }
+.company-panel { padding:1.5rem; border:1px solid oklch(var(--bc)/.15); border-radius:1rem; background:oklch(var(--b1)); margin-bottom:1.25rem; min-width:0; }
+.company-panel h2 { font-size:1.15rem; font-weight:700; margin-bottom:1rem; }
+.company-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+.company-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1rem; margin-bottom:1.5rem; }
+.company-metric { font-size:2rem; font-weight:800; }
+.company-form { display:grid; gap:1rem; }
+.company-form label { display:block; font-weight:600; margin-bottom:.4rem; }
+.company-form :is(input,select,textarea) { width:100%; }
+.company-text { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.8; font-family:inherit; }
+.company-table-wrap { overflow-x:auto; }
+.company-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+.company-table :is(th,td) { text-align:left; padding:1rem .6rem; border-bottom:1px solid oklch(var(--bc)/.12); vertical-align:top; }
+.company-table th { white-space:nowrap; font-weight:700; }
+.company-empty { padding:2rem 1rem; text-align:center; }
+.company-account { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.company-account .company-actions { margin-top:.75rem; }
+.company-status { display:inline-block; font-size:.8rem; font-weight:600; }
+.company-score-grid { display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
+.company-score-grid div { padding:.75rem 1rem; background:oklch(var(--b2)); border-radius:.6rem; }
+.company-score-grid strong { display:block; font-size:1.3rem; }
+.company-message { padding:1rem; border-left:3px solid oklch(var(--p)); background:oklch(var(--b2)); margin:1rem 0; border-radius:.5rem; }
+.company-pagination { display:flex; justify-content:center; align-items:center; gap:1rem; margin:1rem 0; }
+@media(max-width:700px) {
+    .company-grid, .company-account { grid-template-columns:1fr; }
+    .company-panel { padding:1rem; }
+    .company-header .company-actions { width:100%; }
+    .company-form .btn { white-space:normal; height:auto; min-height:2.75rem; }
+}

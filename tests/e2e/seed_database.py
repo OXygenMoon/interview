@@ -149,6 +149,7 @@ def main():
             last_activity=started + timedelta(minutes=25),
             reviewed=True,
             report_queue_status='finished',
+            resume_snapshot='端到端学生的递交简历：熟悉 Python，参与服务稳定性项目。',
         )
         db.session.add(completed)
         db.session.flush()

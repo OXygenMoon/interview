@@ -447,7 +447,12 @@ def interview_room(session_id):
     enable_video = SystemConfig.get('enable_video', 'true') == 'true'
     enable_realtime_voice = SystemConfig.get('enable_realtime_voice', 'true') == 'true'
 
+    timer_end = session.end_time or datetime.now()
+    elapsed_seconds = max(0, int((timer_end - session.start_time).total_seconds())) if session.start_time else 0
+
     return render_template('chat.html',
+                           elapsed_seconds=elapsed_seconds,
+                           timer_running=session.status == 'ongoing',
                            session=session,
                            messages=messages,
                            current_user=current_user,

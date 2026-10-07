@@ -123,6 +123,8 @@ def create_session():
     """
     创建一个新的面试会话
     """
+    if current_user.role != 'student':
+        return jsonify({'error': '仅学生可以开始面试。'}), 403
     try:
         # 0. 冷却系统守卫：放弃罚时 / 完成冷却 / 复盘门槛
         cd = get_cooldown_status(current_user.id)

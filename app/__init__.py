@@ -128,6 +128,9 @@ def create_app():
     from .routes import bp as routes_bp
     app.register_blueprint(routes_bp)
 
+    from .company_portal import bp as company_portal_bp
+    app.register_blueprint(company_portal_bp)
+
     # === 注册认证蓝图 ===
     from .auth import auth_bp
     app.register_blueprint(auth_bp)
