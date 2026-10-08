@@ -177,4 +177,103 @@ def test_asr_final_save_corrects_preview_and_duplicate_events_do_not_add_bubbles
     expect(user_bubbles).to_have_count(initial_count + 1)
     expect(user_bubbles.last).to_have_text(final)
     scripts = page.locator('script[src*="realtime-voice.js"]')
-    assert 'v=voice-mobile-20261007-1' in scripts.get_attribute('src')
+    assert 'v=voice-finish-turn-20261008-1' in scripts.get_attribute('src')
+
+
+@pytest.mark.parametrize('width', [1440, 390])
+def test_finish_one_turn_pauses_noise_upload_and_resumes_after_playback(page, live_server, width):
+    page.set_viewport_size({'width': width, 'height': 844})
+    setup_mic(page)  # A continuous oscillator simulates never-ending background sound.
+    controls, frames, sockets = [], [], []
+
+    def connected(socket):
+        sockets.append(socket)
+
+        def incoming(raw):
+            if isinstance(raw, bytes):
+                frames.append(raw)
+                return
+            kind = json.loads(raw)['type']
+            controls.append(kind)
+            if kind == 'connect':
+                socket.send(json.dumps({'type': 'ready'}))
+            elif kind == 'input_audio_buffer.commit':
+                socket.send(json.dumps({'type': 'turn.committed'}))
+            elif kind == 'session.close':
+                socket.send(json.dumps({'type': 'session.closed'}))
+
+        socket.on_message(incoming)
+
+    page.route_web_socket('**/api/interview/*/realtime', connected)
+    open_live_room(page, live_server)
+    page.locator('#realtime-toggle').click()
+    finish = page.locator('#realtime-finish-turn')
+    expect(finish).to_be_enabled()
+    page.wait_for_function('realtimeVoice.ready && realtimeVoice.mic !== null')
+    page.evaluate('window.originalMic = realtimeVoice.mic; window.originalSocket = realtimeVoice.socket')
+    for turn in [1, 2]:
+        expect(finish).to_be_enabled()
+        finish.click()
+        expect(finish).to_be_disabled()
+        expect(finish).to_have_text('等待面试官')
+        assert controls.count('input_audio_buffer.commit') == turn
+        page.wait_for_timeout(80)  # Let frames in flight drain.
+        paused_count = len(frames)
+        page.wait_for_timeout(120)
+        assert len(frames) == paused_count
+        assert page.evaluate('realtimeVoice.active && realtimeVoice.ready && originalMic.getTracks()[0].readyState === "live"')
+        sockets[0].send(json.dumps({'type': 'conversation.item.input_audio_transcription.started', 'item_id': f'manual-{turn}'}))
+        sockets[0].send(json.dumps({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': f'manual-{turn}', 'text': '我已回答完。'}))
+        sockets[0].send(json.dumps({'type': 'response.output_text.done', 'response_id': f'manual-r{turn}', 'text': '请解释事务回滚。'}))
+        sockets[0].send(json.dumps({'type': 'response.output_audio.delta', 'response_id': f'manual-r{turn}', 'delta': base64.b64encode(bytes(48000)).decode()}))
+        sockets[0].send(json.dumps({'type': 'response.output_audio.done', 'response_id': f'manual-r{turn}'}))
+        page.wait_for_function('realtimeVoice.sources.size > 0')
+        expect(finish).to_be_disabled()
+        page.wait_for_timeout(120)
+        assert len(frames) == paused_count  # Audio.done is not yet audible playback completion.
+        expect(finish).to_be_enabled(timeout=3000)
+        assert controls.count('input_audio_unmute.commit') == turn
+        page.wait_for_timeout(120)
+        assert len(frames) > paused_count
+        assert page.evaluate('realtimeVoice.socket === originalSocket && realtimeVoice.mic === originalMic')
+    assert len(sockets) == 1
+    assert 'session.close' not in controls
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+    page.locator('#record-btn').click()
+    assert 'session.close' in controls
+
+
+def test_manual_wait_can_be_interrupted_or_switched_back_to_text(page, live_server):
+    setup_mic(page)
+    controls = []
+
+    def connected(socket):
+        def incoming(raw):
+            if isinstance(raw, bytes):
+                return
+            kind = json.loads(raw)['type']
+            controls.append(kind)
+            if kind == 'connect':
+                socket.send(json.dumps({'type': 'ready'}))
+            elif kind == 'session.close':
+                socket.send(json.dumps({'type': 'session.closed'}))
+        socket.on_message(incoming)
+
+    page.route_web_socket('**/api/interview/*/realtime', connected)
+    open_live_room(page, live_server)
+    page.locator('#realtime-toggle').click()
+    finish = page.locator('#realtime-finish-turn')
+    expect(finish).to_be_enabled()
+    finish.click()
+    expect(finish).to_be_disabled()
+    page.locator('#realtime-interrupt').click()
+    expect(finish).to_be_enabled()
+    assert not page.evaluate('realtimeVoice.turnCommitted')
+    assert 'response.cancel' in controls and 'input_audio_unmute.commit' in controls
+    finish.click()
+    expect(finish).to_be_disabled()
+    page.evaluate('window.manualMic = realtimeVoice.mic')
+    page.locator('#text-toggle').click()
+    expect(page.locator('#msg-input')).to_be_visible()
+    assert page.evaluate('!realtimeVoice.active && !realtimeVoice.turnCommitted && manualMic.getTracks()[0].readyState === "ended"')
+    assert controls.count('session.close') == 1

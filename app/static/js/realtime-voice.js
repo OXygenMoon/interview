@@ -6,6 +6,8 @@ class InterviewRealtimeVoice {
         this.ready = false;
         this.disabled = false;
         this.muted = false;
+        this.turnCommitted = false;
+        this.manualReplyDone = false;
         this.generation = 0;
         this.sources = new Set();
         this.nextPlayback = 0;
@@ -33,6 +35,8 @@ class InterviewRealtimeVoice {
         this.active = true;
         this.ready = false;
         this.muted = false;
+        this.turnCommitted = false;
+        this.manualReplyDone = false;
         this.interruptedResponses.clear();
         this.currentResponse = null;
         this.userBubbles.clear();
@@ -73,7 +77,7 @@ class InterviewRealtimeVoice {
             this.socket = socket;
             socket.binaryType = 'arraybuffer';
             this.capture.port.onmessage = ({data}) => {
-                if (this.ready && !this.muted && socket.readyState === WebSocket.OPEN) {
+                if (this.ready && !this.muted && !this.turnCommitted && socket.readyState === WebSocket.OPEN) {
                     if (socket.bufferedAmount > 64000) {
                         this.fail('网络上传过慢，实时语音已暂停，请重新连接。');
                         return;
@@ -124,7 +128,7 @@ class InterviewRealtimeVoice {
     }
 
     toggleMute() {
-        if (!this.ready) return;
+        if (!this.ready || this.turnCommitted) return;
         this.muted = !this.muted;
         this.control(this.muted ? 'input_audio_mute.commit' : 'input_audio_unmute.commit');
         this.mic?.getAudioTracks().forEach(track => { track.enabled = !this.muted; });
@@ -135,7 +139,36 @@ class InterviewRealtimeVoice {
         if (this.currentResponse) this.interruptedResponses.add(this.currentResponse);
         this.stopPlayback();
         this.control('response.cancel');
+        this.resumeManualInput();
         this.status('已打断，正在倾听');
+    }
+
+    finishTurn() {
+        if (!this.ready || this.turnCommitted || this.sources.size) return;
+        this.turnCommitted = true;
+        this.manualReplyDone = false;
+        this.control('input_audio_buffer.commit');
+        this.status('本次回答已结束，面试官正在接话…');
+        this.replyTimer = setTimeout(() => {
+            if (this.turnCommitted && this.active) {
+                this.resumeManualInput();
+                this.status('面试官暂未回应，可继续回答或再次点击“我说完了”。');
+            }
+        }, 30000);
+    }
+
+    resumeManualInput() {
+        if (!this.turnCommitted) return;
+        clearTimeout(this.replyTimer);
+        this.turnCommitted = false;
+        this.manualReplyDone = false;
+        if (this.active && !this.muted) this.control('input_audio_unmute.commit');
+    }
+
+    completeManualReply() {
+        if (!this.turnCommitted || !this.manualReplyDone || this.sources.size) return;
+        this.resumeManualInput();
+        this.status(this.muted ? '麦克风已静音，点击恢复' : '正在倾听，可以继续下一次回答');
     }
 
     stopPlayback() {
@@ -159,7 +192,13 @@ class InterviewRealtimeVoice {
         source.buffer = buffer;
         source.connect(this.context.destination);
         this.sources.add(source);
-        source.onended = () => { this.sources.delete(source); };
+        source.onended = () => {
+            this.sources.delete(source);
+            this.completeManualReply();
+            if (!this.turnCommitted && this.active && this.ready && !this.sources.size) {
+                this.status(this.muted ? '麦克风已静音，点击恢复' : '正在倾听，可直接说话打断面试官');
+            }
+        };
         const start = Math.max(this.context.currentTime + 0.03, this.nextPlayback);
         source.start(start);
         this.nextPlayback = start + buffer.duration;
@@ -177,6 +216,7 @@ class InterviewRealtimeVoice {
         } else if (kind === 'error') {
             this.fail(event.message || '实时语音服务暂时不可用。');
         } else if (kind === 'conversation.item.input_audio_transcription.started') {
+            if (this.turnCommitted) return;
             if (this.currentResponse) this.interruptedResponses.add(this.currentResponse);
             this.stopPlayback();
             this.status('正在倾听…');
@@ -198,11 +238,12 @@ class InterviewRealtimeVoice {
             this.completedUserBubbles.set(id, bubble);
             this.userBubbles.delete(id);
             this.options.scroll();
-            this.status('等待连续安静 3 秒后，面试官开始回答…');
+            this.status(this.turnCommitted ? '本次回答已结束，面试官正在接话…' : '等待连续安静 3 秒后，面试官开始回答…');
         } else if (kind === 'conversation.item.input_audio_transcription.failed') {
             const id = event.item_id || 'current';
             this.userBubbles.get(id)?.closest('.chat')?.remove();
             this.userBubbles.delete(id);
+            this.resumeManualInput();
             this.status('这句话未听清，请再说一次');
         } else if (kind === 'response.output_text.delta' || kind === 'response.output_text.done') {
             const id = event.response_id || 'current';
@@ -217,11 +258,19 @@ class InterviewRealtimeVoice {
         } else if (kind === 'response.output_audio.delta') {
             if (event.response_id && this.interruptedResponses.has(event.response_id)) return;
             this.currentResponse = event.response_id;
+            if (this.turnCommitted) clearTimeout(this.replyTimer);
             this.play(event.delta);
-            this.status(this.muted ? '麦克风已静音，面试官正在说话' : '面试官正在说话，可直接开口打断');
+            this.status(this.turnCommitted ? '面试官正在说话，播报结束后可继续回答' :
+                (this.muted ? '麦克风已静音，面试官正在说话' : '面试官正在说话，可直接开口打断'));
         } else if (kind === 'response.canceled') {
             this.stopPlayback();
         } else if (kind === 'response.output_audio.done') {
+            if (this.turnCommitted) {
+                clearTimeout(this.replyTimer);
+                this.manualReplyDone = true;
+                this.completeManualReply();
+                return;
+            }
             this.status(this.muted ? '麦克风已静音，点击恢复' : '正在倾听，可直接说话打断面试官');
         } else if (kind === 'audio.saved') {
             const bubble = this.aiBubbles.get(event.response_id || 'current');
@@ -269,6 +318,9 @@ class InterviewRealtimeVoice {
 
     async closeSession({notifyServer = true} = {}) {
         this.active = false;
+        clearTimeout(this.replyTimer);
+        this.turnCommitted = false;
+        this.manualReplyDone = false;
         clearTimeout(this.connectTimer);
         this.capture?.disconnect();
         if (this.capture) this.capture.port.onmessage = null;

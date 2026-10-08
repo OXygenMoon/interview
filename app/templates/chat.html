@@ -158,10 +158,12 @@
             <div id="realtime-controls" class="bg-white p-3 rounded-xl border border-stone-100 mb-2" hidden style="display: none;">
                 <div class="flex gap-2 items-center flex-wrap">
                     <button type="button" id="record-btn" class="btn btn-primary btn-sm text-white">开始实时对话</button>
+                    <button type="button" id="realtime-finish-turn" class="btn btn-outline btn-sm" disabled>我说完了</button>
                     <button type="button" id="realtime-mute" class="btn btn-outline btn-sm" disabled aria-pressed="false">静音</button>
                     <button type="button" id="realtime-interrupt" class="btn btn-ghost btn-sm" disabled>打断面试官</button>
                 </div>
                 <p id="realtime-status" class="text-xs text-stone-500 mt-2" role="status" aria-live="polite">允许麦克风后即可连续对话。</p>
+                <p class="text-xs text-stone-500 mt-1">环境音影响判停时，点击“我说完了”让面试官接话。</p>
             </div>
             {% else %}
             <p class="text-xs text-stone-500 mb-2" role="status">实时语音交互已由管理员关闭，可使用文字回答。</p>
@@ -232,7 +234,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/media-access.js', v='media-help-20261008-1') }}"></script>
-<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-media-help-20261008-1') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime-voice.js', v='voice-finish-turn-20261008-1') }}"></script>
 <script>
     // Use server-computed duration: no browser date parsing or device timezone dependency.
     const initialElapsed = {{ elapsed_seconds|tojson }};
@@ -889,10 +891,13 @@
             recordBtn.disabled = voice.disabled;
             document.getElementById('realtime-toggle').disabled = voice.disabled;
             const mute = document.getElementById('realtime-mute');
-            mute.disabled = !voice.ready || voice.disabled;
+            mute.disabled = !voice.ready || voice.disabled || voice.turnCommitted;
             mute.textContent = voice.muted ? '恢复麦克风' : '静音';
             mute.setAttribute('aria-pressed', String(voice.muted));
             document.getElementById('realtime-interrupt').disabled = !voice.ready || voice.disabled;
+            const finishTurn = document.getElementById('realtime-finish-turn');
+            finishTurn.disabled = !voice.ready || voice.disabled || voice.turnCommitted || voice.sources.size > 0;
+            finishTurn.textContent = voice.turnCommitted ? '等待面试官' : '我说完了';
             syncInputMode();
             if (!voice.active && text !== '实时语音已停止') textAudioStatus(text);
         },
@@ -921,6 +926,7 @@
     syncInputMode();
     recordBtn?.addEventListener('click', toggleInputMode);
     document.getElementById('realtime-mute')?.addEventListener('click', () => realtimeVoice.toggleMute());
+    document.getElementById('realtime-finish-turn')?.addEventListener('click', () => realtimeVoice.finishTurn());
     document.getElementById('realtime-interrupt')?.addEventListener('click', () => realtimeVoice.interrupt());
     window.addEventListener('pagehide', () => { stopAudioPlayback(); realtimeVoice?.stop(); });
 

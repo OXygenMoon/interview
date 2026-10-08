@@ -26,8 +26,24 @@ class ReplySilenceGate:
         self.pending_bytes = 0
         self.discarded = deque(maxlen=128)
         self.hypothesis = None
+        self.manual_reply = False
+
+    def finish_turn(self):
+        self.manual_reply = True
+        self.voiced_frames = 0
+
+    def resume_input(self):
+        self.manual_reply = False
+        self.last_voice = None
+        self.last_acoustic_voice = None
+        self.last_frame = None
+        self.hypothesis = None
+        self.voiced_frames = 0
+        self.asr_voice_only = True
 
     def speech_started(self, now):
+        if self.manual_reply:
+            return False
         # ASR also protects very quiet speech below the local energy threshold.
         self.asr_voice_only = self.last_acoustic_voice is None or now - self.last_acoustic_voice > 0.5
         self.last_voice = now if self.asr_voice_only else self.last_acoustic_voice
@@ -38,6 +54,8 @@ class ReplySilenceGate:
         return False
 
     def speech_progress(self, event, now):
+        if self.manual_reply:
+            return False
         hypothesis = (event.get('item_id'), event.get('delta', ''))
         if not hypothesis[1] or hypothesis == self.hypothesis:
             return False
@@ -53,6 +71,8 @@ class ReplySilenceGate:
         return False
 
     def audio(self, frame, now):
+        if self.manual_reply:
+            return False
         self.last_frame = now
         samples = struct.unpack('<320h', frame)
         rms = math.sqrt(sum(value * value for value in samples) / 320) / 32768
@@ -64,7 +84,10 @@ class ReplySilenceGate:
                 self.last_acoustic_voice = now
                 self.asr_voice_only = False
                 self.last_voice = now
-                if self.pending:
+                if self.pending and self.voiced_frames == 2:
+                    # Only a new sound onset indicates resumed speech.
+                    # Constant background noise extends the wait, but must
+                    # preserve a held reply for the manual finish button.
                     self.discard_pending()
                     return True
         else:
@@ -73,6 +96,8 @@ class ReplySilenceGate:
         return False
 
     def can_reply(self, now):
+        if self.manual_reply:
+            return True
         if self.last_voice is None:
             return True  # The initial greeting has no candidate turn to wait for.
         if now - self.last_voice < REPLY_SILENCE_SECONDS:

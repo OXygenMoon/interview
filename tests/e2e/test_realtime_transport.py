@@ -234,3 +234,80 @@ def test_replies_wait_for_three_seconds_and_short_pause_cancels_unheard_reply(vo
         assert ChatMessage.query.filter_by(content='追问1').count() == 0
         assert ChatMessage.query.filter_by(content='追问2').one().audio_url
     assert frame_errors == []
+
+
+def test_manual_turn_commit_keeps_socket_open_and_ignores_duplicate_and_inflight_audio(voice_app, transport_page):
+    page, frame_errors = transport_page
+    provider = FakeProvider(deferred=True)
+    original_send = provider.send
+    turn, started = 0, False
+
+    def send(raw):
+        nonlocal turn, started
+        event = json.loads(raw)
+        kind = event['type']
+        if kind == 'input_audio_unmute.commit':
+            turn += 1
+            started = False
+        if kind == 'input_audio_buffer.append':
+            provider.sent.append(event)
+            if not started:
+                started = True
+                provider.events.put({'type': 'conversation.item.input_audio_transcription.started', 'item_id': f'q{turn}'})
+                provider.events.put({'type': 'conversation.item.input_audio_transcription.delta', 'item_id': f'q{turn}', 'delta': f'手动回答{turn}'})
+        elif kind == 'input_audio_buffer.commit':
+            provider.sent.append(event)
+            provider.events.put({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': f'q{turn}', 'text': f'手动回答{turn}'})
+            provider.events.put({'type': 'response.output_text.done', 'response_id': f'r{turn}', 'text': f'手动追问{turn}'})
+            provider.events.put({'type': 'response.output_audio.delta', 'response_id': f'r{turn}', 'delta': base64.b64encode(bytes(960)).decode()})
+            provider.events.put({'type': 'response.output_audio.done', 'response_id': f'r{turn}'})
+        else:
+            original_send(raw)
+
+    provider.send = send
+    with patch('app.api.realtime.connect_provider', return_value=provider):
+        result = page.evaluate('''() => new Promise(resolve => {
+            const result={delays:[],errors:[],acks:0};
+            const ws=new WebSocket(location.origin.replace('http','ws')+'/api/interview/1/realtime');
+            let upload, submittedAt, round=0;
+            const timeout=setTimeout(()=>{clearInterval(upload);ws.close();resolve({...result,timeout:true});},7000);
+            const frame=new Int16Array(320);frame.fill(4000);
+            function answer(){
+                round++;
+                const began=performance.now();
+                upload=setInterval(()=>{
+                    ws.send(frame.buffer);
+                    if(performance.now()-began>=500){
+                        clearInterval(upload);submittedAt=performance.now();
+                        ws.send(JSON.stringify({type:'input_audio_buffer.commit'}));
+                        ws.send(JSON.stringify({type:'input_audio_buffer.commit'}));
+                        ws.send(frame.buffer); // A frame that was already in flight.
+                    }
+                },20);
+            }
+            ws.onopen=()=>ws.send(JSON.stringify({type:'connect',csrf_token:'csrf'}));
+            ws.onmessage=({data})=>{
+                const e=JSON.parse(data);
+                if(e.type==='ready')answer();
+                if(e.type==='turn.committed')result.acks++;
+                if(e.type==='error')result.errors.push(e.message);
+                if(e.type==='response.output_audio.delta')result.delays.push(performance.now()-submittedAt);
+                if(e.type==='response.output_audio.done'){
+                    if(round<2){ws.send(JSON.stringify({type:'input_audio_unmute.commit'}));answer();}
+                    else ws.send(JSON.stringify({type:'session.close'}));
+                }
+            };
+            ws.onclose=e=>{clearInterval(upload);clearTimeout(timeout);resolve({...result,code:e.code});};
+        })''')
+    assert result.get('timeout') is None
+    assert result['code'] == 1000
+    assert result['errors'] == []
+    assert result['acks'] == 2
+    assert len(result['delays']) == 2 and max(result['delays']) < 1200
+    assert sum(event['type'] == 'input_audio_buffer.commit' for event in provider.sent) == 2
+    assert sum(event['type'] == 'input_audio_mute.commit' for event in provider.sent) == 2
+    assert not any(event['type'] == 'response.cancel' for event in provider.sent)
+    with voice_app.app_context():
+        assert ChatMessage.query.filter(ChatMessage.content.like('手动回答%')).count() == 2
+        assert ChatMessage.query.filter(ChatMessage.content.like('手动追问%')).count() == 2
+    assert frame_errors == []

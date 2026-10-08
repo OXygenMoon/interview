@@ -217,6 +217,9 @@ def relay(ws, interview_id, hello):
             if isinstance(incoming, bytes):
                 if len(incoming) != 640:
                     raise ValueError('Expected 20 ms mono PCM16 at 16 kHz')
+                if reply_gate.manual_reply:
+                    # Ignore microphone frames already in flight at submission.
+                    continue
                 if reply_gate.audio(incoming, time.monotonic()):
                     # A short pause is not permission to play an early reply.
                     upstream.send(json.dumps({'type': 'response.cancel', 'event_id': str(uuid.uuid4())}))
@@ -228,16 +231,29 @@ def relay(ws, interview_id, hello):
                 raise ValueError('Control message too large')
             control = json.loads(incoming)
             kind = control.get('type')
-            if kind not in {'session.close', 'response.cancel', 'input_audio_mute.commit',
+            if kind not in {'session.close', 'response.cancel', 'input_audio_buffer.commit', 'input_audio_mute.commit',
                             'input_audio_unmute.commit'}:
                 raise ValueError('Unsupported browser event')
             if kind == 'session.close':
                 begin_close()
+            elif kind == 'input_audio_buffer.commit':
+                if reply_gate.manual_reply:
+                    continue
+                reply_gate.finish_turn()
+                # Muting protects the submitted turn from ambient noise and
+                # keeps the provider alive while microphone upload is paused.
+                upstream.send(json.dumps({'type': 'input_audio_mute.commit', 'event_id': str(uuid.uuid4())}))
+                if not reply_gate.pending:
+                    upstream.send(json.dumps({'type': kind, 'event_id': str(uuid.uuid4())}))
+                sent_audio = False
+                ws.send(json.dumps({'type': 'turn.committed'}))
             else:
                 if kind == 'input_audio_mute.commit':
                     reply_gate.muted = True
                     reply_gate.voiced_frames = 0
                 elif kind == 'input_audio_unmute.commit':
+                    if reply_gate.manual_reply:
+                        reply_gate.resume_input()
                     reply_gate.muted = False
                     reply_gate.last_frame = None
                 elif kind == 'response.cancel':

@@ -107,3 +107,26 @@ def test_delayed_asr_text_does_not_add_extra_wait_to_microphone_silence():
     gate.accept(reply()[0], 3.5)
     gate.audio(QUIET, 5)
     assert gate.release(5) == [reply()[0]]
+
+
+def test_manual_submission_releases_held_reply_despite_noise_and_late_asr():
+    gate = ReplySilenceGate()
+    speak(gate, 1)
+    for event in reply():
+        gate.accept(event, 1.1)
+    for index in range(10):
+        assert not gate.audio(VOICE, 1.12 + index * .02)
+    assert gate.release(1.4) == []
+    gate.finish_turn()
+    assert not gate.audio(VOICE, 1.2)
+    assert not gate.speech_started(1.3)
+    assert not gate.speech_progress({'item_id': 'q1', 'delta': '最终识别'}, 1.4)
+    assert gate.release(1.4) == reply()
+    assert gate.accept(reply('r2')[0], 1.5)
+    gate.resume_input()
+    speak(gate, 2)
+    gate.accept(reply('r3')[0], 2.1)
+    gate.audio(QUIET, 4.99)
+    assert gate.release(4.99) == []
+    gate.audio(QUIET, 5)
+    assert gate.release(5) == [reply('r3')[0]]
