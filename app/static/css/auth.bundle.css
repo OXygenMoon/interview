@@ -830,6 +830,8 @@ html[data-theme="playful-dark"] {
     .app-main .chat-bubble { line-height: 1.8; border-radius: var(--radius-panel); }
     .app-main :is(.chat-bubble-primary,.chat-end .chat-bubble) { background: var(--color-soft); color: var(--color-ink); }
     .app-main .chat-bubble:not(.chat-bubble-primary) { background: var(--color-surface); color: var(--color-ink); }
+    .app-main #chat-container .chat-end .chat-bubble { background: #e4ecd9; color: #2c3d25; }
+    html[data-theme="playful-dark"] .app-main #chat-container .chat-end .chat-bubble { background: #303c2d; color: #d8e8ce; }
     /* Teaching dashboard keeps its refined composition; student home retains the original layout. */
     .app-main .dashboard-shell .club-hero {
         grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); gap: var(--space-xl);

@@ -90,6 +90,7 @@ def test_report_preserves_short_answers_and_supplies_round_context_without_visua
     ]
     overall = {
         'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 40),
+        'evaluated_dimensions': list(ai_agent.REQUIRED_SCORE_DIMENSIONS),
         'total_score': 40,
         'comment': '仅评价本次实际展示内容。',
     }
@@ -149,6 +150,7 @@ def test_zero_score_and_visual_array_remain_compatible_with_callers():
     create.assert_not_called()
     assert report['overall']['total_score'] == 0
     assert all(score == 0 for score in report['overall']['scores'].values())
+    assert report['overall']['evaluated_dimensions'] == []
     assert report['details_list'] == []
     assert report['evaluation_source'] == 'rule'
 
@@ -156,9 +158,10 @@ def test_zero_score_and_visual_array_remain_compatible_with_callers():
         assert json.loads(ai_agent.analyze_image('data:image/png;base64,test')) == ['光线偏暗']
 
 
-def test_total_cannot_exceed_weighted_dimensions_or_raise_a_lower_judgment():
+def test_total_uses_assessed_weights_instead_of_inconsistent_model_total():
     scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (60, 50, 80, 0, 60)))
-    payload = {'scores': scores, 'total_score': 95, 'comment': '仅评价已展示内容。'}
+    payload = {'scores': scores, 'total_score': 95, 'comment': '仅评价已展示内容。',
+               'evaluated_dimensions': list(ai_agent.REQUIRED_SCORE_DIMENSIONS)}
     with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
         result = ai_agent._get_overall_score('记录', '后端工程师', 3, difficulty='压力模式')
     # 60*.4 + 50*.25 + 80*.2 + 0*.1 + 60*.05 = 55.5; round half up.
@@ -167,7 +170,15 @@ def test_total_cannot_exceed_weighted_dimensions_or_raise_a_lower_judgment():
     payload['total_score'] = 30
     with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
         result = ai_agent._get_overall_score('记录', '后端工程师', 3, difficulty='压力模式')
-    assert result['total_score'] == 30
+    assert result['total_score'] == 56
+
+    # An untested dimension must not lower the result even when the model
+    # mistakenly includes its zero placeholder in the total it returns.
+    payload['evaluated_dimensions'].remove('抗压能力')
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        result = ai_agent._get_overall_score('记录', '后端工程师', 3, difficulty='压力模式')
+    assert result['total_score'] == 62  # 5550 / 90, half up.
+    assert '抗压能力未评估' in result['comment']
 
 
 @pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
@@ -204,8 +215,8 @@ def test_student_standard_reaches_chat_overall_and_coaching(difficulty, round_nu
     assert '抗压能力未评估' in report['overall']['comment']
 
 
-@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
-def test_student_total_excludes_only_unassessed_dimensions_and_keeps_zero_evidence(difficulty):
+@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+def test_total_excludes_only_unassessed_dimensions_and_keeps_zero_evidence(difficulty):
     scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (81, 82, 83, 0, 84)))
     payload = {'scores': scores, 'total_score': 74, 'comment': '基础正确。',
                'evaluated_dimensions': ['专业技能', '逻辑思维', '语言表达', '礼仪态度']}
@@ -219,12 +230,13 @@ def test_student_total_excludes_only_unassessed_dimensions_and_keeps_zero_eviden
         report = ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)
     assert report['total_score'] == 74
 
-    # Fluent, polite but incorrect answers cannot earn a high overall score.
-    payload['scores']['专业技能'] = 25
-    for dimension in ('逻辑思维', '语言表达', '礼仪态度'):
-        payload['scores'][dimension] = 100
-    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
-        assert ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)['total_score'] == 59
+    if difficulty in ai_agent.STUDENT_MODES:
+        # Fluent, polite but incorrect answers cannot earn a high practice score.
+        payload['scores']['专业技能'] = 25
+        for dimension in ('逻辑思维', '语言表达', '礼仪态度'):
+            payload['scores'][dimension] = 100
+        with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+            assert ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)['total_score'] == 59
 
     payload.update(scores=dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 0),
                    evaluated_dimensions=[], total_score=0)
@@ -233,12 +245,28 @@ def test_student_total_excludes_only_unassessed_dimensions_and_keeps_zero_eviden
 
 
 @pytest.mark.parametrize('dimensions', [None, ['非法维度'], ['专业技能', '专业技能'], []])
-def test_student_report_rejects_invalid_coverage_or_scores_for_unassessed_dimensions(dimensions):
+@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+def test_report_rejects_invalid_coverage_or_scores_for_unassessed_dimensions(dimensions, difficulty):
     payload = {'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 80),
                'total_score': 80, 'comment': '点评。', 'evaluated_dimensions': dimensions}
     with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
         with pytest.raises(ai_agent.AIServiceError):
-            ai_agent._get_overall_score('记录', '文员', 4)
+            ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)
+
+
+@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+def test_partial_dimension_coverage_does_not_reduce_accurate_basic_scores(difficulty):
+    payload = {
+        'scores': dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (95, 0, 95, 0, 0))),
+        'evaluated_dimensions': ['专业技能', '语言表达'],
+        'total_score': 57,
+        'comment': '三个基础问题的回答准确清楚，其他维度未考察。',
+    }
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
+        report = ai_agent._get_overall_score('记录', '文员', 3, difficulty=difficulty)
+    assert report['total_score'] == 95
+    assert report['evaluated_dimensions'] == ['专业技能', '语言表达']
+    assert '逻辑思维、抗压能力、礼仪态度未评估' in report['comment']
 
 
 def test_student_partial_interview_keeps_legacy_completion_cap():

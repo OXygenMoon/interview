@@ -206,6 +206,7 @@ def generate_interview_report(history_messages, target_role, round_num=1,
         return {
             'overall': {
                 'scores': dict.fromkeys(REQUIRED_SCORE_DIMENSIONS, 0),
+                'evaluated_dimensions': [],
                 'total_score': 0,
                 'comment': '本次没有候选人作答证据，尚不能形成整体能力评价。'
                            '五维均未评估；0 为未展示证据占位，不代表实际能力为零。'
@@ -281,17 +282,16 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         comment = str(result.get('comment') or '').strip()
         if not comment:
             raise ValueError('missing report comment')
-        evaluated_dimensions = list(REQUIRED_SCORE_DIMENSIONS)
+        evaluated_dimensions = result.get('evaluated_dimensions')
+        if (not isinstance(evaluated_dimensions, list)
+                or any(not isinstance(d, str) or d not in REQUIRED_SCORE_DIMENSIONS
+                       for d in evaluated_dimensions)
+                or len(set(evaluated_dimensions)) != len(evaluated_dimensions)):
+            raise ValueError('invalid evaluated dimensions')
+        if any(clean_scores[d] != 0 for d in REQUIRED_SCORE_DIMENSIONS
+               if d not in evaluated_dimensions):
+            raise ValueError('unassessed dimension has a score')
         if difficulty in STUDENT_MODES:
-            evaluated_dimensions = result.get('evaluated_dimensions')
-            if (not isinstance(evaluated_dimensions, list)
-                    or any(not isinstance(d, str) or d not in REQUIRED_SCORE_DIMENSIONS
-                           for d in evaluated_dimensions)
-                    or len(set(evaluated_dimensions)) != len(evaluated_dimensions)):
-                raise ValueError('invalid evaluated dimensions')
-            if any(clean_scores[d] != 0 for d in REQUIRED_SCORE_DIMENSIONS
-                   if d not in evaluated_dimensions):
-                raise ValueError('unassessed dimension has a score')
             if '专业技能' not in evaluated_dimensions:
                 cap = 0
             elif clean_scores['专业技能'] < 60:
@@ -306,19 +306,18 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
                           if weight_sum else 0)
         result = {
             'scores': clean_scores,
-            # Student practice uses the declared formula, without penalizing
-            # unassessed dimensions. Legacy pressure reports retain their cap.
-            'total_score': (min(weighted_score, cap) if difficulty in STUDENT_MODES
-                            else min(total_score, weighted_score, cap)),
+            'evaluated_dimensions': evaluated_dimensions,
+            # Recompute for every mode so placeholder zeros or an inconsistent
+            # model total cannot penalize dimensions that were never assessed.
+            'total_score': min(weighted_score, cap),
             'comment': comment,
         }
-        if difficulty in STUDENT_MODES:
-            result['evaluated_dimensions'] = evaluated_dimensions
-            unassessed = [d for d in REQUIRED_SCORE_DIMENSIONS if d not in evaluated_dimensions]
-            scope_note = f'本分数为{difficulty}下已考察范围的入门练习得分。'
-            if unassessed:
-                scope_note += '、'.join(unassessed) + '未评估，0为占位，不参与总分。'
-            result['comment'] = scope_note + comment
+        unassessed = [d for d in REQUIRED_SCORE_DIMENSIONS if d not in evaluated_dimensions]
+        scope_note = (f'本分数为{difficulty}下已考察范围的入门练习得分。'
+                      if difficulty in STUDENT_MODES else '本分数为本轮已考察范围的表现得分。')
+        if unassessed:
+            scope_note += '、'.join(unassessed) + '未评估，0为占位，不参与总分。'
+        result['comment'] = scope_note + comment
         return result
     except Exception as e:
         print(f"❌ 整体打分失败: {e}")
