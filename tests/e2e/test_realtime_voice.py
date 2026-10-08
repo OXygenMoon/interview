@@ -177,7 +177,7 @@ def test_asr_final_save_corrects_preview_and_duplicate_events_do_not_add_bubbles
     expect(user_bubbles).to_have_count(initial_count + 1)
     expect(user_bubbles.last).to_have_text(final)
     scripts = page.locator('script[src*="realtime-voice.js"]')
-    assert 'v=voice-finish-turn-20261008-1' in scripts.get_attribute('src')
+    assert 'v=voice-manual-reply-20261009-1' in scripts.get_attribute('src')
 
 
 @pytest.mark.parametrize('width', [1440, 390])
@@ -277,3 +277,42 @@ def test_manual_wait_can_be_interrupted_or_switched_back_to_text(page, live_serv
     expect(page.locator('#msg-input')).to_be_visible()
     assert page.evaluate('!realtimeVoice.active && !realtimeVoice.turnCommitted && manualMic.getTracks()[0].readyState === "ended"')
     assert controls.count('session.close') == 1
+
+
+def test_manual_recovery_errors_and_text_only_reply_restore_controls(page, live_server):
+    setup_mic(page)
+    controls = []
+
+    def connected(socket):
+        def incoming(raw):
+            if isinstance(raw, bytes):
+                return
+            kind = json.loads(raw)['type']
+            controls.append(kind)
+            if kind == 'connect':
+                socket.send(json.dumps({'type': 'ready'}))
+            elif kind == 'session.close':
+                socket.send(json.dumps({'type': 'session.closed'}))
+        socket.on_message(incoming)
+
+    page.route_web_socket('**/api/interview/*/realtime', connected)
+    open_live_room(page, live_server)
+    page.locator('#realtime-toggle').click()
+    finish = page.locator('#realtime-finish-turn')
+    expect(finish).to_be_enabled()
+    finish.click()
+    page.evaluate("realtimeVoice.handle({type:'manual.reply_failed',message:'回复生成失败，请重试。'})")
+    expect(finish).to_be_enabled()
+    expect(page.locator('#realtime-status')).to_have_text('回复生成失败，请重试。')
+    finish.click()
+    page.evaluate('''() => {
+        realtimeVoice.handle({type:'response.output_text.done',response_id:'text-only',text:'请解释回滚机制。'});
+        realtimeVoice.handle({type:'manual.audio_unavailable',message:'语音播报暂不可用，面试官回复已显示为文字。'});
+        realtimeVoice.handle({type:'response.output_audio.done',response_id:'text-only'});
+    }''')
+    expect(finish).to_be_enabled()
+    expect(page.locator('#realtime-status')).to_have_text('语音播报暂不可用，面试官回复已显示为文字。')
+    expect(page.locator('#chat-container')).to_contain_text('请解释回滚机制。')
+    assert page.evaluate('realtimeVoice.active && realtimeVoice.ready && !realtimeVoice.turnCommitted')
+    assert controls.count('input_audio_unmute.commit') == 2
+    page.locator('#record-btn').click()

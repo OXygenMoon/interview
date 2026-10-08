@@ -21,7 +21,10 @@ from ..services.realtime_voice import (
     TranscriptRecorder, connect_provider, provider_error, session_payload,
 )
 from ..services.websocket_transport import prepare_websocket_transport, close_websocket_transport
-from ..services.realtime_turns import ReplySilenceGate
+from ..services.realtime_turns import OUTPUT_EVENTS, ReplySilenceGate
+from ..services.realtime_manual_reply import generate_manual_reply
+
+MANUAL_REPLY_WAIT_SECONDS = 1.5
 
 
 def authorize_browser(interview_id, hello):
@@ -103,6 +106,12 @@ def relay(ws, interview_id, hello):
     stopped = threading.Event()
     recorder = TranscriptRecorder(interview_id)
     reply_gate = ReplySilenceGate()
+    manual_events = queue.Queue(maxsize=256)
+    manual_job = None
+    manual_deadline = None
+    manual_text = ''
+    manual_response_id = None
+    manual_audio_seen = False
     ready = False
     closing = False
     close_sent = False
@@ -111,10 +120,18 @@ def relay(ws, interview_id, hello):
     deadline = time.monotonic() + 15
     last_status_check = time.monotonic()
 
+    def cancel_manual_job():
+        nonlocal manual_job, manual_deadline
+        manual_deadline = None
+        if manual_job:
+            manual_job['canceled'].set()
+            manual_job = None
+
     def begin_close():
         nonlocal closing, close_sent, finish_input_at, deadline
         if closing:
             return
+        cancel_manual_job()
         reply_gate.discard_pending()
         # Finalize the last microphone utterance before releasing the session.
         if sent_audio:
@@ -128,7 +145,20 @@ def relay(ws, interview_id, hello):
         deadline = time.monotonic() + 3.5
 
     def forward(event):
-        nonlocal close_sent
+        nonlocal close_sent, manual_deadline, manual_text, manual_response_id, manual_audio_seen
+        kind = event.get('type')
+        if reply_gate.manual_reply:
+            if kind in {'response.output_text.delta', 'response.output_text.done'}:
+                manual_response_id = event.get('response_id') or manual_response_id
+                if kind.endswith('.delta'):
+                    manual_text = (manual_text + event.get('delta', ''))[:16000]
+                else:
+                    manual_text = event.get('text') or manual_text
+                if manual_deadline is not None:
+                    manual_deadline = time.monotonic() + MANUAL_REPLY_WAIT_SECONDS
+            elif kind == 'response.output_audio.delta' and event.get('delta'):
+                manual_audio_seen = True
+                manual_deadline = None
         saved = recorder.handle(event)
         if saved and saved.get('sender') == 'user':
             # completed may be only an end marker; include the final snapshot.
@@ -139,6 +169,34 @@ def relay(ws, interview_id, hello):
         if closing and not close_sent and event.get('type') == 'conversation.item.input_audio_transcription.completed':
             upstream.send(json.dumps({'type': 'session.close'}))
             close_sent = True
+
+    def recover_manual_reply():
+        nonlocal manual_job, manual_deadline
+        manual_deadline = None
+        # EndASR can acknowledge without completing ASR or producing a reply.
+        # Finalize the server's latest snapshots, never a client-supplied text.
+        for item_id, text in list(recorder.users.items()):
+            if text.strip():
+                forward({'type': 'conversation.item.input_audio_transcription.completed',
+                         'item_id': item_id, 'transcript': text})
+        history = ChatMessage.query.filter_by(session_id=interview_id, generation_status='completed').order_by(ChatMessage.id).all()
+        # A voice answer can span several ASR items. Include every fragment
+        # since the previous actual interviewer reply in the shared history.
+        last_ai = next((message.id for message in reversed(history) if message.sender == 'ai'), 0)
+        has_answer = bool(manual_text) or any(message.sender == 'user' and message.id > last_ai for message in history)
+        if not has_answer:
+            ws.send(json.dumps({'type': 'manual.reply_failed', 'message': '还没有识别到本次回答，请继续说话后再点击“我说完了”。'}, ensure_ascii=False))
+            return
+        job_id = uuid.uuid4().hex
+        response_id = manual_response_id if manual_text else 'manual-' + job_id
+        canceled = threading.Event()
+        manual_job = {'id': job_id, 'response_id': response_id, 'canceled': canceled,
+                      'generated': not bool(manual_text)}
+        upstream.send(json.dumps({'type': 'response.cancel', 'event_id': str(uuid.uuid4())}))
+        threading.Thread(target=generate_manual_reply, args=(
+            current_app._get_current_object(), interview_id, job_id, response_id,
+            manual_events, canceled, manual_text,
+        ), daemon=True).start()
 
     try:
         interview = db.session.get(InterviewSession, interview_id)
@@ -153,9 +211,25 @@ def relay(ws, interview_id, hello):
         receiver = threading.Thread(target=read_upstream, args=(upstream, events, stopped), daemon=True)
         receiver.start()
         while True:
-            while not events.empty():
-                event = events.get_nowait()
+            while not events.empty() or not manual_events.empty():
+                local = not manual_events.empty()
+                event = manual_events.get_nowait() if local else events.get_nowait()
+                if local:
+                    job_id = event.pop('_manual_job', None)
+                    if not manual_job or job_id != manual_job['id'] or closing:
+                        continue
                 kind = event.get('type')
+                if not local and reply_gate.manual_reply and kind == 'response.output_audio.done' and not manual_audio_seen:
+                    # Empty/canceled audio completion is not an audible reply.
+                    continue
+                if not local and manual_job and kind in OUTPUT_EVENTS | {'response.canceled'}:
+                    # Do not race a recovered response with late duplex output.
+                    old_id = event.get('response_id') or (event.get('response') or {}).get('id')
+                    if old_id and old_id not in reply_gate.discarded:
+                        reply_gate.discarded.append(old_id)
+                    continue
+                if local and kind == 'manual.reply_failed':
+                    recorder.handle({'type': 'response.canceled', 'response_id': event['response_id']})
                 if kind in {'error', 'bridge.error'}:
                     code = (event.get('error') or {}).get('code')
                     current_app.logger.warning('Realtime provider error code=%s', code)
@@ -177,13 +251,22 @@ def relay(ws, interview_id, hello):
                         resumed = reply_gate.speech_progress(event, time.monotonic())
                 if resumed:
                     upstream.send(json.dumps({'type': 'response.cancel', 'event_id': str(uuid.uuid4())}))
-                if reply_gate.accept(event, time.monotonic()):
+                if local or reply_gate.accept(event, time.monotonic()):
                     forward(event)
+                if local and kind == 'response.output_text.done' and manual_job['generated']:
+                    # Keep the next live turn aligned with the reply the user
+                    # actually received, including the newly saved QA pair.
+                    refreshed = ChatMessage.query.filter_by(session_id=interview_id).order_by(ChatMessage.id).all()
+                    updated = session_payload(db.session.get(InterviewSession, interview_id), refreshed)
+                    updated['type'] = 'session.update'
+                    upstream.send(json.dumps(updated, ensure_ascii=False))
                 if kind == 'session.closed':
                     return
             if not closing:
                 for event in reply_gate.release(time.monotonic()):
                     forward(event)
+                if manual_deadline is not None and time.monotonic() >= manual_deadline:
+                    recover_manual_reply()
             if stopped.is_set() and events.empty():
                 break
             if (not ready or closing) and time.monotonic() > deadline:
@@ -203,6 +286,7 @@ def relay(ws, interview_id, hello):
                 # Keep a socket from writing after another tab finishes/deletes.
                 interview = db.session.get(InterviewSession, interview_id, populate_existing=True)
                 if interview.status != 'ongoing' and not closing:
+                    cancel_manual_job()
                     upstream.send(json.dumps({'type': 'session.close'}))
                     closing = True
                     close_sent = True
@@ -240,23 +324,35 @@ def relay(ws, interview_id, hello):
                 if reply_gate.manual_reply:
                     continue
                 reply_gate.finish_turn()
+                manual_text = ''
+                manual_response_id = None
+                manual_audio_seen = False
+                manual_deadline = time.monotonic() + MANUAL_REPLY_WAIT_SECONDS
                 # Muting protects the submitted turn from ambient noise and
                 # keeps the provider alive while microphone upload is paused.
                 upstream.send(json.dumps({'type': 'input_audio_mute.commit', 'event_id': str(uuid.uuid4())}))
-                if not reply_gate.pending:
+                if not any(event.get('delta') or event.get('text') for event in reply_gate.pending):
                     upstream.send(json.dumps({'type': kind, 'event_id': str(uuid.uuid4())}))
                 sent_audio = False
                 ws.send(json.dumps({'type': 'turn.committed'}))
+                if recorder.finished_users and not recorder.users and not any(
+                    event.get('delta') or event.get('text') for event in reply_gate.pending
+                ):
+                    # ASR already ended: another EndASR cannot restart a
+                    # canceled response. Generate from its saved text now.
+                    recover_manual_reply()
             else:
                 if kind == 'input_audio_mute.commit':
                     reply_gate.muted = True
                     reply_gate.voiced_frames = 0
                 elif kind == 'input_audio_unmute.commit':
+                    cancel_manual_job()
                     if reply_gate.manual_reply:
                         reply_gate.resume_input()
                     reply_gate.muted = False
                     reply_gate.last_frame = None
                 elif kind == 'response.cancel':
+                    cancel_manual_job()
                     reply_gate.discard_pending()
                 upstream.send(json.dumps({'type': kind, 'event_id': str(uuid.uuid4())}))
     except websocket.WebSocketBadStatusException as exc:
@@ -271,6 +367,7 @@ def relay(ws, interview_id, hello):
         except ConnectionClosed:
             pass
     finally:
+        cancel_manual_job()
         if upstream:
             if not close_sent:
                 try:

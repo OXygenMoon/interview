@@ -147,6 +147,7 @@ class InterviewRealtimeVoice {
         if (!this.ready || this.turnCommitted || this.sources.size) return;
         this.turnCommitted = true;
         this.manualReplyDone = false;
+        this.manualAudioMessage = null;
         this.control('input_audio_buffer.commit');
         this.status('本次回答已结束，面试官正在接话…');
         this.replyTimer = setTimeout(() => {
@@ -167,8 +168,9 @@ class InterviewRealtimeVoice {
 
     completeManualReply() {
         if (!this.turnCommitted || !this.manualReplyDone || this.sources.size) return;
+        const message = this.manualAudioMessage;
         this.resumeManualInput();
-        this.status(this.muted ? '麦克风已静音，点击恢复' : '正在倾听，可以继续下一次回答');
+        this.status(message || (this.muted ? '麦克风已静音，点击恢复' : '正在倾听，可以继续下一次回答'));
     }
 
     stopPlayback() {
@@ -213,6 +215,12 @@ class InterviewRealtimeVoice {
         } else if (kind === 'feature.disabled') {
             this.disabled = true;
             this.fail(event.message || '管理员已关闭实时语音交互，请使用文字回答。');
+        } else if (kind === 'manual.reply_failed') {
+            this.resumeManualInput();
+            this.status(event.message);
+        } else if (kind === 'manual.audio_unavailable') {
+            this.manualAudioMessage = event.message;
+            this.status(event.message);
         } else if (kind === 'error') {
             this.fail(event.message || '实时语音服务暂时不可用。');
         } else if (kind === 'conversation.item.input_audio_transcription.started') {
@@ -246,6 +254,7 @@ class InterviewRealtimeVoice {
             this.resumeManualInput();
             this.status('这句话未听清，请再说一次');
         } else if (kind === 'response.output_text.delta' || kind === 'response.output_text.done') {
+            if (this.turnCommitted && (event.delta || event.text)) clearTimeout(this.replyTimer);
             const id = event.response_id || 'current';
             let bubble = this.aiBubbles.get(id);
             if (!bubble) {

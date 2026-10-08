@@ -124,7 +124,7 @@ class TranscriptRecorder:
         self.finished_replies = set()
         self.finished_users = set()
 
-    def save(self, sender, text, status='completed', audio=None):
+    def save(self, sender, text, status='completed', audio=None, model_name=None):
         text = text.strip()[:MAX_TEXT_CHARS]
         if not text:
             return None
@@ -133,7 +133,7 @@ class TranscriptRecorder:
             return None
         message = ChatMessage(session_id=self.session_id, sender=sender, content=text,
                               timestamp=datetime.now(), generation_status=status,
-                              model_name='doubao-realtime-' + current_app.config['VOLC_REALTIME_MODEL'])
+                              model_name=model_name or 'doubao-realtime-' + current_app.config['VOLC_REALTIME_MODEL'])
         filename = None
         if audio and len(audio) % 2 == 0:
             root = Path(current_app.root_path) / 'static' / 'uploads' / 'audio'
@@ -201,9 +201,11 @@ class TranscriptRecorder:
             reply['text'] = (reply['text'] + event.get('delta', ''))[:MAX_TEXT_CHARS]
         elif kind == 'response.output_text.done':
             reply['text'] = (event.get('text') or reply['text'])[:MAX_TEXT_CHARS]
+            reply['model_name'] = event.get('model_name')
             # Save text immediately: reports must not depend on audio arriving.
             if not reply['message_id']:
-                saved = self.save('ai', reply['text'], audio=reply['audio'] if reply['audio_done'] else None)
+                saved = self.save('ai', reply['text'], audio=reply['audio'] if reply['audio_done'] else None,
+                                  model_name=reply.get('model_name'))
                 if saved:
                     reply['message_id'] = saved['message_id']
                     saved['response_id'] = reply_id

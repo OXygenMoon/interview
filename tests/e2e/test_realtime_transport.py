@@ -311,3 +311,122 @@ def test_manual_turn_commit_keeps_socket_open_and_ignores_duplicate_and_inflight
         assert ChatMessage.query.filter(ChatMessage.content.like('手动回答%')).count() == 2
         assert ChatMessage.query.filter(ChatMessage.content.like('手动追问%')).count() == 2
     assert frame_errors == []
+
+
+@pytest.mark.parametrize('scenario', ['ack_only', 'already_finalized', 'empty_done', 'usage_only', 'native_text_noaudio'])
+def test_manual_commit_recovers_from_asr_ack_without_response_using_recognized_text(voice_app, transport_page, monkeypatch, scenario):
+    import wave
+    from pathlib import Path
+    from app.models import InterviewSession
+
+    page, frame_errors = transport_page
+    monkeypatch.setattr('app.api.realtime.MANUAL_REPLY_WAIT_SECONDS', .08)
+    answer = '我在后端项目中使用数据库事务保证原子性。'
+    reply = '你提到数据库事务，请解释回滚机制。'
+    calls, speech = [], []
+
+    def generate(history, **options):
+        calls.append(([m.content for m in history if m.sender == 'user'], options))
+        yield '你提到数据库事务，'
+        yield '请解释回滚机制。'
+
+    def synthesize(text, directory, voice):
+        speech.append((text, voice))
+        with wave.open(str(Path(directory) / 'manual.wav'), 'wb') as audio:
+            audio.setnchannels(1)
+            audio.setsampwidth(2)
+            audio.setframerate(24000)
+            audio.writeframes(bytes(4800))
+        return 'manual.wav'
+
+    monkeypatch.setattr('app.services.realtime_manual_reply.stream_ai_response', generate)
+    monkeypatch.setattr('app.services.realtime_manual_reply._text_to_speech_realtime', synthesize)
+    with voice_app.app_context():
+        db.session.get(InterviewSession, 1).voice_type = 'zh_male_m191_uranus_bigtts'
+        db.session.commit()
+    provider = FakeProvider(deferred=True)
+    original_send = provider.send
+    heard = False
+
+    def send(raw):
+        nonlocal heard
+        event = json.loads(raw)
+        kind = event['type']
+        if kind == 'input_audio_buffer.append':
+            provider.sent.append(event)
+            if not heard:
+                heard = True
+                provider.events.put({'type': 'conversation.item.input_audio_transcription.started', 'item_id': 'q1'})
+                provider.events.put({'type': 'conversation.item.input_audio_transcription.delta', 'item_id': 'q1', 'delta': answer})
+                if scenario == 'already_finalized':
+                    provider.events.put({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': 'q1', 'text': answer})
+                elif scenario == 'usage_only':
+                    provider.events.put({'type': 'response.done', 'response_id': 'old', 'usage': {}})
+                elif scenario == 'native_text_noaudio':
+                    provider.events.put({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': 'q1', 'text': answer})
+                    provider.events.put({'type': 'response.output_text.done', 'response_id': 'r1', 'text': reply})
+        elif kind == 'input_audio_buffer.commit':
+            provider.sent.append(event)
+            provider.events.put({'type': 'input_audio_buffer.committed'})
+            if scenario == 'empty_done':
+                provider.events.put({'type': 'response.output_audio.done', 'response_id': 'old'})
+            # Deliberately do NOT generate a reply on EndASR: the reported bug.
+        elif kind == 'response.cancel':
+            provider.sent.append(event)
+            provider.events.put({'type': 'response.output_text.done', 'response_id': 'late', 'text': '不该出现的旧回复'})
+        elif kind == 'session.update':
+            provider.sent.append(event)
+            provider.events.put({'type': 'session.updated'})
+            provider.events.put({'type': 'conversation.item.input_audio_transcription.completed', 'item_id': 'q1', 'text': answer})
+        else:
+            original_send(raw)
+
+    provider.send = send
+    with patch('app.api.realtime.connect_provider', return_value=provider):
+        result = page.evaluate('''() => new Promise(resolve => {
+            const result={text:'',audio:0,errors:[],commits:0};
+            const ws=new WebSocket(location.origin.replace('http','ws')+'/api/interview/1/realtime');
+            let upload, started, submitted=false;
+            const timer=setTimeout(()=>{clearInterval(upload);ws.close();resolve({...result,timeout:true});},5000);
+            ws.onopen=()=>ws.send(JSON.stringify({type:'connect',csrf_token:'csrf'}));
+            ws.onmessage=({data})=>{
+                const e=JSON.parse(data);
+                if(e.type==='ready'){
+                    started=performance.now();
+                    upload=setInterval(()=>{
+                        const frame=new Int16Array(320);frame.fill(4000);ws.send(frame.buffer);
+                        if(!submitted && performance.now()-started>180){
+                            submitted=true;clearInterval(upload);
+                            ws.send(JSON.stringify({type:'input_audio_buffer.commit'}));
+                            ws.send(JSON.stringify({type:'input_audio_buffer.commit'}));
+                        }
+                    },20);
+                }
+                if(e.type==='turn.committed')result.commits++;
+                if(e.type==='response.output_text.done')result.text=e.text;
+                if(e.type==='response.output_audio.delta')result.audio+=atob(e.delta).length;
+                if(e.type==='error'||e.type==='manual.reply_failed')result.errors.push(e.message);
+                if(e.type==='response.output_audio.done')ws.send(JSON.stringify({type:'session.close'}));
+            };
+            ws.onclose=e=>{clearInterval(upload);clearTimeout(timer);resolve({...result,code:e.code});};
+        })''')
+    assert result.get('timeout') is None
+    assert result['errors'] == [] and result['code'] == 1000
+    assert result['text'] == reply and result['audio'] == 4800
+    assert result['commits'] == 1
+    if scenario == 'native_text_noaudio':
+        assert calls == []  # Read the existing reply, without generating another question.
+    else:
+        assert len(calls) == 1 and calls[0][0] == [answer]
+        assert calls[0][1]['target_role'] == '后端开发' and calls[0][1]['round_num'] == 2
+        updated = next(event for event in provider.sent if event['type'] == 'session.update')
+        assert updated['extension']['dialog']['dialog_context'][-2:] == [
+            {'role': 'user', 'text': answer}, {'role': 'assistant', 'text': reply},
+        ]
+    assert speech == [(reply, 'zh_male_m191_uranus_bigtts')]
+    with voice_app.app_context():
+        assert ChatMessage.query.filter_by(sender='user').one().content == answer
+        message = ChatMessage.query.filter_by(content=reply).one()
+        assert message.generation_status == 'completed' and message.audio_url
+        assert ChatMessage.query.filter_by(content='不该出现的旧回复').count() == 0
+    assert frame_errors == []
