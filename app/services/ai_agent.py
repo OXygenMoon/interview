@@ -1,5 +1,6 @@
 import json
 import logging
+from types import SimpleNamespace
 from urllib.parse import urlsplit
 from openai import OpenAI
 from ..config import Config
@@ -11,6 +12,7 @@ from .interview_prompts import (
 )
 from .local_asr import ASRUnavailableError, AudioDecodeError, transcribe_local_audio
 from .visual_review import normalize_visual_feedback
+from .interview_coverage import DIMENSIONS, coverage_instructions, dimension_answers
 
 # 面试文本及视觉请求使用配置的 OpenAI 兼容服务。
 client = OpenAI(
@@ -32,7 +34,7 @@ class AIServiceError(RuntimeError):
     """AI output is unavailable or invalid and must not become a score."""
 
 
-REQUIRED_SCORE_DIMENSIONS = ("专业技能", "逻辑思维", "语言表达", "抗压能力", "礼仪态度")
+REQUIRED_SCORE_DIMENSIONS = DIMENSIONS
 SCORE_WEIGHTS = (40, 25, 20, 10, 5)
 
 
@@ -63,7 +65,8 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
     # profiles and role names remain explicitly untrusted data.
     mode_prompt = get_interaction_mode(difficulty)
     round_scope = get_round_scope(round_num, difficulty)
-    system_prompt = f"{CHAT_PROMPT}\n【本轮范围】{round_scope}\n【互动模式】{mode_prompt}"
+    system_prompt = (f"{CHAT_PROMPT}\n【本轮范围】{round_scope}\n【互动模式】{mode_prompt}"
+                     + coverage_instructions(history_messages, difficulty, round_num))
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": json.dumps({
@@ -164,11 +167,13 @@ def evaluate_random_answer(question, answer):
 
 
 def generate_interview_report(history_messages, target_role, round_num=1,
-                              difficulty="标准模式", position_context=None):
+                              difficulty="标准模式", position_context=None, require_complete=False):
     """
     面试结束时调用：采用【双通道分析】策略
     """
     print("🚀 开始生成面试报告 (含参考答案)...")
+    if require_complete and set(dimension_answers(history_messages, difficulty, round_num)) != set(DIMENSIONS):
+        raise AIServiceError('五维必答题尚未全部作答，请先补齐面试问题')
 
     transcript = []
     qa_pairs = []
@@ -243,6 +248,25 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
     # Retained until report/UI support a distinct insufficient-evidence state.
     cap = 60 if round_count < 3 else 100
     system_prompt = get_assessment_prompt(OVERALL_PROMPT, difficulty, round_num)
+    try:
+        transcript = json.loads(full_text)
+        history = [SimpleNamespace(sender=row['sender'], content=row.get('content', ''))
+                   for row in transcript] if isinstance(transcript, list) else []
+    except (ValueError, TypeError, KeyError):
+        history = []
+    evidence = dimension_answers(history, difficulty, round_num)
+    complete_coverage = set(evidence) == set(REQUIRED_SCORE_DIMENSIONS)
+    if complete_coverage:
+        system_prompt += (
+            '\n【五维已完成，必须全部评分】\n'
+            'required_dimension_evidence逐一给出本轮五维必答题的实际问答。'
+            '五个维度均已考察，evaluated_dimensions必须包含全部五维，scores必须全部打分。'
+            '不得再以未考察、没有压力题、没有礼仪题为由给0分或低分。'
+            '抗压题中明确的时限或需求变化及应对，礼仪题中的实际沟通用语均是有效证据。'
+            '简短的正确应对按当前模式评分，不额外要求职场经历、情绪紧张或复杂压力。'
+            '明确不会或核心错误仍可得低分，包括0分，但必须说明实际作答的错误，'
+            '不能把已经问答的维度称为未评估。'
+        )
     user_prompt = json.dumps({
         "target_role": target_role,
         "round_scope": get_round_scope(round_num, difficulty),
@@ -250,6 +274,7 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         "position_context": position_context or {},
         "message_count": round_count,
         "legacy_total_cap": cap,
+        "required_dimension_evidence": evidence,
         "transcript": full_text,
     }, ensure_ascii=False)
 
@@ -291,6 +316,8 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         if any(clean_scores[d] != 0 for d in REQUIRED_SCORE_DIMENSIONS
                if d not in evaluated_dimensions):
             raise ValueError('unassessed dimension has a score')
+        if complete_coverage and set(evaluated_dimensions) != set(REQUIRED_SCORE_DIMENSIONS):
+            raise ValueError('completed interview must score all five dimensions')
         if difficulty in STUDENT_MODES:
             if '专业技能' not in evaluated_dimensions:
                 cap = 0

@@ -58,10 +58,11 @@ def test_provider_config_restores_pairs_and_uses_pcm16(voice_app):
         assert voice_app.config['VOLC_API_KEY'] not in json.dumps(payload)
 
 
-@pytest.mark.parametrize('difficulty', ['新手模式', '标准模式'])
+@pytest.mark.parametrize('difficulty', ['新手模式', '标准模式', '压力模式'])
 @pytest.mark.parametrize('round_num', [1, 2, 3])
 def test_realtime_interviewer_uses_the_same_student_standard(voice_app, difficulty, round_num):
     from app.services.interview_prompts import get_interaction_mode, get_round_scope
+    from app.services.interview_coverage import required_questions
 
     with voice_app.app_context():
         interview = db.session.get(InterviewSession, 1)
@@ -70,7 +71,10 @@ def test_realtime_interviewer_uses_the_same_student_standard(voice_app, difficul
         instructions = session_payload(interview, [])['session']['instructions']
         assert get_round_scope(round_num, difficulty) in instructions
         assert get_interaction_mode(difficulty) in instructions
-        assert '中职学生' in instructions
+        if difficulty != '压力模式':
+            assert '中职学生' in instructions
+        for question in required_questions(difficulty, round_num).values():
+            assert question in instructions
 
 
 @pytest.mark.parametrize('user,origin,token,status,allowed', [

@@ -748,6 +748,14 @@ class BusinessRegressionTests(unittest.TestCase):
             interview_id = interview.id
 
         from app.services.report_queue import ReportQueueUnavailable
+        from app.services.interview_coverage import required_questions
+        with self.app.app_context():
+            for question in required_questions(None).values():
+                db.session.add(ChatMessage(session_id=interview_id, sender='ai', content=question,
+                                           generation_status='completed'))
+                db.session.add(ChatMessage(session_id=interview_id, sender='user', content='先确认要求，再沟通和处理。',
+                                           generation_status='completed'))
+            db.session.commit()
 
         with patch(
             'app.services.report_queue.enqueue_report',
