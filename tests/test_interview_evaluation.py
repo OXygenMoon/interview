@@ -10,6 +10,7 @@ from scripts.evaluate_interview_rounds import (
     judge_case,
 )
 from scripts.evaluate_student_interviews import validate_fixtures
+from scripts.evaluate_vocational_basics import calibration_checks
 
 
 def test_round_fixtures_use_identical_questions_across_profiles():
@@ -76,3 +77,22 @@ def test_failure_record_excludes_arbitrary_exception_text_and_private_fields():
     assert record['http_status'] == 402
     assert record['provider_code'] == 30001
     assert private_marker not in json.dumps(record)
+
+
+def test_basic_calibration_rejects_high_total_with_low_skills_or_unacceptable_answers():
+    fixtures = json.loads((Path(__file__).resolve().parents[1]
+                           / 'docs/vocational-basic-cases-v8.json').read_text())
+    correct, incorrect = fixtures['cases']
+    assert [p['question'] for p in correct['qa_pairs']] == [p['question'] for p in incorrect['qa_pairs']]
+    report = {
+        'overall': {'total_score': 85,
+                    'scores': {'专业技能': 40, '逻辑思维': 85, '抗压能力': 85}},
+        'details_list': [{'is_good': False} for _ in correct['qa_pairs']],
+    }
+    checks = {c['check']: c['passed'] for c in calibration_checks(correct, report)}
+    assert checks['provisional_score_range'] is True
+    assert checks['basic_answer_acceptance'] is False
+    assert checks['assessed_basics_not_scored_low'] is False
+    report['overall']['scores']['专业技能'] = 85
+    report['details_list'] = [{'is_good': True} for _ in correct['qa_pairs']]
+    assert all(c['passed'] for c in calibration_checks(correct, report))

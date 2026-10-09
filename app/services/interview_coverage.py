@@ -2,13 +2,15 @@
 
 import re
 
+from .interview_prompts import STUDENT_MODES
+
 
 DIMENSIONS = ('专业技能', '逻辑思维', '语言表达', '抗压能力', '礼仪态度')
 
 
 def required_questions(difficulty, round_num=1):
     difficulty = difficulty or '标准模式'
-    student = difficulty in ('新手模式', '标准模式')
+    student = difficulty in STUDENT_MODES
     skills = {
         1: '这个岗位平时主要做什么？请说出一项你了解的工作。',
         2: '请说出这个岗位会用到的一项工具或技能，以及它的用途。',

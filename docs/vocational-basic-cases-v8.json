@@ -1,0 +1,31 @@
+{
+  "sample_type": "Synthetic dialogue reconstructed from the user's evaluation excerpt; not the original interview transcript.",
+  "role": "网络安全岗位",
+  "position_context": {
+    "position_description": "网络安全相关岗位，工作可能涉及漏洞扫描、渗透测试、基线检查、应急响应、日志分析和加固方案。"
+  },
+  "cases": [
+    {
+      "case_id": "correct_general_basics",
+      "diagnostic_score_range": [80, 90],
+      "expected_is_good": [true, true, true, true],
+      "qa_pairs": [
+        {"question": "这个岗位平时主要做什么？请说出一项你了解的工作。", "answer": "面试官您好，据我了解，这个岗位是提供安全的网络服务，防止网络攻击和渗透。"},
+        {"question": "如果要完成一项岗位相关的小任务，你会先做什么、再做什么？", "answer": "我会先明确目的，再拆解步骤，完成后总结反思。"},
+        {"question": "假设实训任务快到提交时间了，但你还有一部分没完成，你会怎么办？", "answer": "我会求助同伴，向老师说明困难，申请延期。"},
+        {"question": "假设同学给你的资料有一处不清楚，你会怎样礼貌地向他确认？请直接说出你会说的话。", "answer": "谢谢你给我的资料，我可能理解有偏差，请问能再解释一下这里是什么意思吗？谢谢。"}
+      ]
+    },
+    {
+      "case_id": "incorrect_basics",
+      "diagnostic_score_range": [0, 59],
+      "expected_is_good": [false, false, false, false],
+      "qa_pairs": [
+        {"question": "这个岗位平时主要做什么？请说出一项你了解的工作。", "answer": "这个岗位就是为了让别人随便进入网络，没有任何限制。"},
+        {"question": "如果要完成一项岗位相关的小任务，你会先做什么、再做什么？", "answer": "先随便操作，不用看任务要求，也不用检查。"},
+        {"question": "假设实训任务快到提交时间了，但你还有一部分没完成，你会怎么办？", "answer": "我不管了，老师问也不回答，直接不交。"},
+        {"question": "假设同学给你的资料有一处不清楚，你会怎样礼貌地向他确认？请直接说出你会说的话。", "answer": "你这人脑子有问题，赶快把资料重写。"}
+      ]
+    }
+  ]
+}

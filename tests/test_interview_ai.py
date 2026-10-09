@@ -209,13 +209,18 @@ def test_student_standard_reaches_chat_overall_and_coaching(difficulty, round_nu
         assert '中职学生' in system and scope in system
         assert f'【{difficulty}：' in system
         assert '【按证据评分的共同尺度】' not in system
+        # Overall and per-answer coaching must share the user's calibration;
+        # otherwise a high overall score can still receive incorrect criticism.
+        assert '【基础回答校准，适用于三个模式和所有轮次】' in system
+        assert '明确目的—拆解步骤—总结反思' in system
+        assert '不要求主动列出漏洞扫描' in system
         assert data['difficulty'] == difficulty and data['round_scope'] == scope
     assert '"evaluated_dimensions": []' in create.call_args_list[0].kwargs['messages'][0]['content']
     assert report['overall']['total_score'] == 85
     assert '抗压能力未评估' in report['overall']['comment']
 
 
-@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
 def test_total_excludes_only_unassessed_dimensions_and_keeps_zero_evidence(difficulty):
     scores = dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (81, 82, 83, 0, 84)))
     payload = {'scores': scores, 'total_score': 74, 'comment': '基础正确。',
@@ -245,7 +250,7 @@ def test_total_excludes_only_unassessed_dimensions_and_keeps_zero_evidence(diffi
 
 
 @pytest.mark.parametrize('dimensions', [None, ['非法维度'], ['专业技能', '专业技能'], []])
-@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
 def test_report_rejects_invalid_coverage_or_scores_for_unassessed_dimensions(dimensions, difficulty):
     payload = {'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 80),
                'total_score': 80, 'comment': '点评。', 'evaluated_dimensions': dimensions}
@@ -254,7 +259,7 @@ def test_report_rejects_invalid_coverage_or_scores_for_unassessed_dimensions(dim
             ai_agent._get_overall_score('记录', '文员', 4, difficulty=difficulty)
 
 
-@pytest.mark.parametrize('difficulty', (*ai_agent.STUDENT_MODES, '压力模式'))
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
 def test_partial_dimension_coverage_does_not_reduce_accurate_basic_scores(difficulty):
     payload = {
         'scores': dict(zip(ai_agent.REQUIRED_SCORE_DIMENSIONS, (95, 0, 95, 0, 0))),
@@ -269,12 +274,14 @@ def test_partial_dimension_coverage_does_not_reduce_accurate_basic_scores(diffic
     assert '逻辑思维、抗压能力、礼仪态度未评估' in report['comment']
 
 
-def test_student_partial_interview_keeps_legacy_completion_cap():
+@pytest.mark.parametrize('difficulty', ai_agent.STUDENT_MODES)
+def test_student_partial_interview_scores_assessed_scope_without_question_count_cap(difficulty):
     payload = {'scores': dict.fromkeys(ai_agent.REQUIRED_SCORE_DIMENSIONS, 95),
                'total_score': 95, 'comment': '局部证据。',
                'evaluated_dimensions': list(ai_agent.REQUIRED_SCORE_DIMENSIONS)}
-    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)):
-        assert ai_agent._get_overall_score('记录', '文员', 1)['total_score'] == 60
+    with patch.object(ai_agent.client.chat.completions, 'create', return_value=response(payload)) as create:
+        assert ai_agent._get_overall_score('记录', '文员', 1, difficulty=difficulty)['total_score'] == 95
+    assert json.loads(create.call_args.kwargs['messages'][1]['content'])['legacy_total_cap'] == 100
 
 
 def test_default_provider_configuration_uses_flash_and_local_asr(monkeypatch):

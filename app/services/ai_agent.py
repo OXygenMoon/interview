@@ -250,8 +250,9 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
                        difficulty="标准模式", position_context=None):
     """Evaluate recorded evidence with the compatible numeric report contract."""
     print("📊 正在进行整体打分...")
-    # Retained until report/UI support a distinct insufficient-evidence state.
-    cap = 60 if round_count < 3 else 100
+    # Correct student answers are graded within their assessed scope. Finishing
+    # early must not turn them into a low score solely due to question count.
+    cap = 60 if difficulty not in STUDENT_MODES and round_count < 3 else 100
     system_prompt = get_assessment_prompt(OVERALL_PROMPT, difficulty, round_num)
     try:
         transcript = json.loads(full_text)
