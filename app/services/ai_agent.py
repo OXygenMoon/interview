@@ -12,7 +12,7 @@ from .interview_prompts import (
 )
 from .local_asr import ASRUnavailableError, AudioDecodeError, transcribe_local_audio
 from .visual_review import normalize_visual_feedback
-from .interview_coverage import DIMENSIONS, coverage_instructions, dimension_answers
+from .interview_coverage import DIMENSIONS, coverage_instructions, dimension_answers, planned_response
 
 # 面试文本及视觉请求使用配置的 OpenAI 兼容服务。
 client = OpenAI(
@@ -86,6 +86,9 @@ def _build_interview_messages(history_messages, target_role, difficulty, context
 
 def get_ai_response(history_messages, target_role="Python工程师", difficulty = "标准模式", context_info="", visual_context_str="", round_num=1):
     """非流式调用面试模型（保留用于兼容路径）。"""
+    planned = planned_response(history_messages, difficulty, round_num)
+    if planned:
+        return planned
     messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str, round_num)
     try:
         print(f"正在请求面试模型: {Config.LLM_MODEL_NAME} ...")
@@ -107,6 +110,10 @@ def get_ai_response(history_messages, target_role="Python工程师", difficulty 
 
 def stream_ai_response(history_messages, target_role="Python工程师", difficulty="标准模式", context_info="", visual_context_str="", round_num=1):
     """流式调用：逐 token yield 内容片段。出错抛异常，由调用方捕获并兜底。"""
+    planned = planned_response(history_messages, difficulty, round_num)
+    if planned:
+        yield planned
+        return
     messages = _build_interview_messages(history_messages, target_role, difficulty, context_info, visual_context_str, round_num)
     print(f"正在流式请求面试模型: {Config.LLM_MODEL_NAME} ...")
     response = client.chat.completions.create(
@@ -167,13 +174,11 @@ def evaluate_random_answer(question, answer):
 
 
 def generate_interview_report(history_messages, target_role, round_num=1,
-                              difficulty="标准模式", position_context=None, require_complete=False):
+                              difficulty="标准模式", position_context=None):
     """
     面试结束时调用：采用【双通道分析】策略
     """
     print("🚀 开始生成面试报告 (含参考答案)...")
-    if require_complete and set(dimension_answers(history_messages, difficulty, round_num)) != set(DIMENSIONS):
-        raise AIServiceError('五维必答题尚未全部作答，请先补齐面试问题')
 
     transcript = []
     qa_pairs = []

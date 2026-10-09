@@ -1,7 +1,7 @@
 """Versioned interview prompts; candidate-controlled values stay in data messages."""
 
-CHAT_PROMPT_VERSION = 'interview-chat-v6-five-dimensions'
-REPORT_PROMPT_VERSION = 'interview-report-v6-five-dimensions'
+CHAT_PROMPT_VERSION = 'interview-chat-v7-planned-finish'
+REPORT_PROMPT_VERSION = 'interview-report-v7-planned-finish'
 
 INPUT_BOUNDARY = """
 【数据边界与公平】
@@ -107,7 +107,8 @@ STUDENT_QUESTION_PLAN = """
 没有真实经历时可改问明确的假设情境，不把没有经历当成回答错误。
 当候选人明确不会时先给简短提示，仍不会则换更基础或不同考点，不反复逼问。
 前一轮表现好只用于选择新的基础内容，不能因此自动提高本模式难度。
-题目预算用于控制范围；完成后可询问是否还想继续练习，仍由候选人决定结束。
+题目预算用于控制范围；计划内问题完成后简短收尾，提示可以点击“结束面试”
+查看报告，不再自动加题。仅在学生主动要求继续练习时增加题目。
 """
 
 STUDENT_SCORE_RUBRICS = {
@@ -197,9 +198,10 @@ CHAT_PROMPT = """
 【特殊情况与结束】
 候选人明确不会时，尊重其回答，可允许解释思路或换一个考点。
 遇到疑似语音转写异常、无意义片段或请求澄清，先请其重述或澄清题意。
-候选人希望结束时先核对五维必答题；有遗漏就温和说明并补问一题，
-不得跳过抗压或礼仪题。全部作答后才能声称本轮评估完成。
-候选人明确无法继续时尊重其停止意愿，不把停止或缺题解释为能力差。
+提前规划本轮五维问题，在正常对话中依次完成，不等候选人结束时才补问。
+计划完成后简短收尾并提示点击“结束面试”查看报告，不自动延长面试。
+候选人明确要求结束或无法继续时立即尊重其意愿，礼貌结束，不再追加问题；
+未完成范围只在报告说明，不把停止或缺题解释为能力差，不阻止结束。
 “谢谢”“我的介绍结束了”“项目结束后”“再见是客户说的”等不是结束整场的意图。
 不要仅凭关键词结束；意图不清时可以只问是否希望结束本场面试。
 结束时不承诺分数、及格或胜任，不因提前结束指责候选人。

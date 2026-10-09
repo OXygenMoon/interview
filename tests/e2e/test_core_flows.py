@@ -118,14 +118,11 @@ def test_interview_creation_reaches_live_room(page, live_server):
     assert any('提交失败：报告队列不可用' in message for message in dialogs)
 
     page.unroute(finish_pattern)
-    with page.expect_response(finish_pattern) as supplemental:
+    with page.expect_response(finish_pattern) as finished:
         finish_button.click()
-    assert supplemental.value.status == 409
-    expect(page.locator('#chat-container')).to_contain_text('生成报告前，我们再补充一个小问题。')
-    expect(page.locator('#chat-container')).to_contain_text('这个岗位平时主要做什么？')
-    expect(page.locator('#msg-input')).to_be_visible()
-    expect(page.get_by_role('button', name='结束面试')).to_be_enabled()
-    expect(page).to_have_url(re.compile(r'/interview/room/\d+$'))
+    assert finished.value.status == 200
+    expect(page).to_have_url(f'{live_server}/')
+    assert not any('补问' in message for message in dialogs)
 
 
 def test_teacher_and_admin_role_destinations(page, live_server):

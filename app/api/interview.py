@@ -18,7 +18,6 @@ from ..services.ai_agent import AIServiceError, CHAT_PROMPT_VERSION, REPORT_PROM
 from ..services.submitted_resume import snapshot_resume, visible_resume_content
 from ..services.question_bank import get_random_interview_questions
 from ..services.interview_prompts import STUDENT_MODES
-from ..services.interview_coverage import missing_dimensions, required_questions
 from ..services.local_asr import AudioDecodeError
 from ..services.visual_review import decode_frame, normalize_visual_feedback, visual_record, UNAVAILABLE_COMMENT
 # 引入 TTS 服务
@@ -479,7 +478,6 @@ def background_report_task(session_id):
                 round_num=session.round or 1,
                 difficulty=session.difficulty or '标准模式',
                 position_context=session.position_snapshot,
-                require_complete=session.prompt_version == CHAT_PROMPT_VERSION,
             )
 
             # (C) 保存数据
@@ -582,31 +580,6 @@ def finish_session(session_id):
             })
         if session.status not in {'ongoing', 'failed', 'expired'}:
             return jsonify({'error': '当前面试状态不能生成报告'}), 409
-
-        if session.status in {'ongoing', 'failed', 'expired'}:
-            history = ChatMessage.query.filter_by(
-                session_id=session_id, generation_status='completed',
-            ).order_by(ChatMessage.id).all()
-            missing = missing_dimensions(history, session.difficulty, session.round or 1)
-            if missing:
-                question = required_questions(session.difficulty, session.round or 1)[missing[0]]
-                last = history[-1] if history else None
-                if not (last and last.sender == 'ai' and question in (last.content or '')):
-                    db.session.add(ChatMessage(
-                        session_id=session_id, sender='ai',
-                        content='生成报告前，我们再补充一个小问题。' + question,
-                        generation_status='completed', timestamp=datetime.now(),
-                    ))
-                session.last_activity = datetime.now()
-                session.status = 'ongoing'
-                session.prompt_version = CHAT_PROMPT_VERSION
-                db.session.commit()
-                return jsonify({
-                    'status': 'coverage_required',
-                    'message': '请先回答补充问题，五个维度全部考察后再生成报告。',
-                    'missing_dimensions': missing,
-                    'question': question,
-                }), 409
 
         # 1. 立即更新状态为 "processing" (处理中)
         processing_started_at = datetime.now()

@@ -931,7 +931,7 @@
     window.addEventListener('pagehide', () => { stopAudioPlayback(); realtimeVoice?.stop(); });
 
     async function finishInterview() {
-        if(!confirm("准备结束面试吗？如果还有遗漏的问题，面试官会先补问，再生成报告。")) return;
+        if(!confirm("确定要结束面试吗？AI 将根据已有回答生成报告。")) return;
         const btn = document.querySelector('button[onclick="finishInterview()"]');
         if(btn) { btn.innerHTML = '提交中...'; btn.disabled = true; }
 
@@ -940,12 +940,6 @@
             if (realtimeVoice?.active) await realtimeVoice.stop();
             const res = await fetch(`/api/interview/${sessionId}/finish`, {method: 'POST'});
             const data = await res.json().catch(() => ({}));
-            if (data.status === 'coverage_required') {
-                // The server saved the supplemental question. Reload it once,
-                // keep the interview open, and restore text/voice answering.
-                window.location.reload();
-                return;
-            }
             if(!res.ok) {
                 throw new Error(data.error || `服务器返回 ${res.status}`);
             }

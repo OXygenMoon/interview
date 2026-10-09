@@ -77,6 +77,20 @@ def test_realtime_interviewer_uses_the_same_student_standard(voice_app, difficul
             assert question in instructions
 
 
+def test_realtime_completed_round_prompts_closing_without_waiting_for_another_answer(voice_app):
+    from app.services.interview_coverage import required_questions
+
+    with voice_app.app_context():
+        interview = db.session.get(InterviewSession, 1)
+        history = [ChatMessage(sender=sender, content=content, generation_status='completed')
+                   for question in required_questions(interview.difficulty, interview.round).values()
+                   for sender, content in [('ai', question), ('user', '先确认要求，再沟通和处理。')]]
+        instructions = session_payload(interview, history)['session']['instructions']
+        assert '【收尾】只做简短结束提示' in instructions
+        assert '点击“结束面试”查看报告' in instructions
+        assert '【上一条提问数据】继续等待候选人作答' not in instructions
+
+
 @pytest.mark.parametrize('user,origin,token,status,allowed', [
     (None, 'http://localhost', 'csrf', 'ongoing', False),
     (2, 'http://localhost', 'csrf', 'ongoing', False),

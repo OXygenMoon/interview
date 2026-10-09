@@ -14,7 +14,7 @@ from flask import current_app
 from .. import db
 from ..models import ChatMessage, InterviewSession
 from .interview_prompts import CHAT_PROMPT, get_interaction_mode, get_round_scope
-from .interview_coverage import coverage_instructions
+from .interview_coverage import coverage_instructions, closing_response
 
 
 ASR_PREFIX = 'conversation.item.input_audio_transcription.'
@@ -72,7 +72,10 @@ def session_payload(interview, history):
     pairs = pairs[-12:]
     last_ai = next((m.content for m in reversed(history) if m.sender == 'ai'
                     and m.generation_status == 'completed'), '')
-    if last_ai:
+    closing = closing_response(history, interview.difficulty, interview.round or 1)
+    if closing:
+        instructions += '\n【收尾】只做简短结束提示，不再等待或重复上一道问题：' + closing
+    elif last_ai:
         instructions += '\n【上一条提问数据】继续等待候选人作答：' + json.dumps(last_ai[:2000], ensure_ascii=False)
     while pairs and sum(len(item['text']) for item in pairs) + len(instructions) > 7500:
         pairs = pairs[2:]
