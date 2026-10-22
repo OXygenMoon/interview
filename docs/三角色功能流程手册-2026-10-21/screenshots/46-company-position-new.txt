@@ -1,0 +1,93 @@
+Window: "新增面试岗位 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 新增面试岗位 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company/positions/new, Secondary Actions: Raise
+	1 container 新增面试岗位 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company/positions/new
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/company/positions/new, Placeholder: 搜索或输入 Web 地址
+						11 按钮 将此页面添加到收藏夹(⌘D)
+					12 container
+						13 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						14 弹出式按钮 脚本猫
+有权访问此网站
+						15 弹出式按钮 扩展
+					16 按钮 收藏夹
+					17 按钮 学校 个人资料
+					18 按钮 设置及其他
+				19 工具栏 收藏夹栏
+					20 container 资源下载
+					21 container 摄影
+					22 container 设计
+					23 container 编程
+					24 container 教师平台
+					25 container 出版社申请样书
+					26 container 大语言模型
+					27 container 校内开发
+					28 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					29 container NAS
+					30 container 幼儿全过程动态分析系统
+					31 container 中文数据库
+					32 container 独立游戏开发 | indienova 独立游戏
+					33 container 嘉兴市专业技术人员继续教育平台
+					34 container My Game Cards | SEAGM
+					35 弹出式按钮 包含隐藏的收藏夹的菜单
+				36 container
+					37 滚动区
+						38 HTML 内容 新增面试岗位 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company/positions/new
+							39 link 跳转到主要内容, Value: 211.154.20.65:20018/company/positions/new#main-content
+							40 container
+								41 link AI 智聘 企业招聘工作台首页, Value: 211.154.20.65:20018/company
+								42 container 主导航
+									43 link 公司概览, Value: 211.154.20.65:20018/company
+									44 link 面试岗位, Value: 211.154.20.65:20018/company/positions
+									45 link 学生面试记录, Value: 211.154.20.65:20018/company/interviews
+								46 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								47 开合三角标记 打开个人账号菜单, Help: 宋经理
+									48 文本 宋经理
+							49 container
+								50 标题 新增面试岗位, Value: 1
+									51 文本 新增面试岗位
+								52 文本 描述岗位职责、基础技能与招聘要求，让面试更贴近公司需求。
+								53 link 返回岗位, Value: 211.154.20.65:20018/company/positions
+								54 container
+									55 文本 岗位名称
+									56 文本栏 (settable) 岗位名称
+									57 文本 岗位职责与要求
+									58 文本输入区 (settable) 岗位职责与要求, Placeholder: 工作职责、必备技能、适合的专业、面试考察重点…
+									59 文本 支持 Markdown 文本，内容对学生可见。历史面试会保留面试时的岗位要求。
+									60 按钮 保存岗位
+									61 link 取消, Value: 211.154.20.65:20018/company/positions
+								62 文本 嘉善技师学院 · AI 智聘平台
+								63 文本 慢慢积累，也慢慢发光。
+				64 标签组 标签页栏
+					65 弹出式按钮 搜索标签页
+					66 container
+						67 标签组
+							68 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								69 按钮 关闭标签页
+							70 标签 (selected, settable, boolean) 新增面试岗位 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 188 MB, Value: on
+								71 按钮 关闭标签页
+							72 滚动区
+					73 按钮 新建标签页
+	74 关闭按钮
+	75 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	76 最小化按钮
+77 menu bar
+	78 Edge
+	79 文件
+	80 编辑
+	81 查看
+	82 历史记录
+	83 收藏夹
+	84 个人资料
+	85 标签页
+	86 窗口
+	87 帮助
+
+The focused UI element is 38 HTML 内容 新增面试岗位 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company/positions/new

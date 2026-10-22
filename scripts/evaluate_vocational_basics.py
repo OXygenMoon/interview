@@ -5,6 +5,7 @@ from errors; the correct-answer case should score 80–90, with all answers acce
 """
 
 import contextlib
+import argparse
 from datetime import datetime
 import hashlib
 import io
@@ -25,7 +26,7 @@ def calibration_checks(case, report):
         'check': 'basic_answer_acceptance',
         'passed': [row['is_good'] for row in report['details_list']] == case['expected_is_good'],
     })
-    if case['case_id'] == 'correct_general_basics':
+    if all(case['expected_is_good']):
         scores = report['overall']['scores']
         checks.append({
             'check': 'assessed_basics_not_scored_low',
@@ -39,7 +40,12 @@ def main():
     load_dotenv(ROOT / '.env')
     from app.services import ai_agent as ai
     ai.client = ai.client.with_options(timeout=45, max_retries=0)
-    fixture_path = ROOT / 'docs/vocational-basic-cases-v8.json'
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--fixtures', type=Path, default=ROOT / 'docs/vocational-basic-cases-v8.json')
+    parser.add_argument('--output', type=Path, default=ROOT / 'docs/vocational-basic-results-v9.json')
+    parser.add_argument('--modes', nargs='+', choices=ai.STUDENT_MODES, default=ai.STUDENT_MODES)
+    args = parser.parse_args()
+    fixture_path = args.fixtures
     fixtures = json.loads(fixture_path.read_text())
     result = {
         'evaluated_at': datetime.now(ZoneInfo('Asia/Shanghai')).isoformat(),
@@ -54,8 +60,8 @@ def main():
                         'No business database reads or writes.'],
         'cases': [],
     }
-    output = ROOT / 'docs/vocational-basic-results-v8.json'
-    for difficulty in ai.STUDENT_MODES:
+    output = args.output
+    for difficulty in args.modes:
         for case in fixtures['cases']:
             row = {'case_id': case['case_id'], 'difficulty': difficulty, 'round_num': 1}
             try:

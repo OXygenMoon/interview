@@ -1,0 +1,3 @@
+The following is a diff from the previous accessibility tree for Window: "面试深度复盘 - 嘉善技师学院 AI 智聘平台" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~							99 标签 (selected, settable, boolean) 面试深度复盘 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 200 MB, Value: on
+The focused UI element is 103 HTML 内容 面试深度复盘 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/interview/summary/226

@@ -1,0 +1,128 @@
+Window: "组织架构管理 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 组织架构管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/organization, Secondary Actions: Raise
+	1 container 组织架构管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/organization
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/organization, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 组织架构管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/organization
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/admin/organization#main-content
+							41 container
+								42 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								43 container 主导航
+									44 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									45 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									46 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									47 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									48 开合三角标记 教学管理
+										49 文本 教学管理
+								50 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								51 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									52 文本 劳振煜
+							53 container
+								54 标题 🏫 组织架构与学生管理, Value: 2
+									55 文本 🏫 组织架构与学生管理
+								56 文本 创建系部、班级，并批量导入学生名单
+								57 link 下载模板, Value: 211.154.20.65:20018/api/admin/student/template
+								58 按钮 批量导入学生
+								59 文本 系部列表
+								60 按钮 + 新增
+								61 container
+									62 text 智能制造系 0个班
+									63 按钮 ✕
+								64 container
+									65 text 精密控制系 0个班
+									66 按钮 ✕
+								67 container
+									68 text 基础教育系 0个班
+									69 按钮 ✕
+								70 container
+									71 text 数字经济系 3个班
+									72 按钮 ✕
+								73 container
+									74 text 测试组 1个班
+									75 按钮 ✕
+								76 container
+									77 文本 当前管理
+									78 标题 数字经济系, Value: 3
+										79 文本 数字经济系
+									80 按钮 + 批量创建班级
+									81 container
+										82 文本 2222
+										83 按钮
+									84 container
+										85 文本 2223
+										86 按钮
+									87 container
+										88 文本 2534
+										89 按钮
+								90 container
+									91 标题 批量导入学生, Value: 3
+										92 文本 批量导入学生
+									93 文本 请上传填写好的 Excel 模板。若班级不存在，系统将自动在该系部下创建。
+									94 按钮 选择文件: 未选择文件
+									95 按钮 取消
+									96 按钮 开始导入
+								97 container
+									98 text 嘉善技师学院 · AI 智聘平台 慢慢积累，也慢慢发光。
+				99 标签组 标签页栏
+					100 弹出式按钮 搜索标签页
+					101 container
+						102 标签组
+							103 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								104 按钮 关闭标签页
+							105 标签 (selected, settable, boolean) 组织架构管理 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 193 MB, Value: on
+								106 按钮 关闭标签页
+							107 滚动区
+					108 按钮 新建标签页
+	109 关闭按钮
+	110 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	111 最小化按钮
+112 menu bar
+	113 Edge
+	114 文件
+	115 编辑
+	116 查看
+	117 历史记录
+	118 收藏夹
+	119 个人资料
+	120 标签页
+	121 窗口
+	122 帮助
+
+The focused UI element is 53 container

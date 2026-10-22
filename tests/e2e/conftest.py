@@ -52,6 +52,7 @@ def live_server(tmp_path_factory):
         'APP_HOST': '127.0.0.1',
         'APP_PORT': str(port),
         'DATABASE_URL': f'sqlite:///{database_path}',
+        'LEARNING_VIDEO_UPLOAD_DIR': str(runtime_dir / 'learning-videos'),
         'SECRET_KEY': 'e2e-only-secret-key',
         'LLM_API_KEY': 'e2e-placeholder-key',
         'REPORT_QUEUE_MODE': 'thread',

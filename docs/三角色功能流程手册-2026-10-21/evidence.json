@@ -1,0 +1,170 @@
+[
+  {
+    "name": "03-student-home"
+  },
+  {
+    "name": "04-student-create"
+  },
+  {
+    "name": "05-student-job-config"
+  },
+  {
+    "name": "06-student-learning"
+  },
+  {
+    "name": "07-student-course"
+  },
+  {
+    "name": "08-student-quiz"
+  },
+  {
+    "name": "09-student-radar"
+  },
+  {
+    "name": "10-student-growth"
+  },
+  {
+    "name": "11-student-history"
+  },
+  {
+    "name": "12-student-history-list"
+  },
+  {
+    "name": "13-student-report"
+  },
+  {
+    "name": "14-student-report-review"
+  },
+  {
+    "name": "15-student-resumes"
+  },
+  {
+    "name": "16-student-resume-editor"
+  },
+  {
+    "name": "17-student-profile"
+  },
+  {
+    "name": "18-student-leaderboard"
+  },
+  {
+    "name": "19-student-random"
+  },
+  {
+    "name": "20-account-menu"
+  },
+  {
+    "name": "21-account-links"
+  },
+  {
+    "name": "22-change-password"
+  },
+  {
+    "name": "23-admin-dashboard"
+  },
+  {
+    "name": "24-admin-menu"
+  },
+  {
+    "name": "25-admin-students"
+  },
+  {
+    "name": "26-admin-student-detail"
+  },
+  {
+    "name": "27-admin-interviews"
+  },
+  {
+    "name": "28-admin-capability"
+  },
+  {
+    "name": "29-admin-compare"
+  },
+  {
+    "name": "30-admin-resumes"
+  },
+  {
+    "name": "31-admin-learning"
+  },
+  {
+    "name": "32-admin-course-category"
+  },
+  {
+    "name": "33-admin-course-form"
+  },
+  {
+    "name": "34-admin-organization"
+  },
+  {
+    "name": "34-admin-organization"
+  },
+  {
+    "name": "35-admin-department"
+  },
+  {
+    "name": "36-admin-student-import"
+  },
+  {
+    "name": "37-admin-partnerships"
+  },
+  {
+    "name": "38-admin-company"
+  },
+  {
+    "name": "39-admin-jobs"
+  },
+  {
+    "name": "40-admin-job-form"
+  },
+  {
+    "name": "41-admin-question-bank"
+  },
+  {
+    "name": "42-admin-settings"
+  },
+  {
+    "name": "43-admin-test-accounts"
+  },
+  {
+    "name": "44-company-overview"
+  },
+  {
+    "name": "45-company-positions"
+  },
+  {
+    "name": "46-company-position-new"
+  },
+  {
+    "name": "47-company-position-edit"
+  },
+  {
+    "name": "48-company-recommendations"
+  },
+  {
+    "name": "49-company-interviews"
+  },
+  {
+    "name": "50-company-report"
+  },
+  {
+    "name": "51-company-conversation"
+  },
+  {
+    "name": "52-company-resume"
+  },
+  {
+    "name": "53-student-conversation"
+  },
+  {
+    "name": "54-student-resume-new"
+  },
+  {
+    "name": "55-student-base-file"
+  },
+  {
+    "name": "56-theme"
+  },
+  {
+    "name": "57-logout"
+  }
+]

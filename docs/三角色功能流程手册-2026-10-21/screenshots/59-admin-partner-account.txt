@@ -1,0 +1,122 @@
+Window: "校企合作管理 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 校企合作管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/partnerships, Secondary Actions: Raise
+	1 container 校企合作管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/partnerships
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/partnerships, Placeholder: 搜索或输入 Web 地址
+						11 按钮 管理密码
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 校企合作管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/partnerships
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/admin/partnerships#main-content
+							41 container
+								42 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								43 container 主导航
+									44 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									45 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									46 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									47 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									48 开合三角标记 教学管理
+										49 文本 教学管理
+								50 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								51 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									52 文本 劳振煜
+							53 container
+								54 文本 管理员 / 校企合作
+								55 标题 校企合作管理, Value: 1
+									56 文本 校企合作管理
+								57 文本 为合作公司开通账号、维护联系人与登录状态。每个公司账号只可访问所属公司的岗位和面试记录。
+								58 link 管理公司资料与岗位库 →, Value: 211.154.20.65:20018/admin/company
+								59 标题 开通公司账号, Value: 2
+									60 文本 开通公司账号
+								61 container
+									62 文本 所属公司
+									63 弹出式按钮 所属公司, Value: 新增合作公司
+										64 (selected) 新增合作公司
+									65 文本 可为已有公司开通多个联系人账号。
+									66 文本 新公司名称
+									67 文本栏 (settable) 新公司名称
+									68 文本 公司介绍
+									69 文本输入区 (settable) 公司介绍
+									70 文本 登录账号
+									71 文本栏 (settable) 登录账号
+									72 文本 联系人
+									73 文本栏 (settable) 联系人
+									74 文本 初始密码
+									75 安全文本栏 (settable) 初始密码
+									76 文本 至少 10 个字符，首次登录需修改密码。
+									77 按钮 开通公司账号
+								78 标题 公司账号 · 1, Value: 2
+									79 文本 公司账号 · 1
+								80 container
+									81 标题 浙江创智科技, Value: 2
+										82 文本 浙江创智科技
+									83 text @zjczkj · 宋经理 启用中 · 3 个岗位
+									84 按钮 停用账号
+									85 文本 联系人
+									86 文本栏 (settable) 联系人, Value: 宋经理
+									87 按钮 更新联系人
+									88 文本 新临时密码
+									89 安全文本栏 (settable) 新临时密码
+									90 按钮 重置密码
+								91 文本 嘉善技师学院 · AI 智聘平台
+								92 文本 慢慢积累，也慢慢发光。
+				93 标签组 标签页栏
+					94 弹出式按钮 搜索标签页
+					95 container
+						96 标签组
+							97 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								98 按钮 关闭标签页
+							99 标签 (selected, settable, boolean) 校企合作管理 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 274 MB, Value: on
+								100 按钮 关闭标签页
+							101 滚动区
+					102 按钮 新建标签页
+	103 关闭按钮
+	104 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	105 最小化按钮
+106 menu bar
+	107 Edge
+	108 文件
+	109 编辑
+	110 查看
+	111 历史记录
+	112 收藏夹
+	113 个人资料
+	114 标签页
+	115 窗口
+	116 帮助
+
+The focused UI element is 39 HTML 内容 校企合作管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/partnerships

@@ -1,0 +1,153 @@
+Window: "测试账号 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 测试账号 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/test-accounts, Secondary Actions: Raise
+	1 container 测试账号 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/test-accounts
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/test-accounts, Placeholder: 搜索或输入 Web 地址
+						11 按钮 将此页面添加到收藏夹(⌘D)
+					12 container
+						13 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						14 弹出式按钮 脚本猫
+有权访问此网站
+						15 弹出式按钮 扩展
+					16 按钮 收藏夹
+					17 按钮 学校 个人资料
+					18 按钮 设置及其他
+				19 工具栏 收藏夹栏
+					20 container 资源下载
+					21 container 摄影
+					22 container 设计
+					23 container 编程
+					24 container 教师平台
+					25 container 出版社申请样书
+					26 container 大语言模型
+					27 container 校内开发
+					28 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					29 container NAS
+					30 container 幼儿全过程动态分析系统
+					31 container 中文数据库
+					32 container 独立游戏开发 | indienova 独立游戏
+					33 container 嘉兴市专业技术人员继续教育平台
+					34 container My Game Cards | SEAGM
+					35 弹出式按钮 包含隐藏的收藏夹的菜单
+				36 container
+					37 滚动区
+						38 HTML 内容 测试账号 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/test-accounts
+							39 link 跳转到主要内容, Value: 211.154.20.65:20018/test-accounts#main-content
+							40 container
+								41 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								42 container 主导航
+									43 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									44 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									45 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									46 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									47 开合三角标记 教学管理
+										48 文本 教学管理
+								49 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								50 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									51 文本 劳振煜
+							52 container
+								53 container
+									54 文本 测试组 / 测试班
+									55 标题 选一个账号，开始体验。, Value: 1
+										56 文本 选一个账号，开始体验。
+									57 text 10 个测试账号，共享一个班级。完成或放弃面试后，等待 5 分钟即可再次练习。 10 个账号可用
+								58 文本 账号状态每 5 秒自动更新。使用中的账号无法重复登录，退出登录后立即可用。
+								59 文本 关闭所有平台页面或网络断开后，约 3 分钟自动释放账号；再次访问需要重新选择。测试资料与记录会保留在对应账号中。
+								60 文本 当前登录：劳振煜。切换账号前，请通过右上角账号菜单退出登录。
+								61 文本 账号状态已更新
+								62 container
+									63 标题 测试学员 01, Value: 2
+										64 文本 测试学员 01
+									65 文本 interview_test01
+									66 文本 未登录，可以使用
+									67 按钮 (disabled) 使用此账号 →
+								68 container
+									69 标题 测试学员 02, Value: 2
+										70 文本 测试学员 02
+									71 文本 interview_test02
+									72 文本 未登录，可以使用
+									73 按钮 (disabled) 使用此账号 →
+								74 container
+									75 标题 测试学员 03, Value: 2
+										76 文本 测试学员 03
+									77 文本 interview_test03
+									78 文本 未登录，可以使用
+									79 按钮 (disabled) 使用此账号 →
+								80 container
+									81 标题 测试学员 04, Value: 2
+										82 文本 测试学员 04
+									83 文本 interview_test04
+									84 文本 未登录，可以使用
+									85 按钮 (disabled) 使用此账号 →
+								86 container
+									87 标题 测试学员 05, Value: 2
+										88 文本 测试学员 05
+									89 文本 interview_test05
+									90 文本 未登录，可以使用
+									91 按钮 (disabled) 使用此账号 →
+								92 container
+									93 标题 测试学员 06, Value: 2
+										94 文本 测试学员 06
+									95 文本 interview_test06
+									96 文本 未登录，可以使用
+									97 按钮 (disabled) 使用此账号 →
+								98 container
+									99 标题 测试学员 07, Value: 2
+										100 文本 测试学员 07
+									101 文本 interview_test07
+									102 文本 未登录，可以使用
+									103 按钮 (disabled) 使用此账号 →
+								104 container
+									105 标题 测试学员 08, Value: 2
+										106 文本 测试学员 08
+									107 文本 interview_test08
+									108 文本 未登录，可以使用
+									109 按钮 (disabled) 使用此账号 →
+								110 container
+									111 标题 测试学员 09, Value: 2
+										112 文本 测试学员 09
+									113 文本 interview_test09
+									114 文本 未登录，可以使用
+									115 按钮 (disabled) 使用此账号 →
+								116 container
+									117 标题 测试学员 10, Value: 2
+										118 文本 测试学员 10
+									119 文本 interview_test10
+									120 文本 未登录，可以使用
+									121 按钮 (disabled) 使用此账号 →
+								122 文本 嘉善技师学院 · AI 智聘平台
+								123 文本 慢慢积累，也慢慢发光。
+				124 标签组 标签页栏
+					125 弹出式按钮 搜索标签页
+					126 container
+						127 标签组
+							128 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								129 按钮 关闭标签页
+							130 标签 (selected, settable, boolean) 测试账号 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 175 MB, Value: on
+								131 按钮 关闭标签页
+							132 滚动区
+					133 按钮 新建标签页
+	134 关闭按钮
+	135 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	136 最小化按钮
+137 menu bar
+	138 Edge
+	139 文件
+	140 编辑
+	141 查看
+	142 历史记录
+	143 收藏夹
+	144 个人资料
+	145 标签页
+	146 窗口
+	147 帮助
+
+The focused UI element is 38 HTML 内容 测试账号 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/test-accounts

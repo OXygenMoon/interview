@@ -1,0 +1,402 @@
+[
+  {
+    "code": "G01",
+    "title": "登录与识别工作台",
+    "page": 6,
+    "source": "57-logout.png",
+    "figure": "G01.png",
+    "status": "三种身份均已实际登录"
+  },
+  {
+    "code": "S01",
+    "title": "面试大厅与练习概况",
+    "page": 7,
+    "source": "03-student-home.png",
+    "figure": "S01.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S02",
+    "title": "配置公司岗位与模拟面试",
+    "page": 8,
+    "source": "05-student-job-config.png",
+    "figure": "S02.png",
+    "status": "配置已核验  未启动新面试"
+  },
+  {
+    "code": "S03",
+    "title": "随机问题单题快练",
+    "page": 9,
+    "source": "19-student-random.png",
+    "figure": "S03.png",
+    "status": "页面及输入入口已核验  分析未提交"
+  },
+  {
+    "code": "S04",
+    "title": "浏览学习资料与进度",
+    "page": 10,
+    "source": "06-student-learning.png",
+    "figure": "S04.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S05",
+    "title": "阅读课程与切换章节",
+    "page": 11,
+    "source": "07-student-course.png",
+    "figure": "S05.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S06",
+    "title": "完成随堂测验",
+    "page": 12,
+    "source": "08-student-quiz.png",
+    "figure": "S06.png",
+    "status": "题目与提交入口已核验  未交卷"
+  },
+  {
+    "code": "S07",
+    "title": "查看五维能力与成长轨迹",
+    "page": 13,
+    "source": "09-student-radar.png",
+    "figure": "S07.png",
+    "status": "能力图与轨迹切换已核验  诊断未生成"
+  },
+  {
+    "code": "S08",
+    "title": "查找练习记录与打开报告",
+    "page": 14,
+    "source": "12-student-history-list.png",
+    "figure": "S08.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S09",
+    "title": "阅读面试总评与画面复盘",
+    "page": 15,
+    "source": "13-student-report.png",
+    "figure": "S09.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S10",
+    "title": "逐句复盘与参考回答",
+    "page": 16,
+    "source": "14-student-report-review.png",
+    "figure": "S10.png",
+    "status": "历史复盘已核验  新评估未生成"
+  },
+  {
+    "code": "S11",
+    "title": "回看已结束面试对话",
+    "page": 17,
+    "source": "53-student-conversation.png",
+    "figure": "S11.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S12",
+    "title": "管理个人简历库",
+    "page": 18,
+    "source": "15-student-resumes.png",
+    "figure": "S12.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "S13",
+    "title": "新建简历并导入基础档案",
+    "page": 19,
+    "source": "54-student-resume-new.png",
+    "figure": "S13.png",
+    "status": "新建表单已核验  未创建"
+  },
+  {
+    "code": "S14",
+    "title": "编辑简历与导出 PDF",
+    "page": 20,
+    "source": "16-student-resume-editor.png",
+    "figure": "S14.png",
+    "status": "编辑器及导出入口已核验  未改写或导出"
+  },
+  {
+    "code": "S15",
+    "title": "维护个人基础资料",
+    "page": 21,
+    "source": "55-student-base-file.png",
+    "figure": "S15.png",
+    "status": "两处入口已核验  字段内容未更改"
+  },
+  {
+    "code": "S16",
+    "title": "查看班级风云榜",
+    "page": 22,
+    "source": "18-student-leaderboard.png",
+    "figure": "S16.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A01",
+    "title": "教学概览与最新面试",
+    "page": 23,
+    "source": "23-admin-dashboard.png",
+    "figure": "A01.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A02",
+    "title": "筛选学生名册与账号维护",
+    "page": 24,
+    "source": "25-admin-students.png",
+    "figure": "A02.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A03",
+    "title": "查看学生个体学情",
+    "page": 25,
+    "source": "26-admin-student-detail.png",
+    "figure": "A03.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A04",
+    "title": "管理面试记录流水",
+    "page": 26,
+    "source": "27-admin-interviews.png",
+    "figure": "A04.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A05",
+    "title": "分析群体能力与偏差预警",
+    "page": 27,
+    "source": "28-admin-capability.png",
+    "figure": "A05.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A06",
+    "title": "比较班级表现",
+    "page": 28,
+    "source": "29-admin-compare.png",
+    "figure": "A06.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A07",
+    "title": "检索学生简历",
+    "page": 29,
+    "source": "30-admin-resumes.png",
+    "figure": "A07.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A08",
+    "title": "预览与打印学生简历",
+    "page": 30,
+    "source": "60-admin-resume-preview.png",
+    "figure": "A08.png",
+    "status": "只读预览已核验  未打印"
+  },
+  {
+    "code": "A09",
+    "title": "管理课程分类与内容清单",
+    "page": 31,
+    "source": "32-admin-course-category.png",
+    "figure": "A09.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A10",
+    "title": "新增学习文章或测验",
+    "page": 32,
+    "source": "33-admin-course-form.png",
+    "figure": "A10.png",
+    "status": "新增表单已核验  未保存"
+  },
+  {
+    "code": "A11",
+    "title": "维护系部与班级",
+    "page": 33,
+    "source": "35-admin-department.png",
+    "figure": "A11.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A12",
+    "title": "批量导入学生名单",
+    "page": 34,
+    "source": "36-admin-student-import.png",
+    "figure": "A12.png",
+    "status": "导入表单已核验  未上传"
+  },
+  {
+    "code": "A13",
+    "title": "开通校企合作账号",
+    "page": 35,
+    "source": "37-admin-partnerships.png",
+    "figure": "A13.png",
+    "status": "开通表单已核验  未开通"
+  },
+  {
+    "code": "A14",
+    "title": "维护企业联系人与登录状态",
+    "page": 36,
+    "source": "59-admin-partner-account.png",
+    "figure": "A14.png",
+    "status": "维护入口已核验  未变更"
+  },
+  {
+    "code": "A15",
+    "title": "管理企业资料与岗位库",
+    "page": 37,
+    "source": "39-admin-jobs.png",
+    "figure": "A15.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A16",
+    "title": "新增岗位与维护面试要求",
+    "page": 38,
+    "source": "40-admin-job-form.png",
+    "figure": "A16.png",
+    "status": "岗位表单已核验  未保存"
+  },
+  {
+    "code": "A17",
+    "title": "配置随机面试问题题库",
+    "page": 39,
+    "source": "41-admin-question-bank.png",
+    "figure": "A17.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A18",
+    "title": "配置语音视频功能开关",
+    "page": 40,
+    "source": "42-admin-settings.png",
+    "figure": "A18.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A19",
+    "title": "配置存储保留与练习冷却",
+    "page": 41,
+    "source": "58-admin-settings-bottom.png",
+    "figure": "A19.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "A20",
+    "title": "查看测试账号使用状态",
+    "page": 42,
+    "source": "43-admin-test-accounts.png",
+    "figure": "A20.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E01",
+    "title": "查看公司招聘概览",
+    "page": 43,
+    "source": "44-company-overview.png",
+    "figure": "E01.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E02",
+    "title": "浏览岗位与进入关联面试",
+    "page": 44,
+    "source": "45-company-positions.png",
+    "figure": "E02.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E03",
+    "title": "新增本公司面试岗位",
+    "page": 45,
+    "source": "46-company-position-new.png",
+    "figure": "E03.png",
+    "status": "新增表单已核验  未发布"
+  },
+  {
+    "code": "E04",
+    "title": "编辑已有岗位",
+    "page": 46,
+    "source": "47-company-position-edit.png",
+    "figure": "E04.png",
+    "status": "编辑表单已核验  未保存"
+  },
+  {
+    "code": "E05",
+    "title": "查看岗位学生推荐及依据",
+    "page": 47,
+    "source": "48-company-recommendations.png",
+    "figure": "E05.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E06",
+    "title": "按岗位筛选学生面试记录",
+    "page": 48,
+    "source": "49-company-interviews.png",
+    "figure": "E06.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E07",
+    "title": "阅读面试报告与仪态证据",
+    "page": 49,
+    "source": "50-company-report.png",
+    "figure": "E07.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E08",
+    "title": "查看学生原始对话与画面",
+    "page": 50,
+    "source": "51-company-conversation.png",
+    "figure": "E08.png",
+    "status": "页面已核验"
+  },
+  {
+    "code": "E09",
+    "title": "查看面试时递交的简历",
+    "page": 51,
+    "source": "52-company-resume.png",
+    "figure": "E09.png",
+    "status": "递交简历页已核验  未打印"
+  },
+  {
+    "code": "G02",
+    "title": "选择页面主题",
+    "page": 52,
+    "source": "56-theme.png",
+    "figure": "G02.png",
+    "status": "主题选项已核验  未变更"
+  },
+  {
+    "code": "G03",
+    "title": "自行修改登录密码",
+    "page": 53,
+    "source": "22-change-password.png",
+    "figure": "G03.png",
+    "status": "入口及空表单已核验  未改密"
+  },
+  {
+    "code": "G04",
+    "title": "查看 WikiBook 账号关联状态",
+    "page": 54,
+    "source": "21-account-links.png",
+    "figure": "G04.png",
+    "status": "当前未配置  暂不可完成关联"
+  },
+  {
+    "code": "G05",
+    "title": "退出并切换账号",
+    "page": 55,
+    "source": "20-account-menu.png",
+    "figure": "G05.png",
+    "status": "登录切换与退出已实际核验"
+  }
+]

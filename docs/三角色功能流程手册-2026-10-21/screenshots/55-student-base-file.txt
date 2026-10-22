@@ -1,0 +1,89 @@
+Window: "智能简历中心 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 智能简历中心 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/resume_dashboard, Secondary Actions: Raise
+	1 container 智能简历中心 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/resume_dashboard
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/resume_dashboard, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 智能简历中心 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/resume_dashboard
+							40 container
+								41 标题 维护基础档案, Value: 3
+									42 文本 维护基础档案
+								43 按钮 ✕
+								44 图像
+								45 文本 此处维护的信息可作为"母版"，在新建简历时一键导入。
+								46 文本 姓名
+								47 文本栏 (settable) 刘海
+								48 文本 意向岗位
+								49 文本栏 (settable) 例如：产品经理
+								50 文本 电话
+								51 文本栏 (settable)
+								52 文本 邮箱
+								53 邮箱 (settable) 222308@example.com
+								54 文本 所在城市
+								55 文本栏 (settable)
+								56 文本 自我评价
+								57 文本输入区 (settable) 简要介绍您的核心优势...
+								58 按钮 取消
+								59 按钮 保存档案
+				60 标签组 标签页栏
+					61 弹出式按钮 搜索标签页
+					62 container
+						63 标签组
+							64 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								65 按钮 关闭标签页
+							66 标签 (selected, settable, boolean) 智能简历中心 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 205 MB, Value: on
+								67 按钮 关闭标签页
+							68 滚动区
+					69 按钮 新建标签页
+	70 关闭按钮
+	71 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	72 最小化按钮
+73 menu bar
+	74 Edge
+	75 文件
+	76 编辑
+	77 查看
+	78 历史记录
+	79 收藏夹
+	80 个人资料
+	81 标签页
+	82 窗口
+	83 帮助
+
+The focused UI element is 43 按钮 ✕

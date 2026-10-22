@@ -1,0 +1,122 @@
+Window: "系统设置 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 系统设置 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/settings, Secondary Actions: Raise
+	1 container 系统设置 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/settings
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/settings, Placeholder: 搜索或输入 Web 地址
+						11 按钮 将此页面添加到收藏夹(⌘D)
+					12 container
+						13 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						14 弹出式按钮 脚本猫
+有权访问此网站
+						15 弹出式按钮 扩展
+					16 按钮 收藏夹
+					17 按钮 学校 个人资料
+					18 按钮 设置及其他
+				19 工具栏 收藏夹栏
+					20 container 资源下载
+					21 container 摄影
+					22 container 设计
+					23 container 编程
+					24 container 教师平台
+					25 container 出版社申请样书
+					26 container 大语言模型
+					27 container 校内开发
+					28 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					29 container NAS
+					30 container 幼儿全过程动态分析系统
+					31 container 中文数据库
+					32 container 独立游戏开发 | indienova 独立游戏
+					33 container 嘉兴市专业技术人员继续教育平台
+					34 container My Game Cards | SEAGM
+					35 弹出式按钮 包含隐藏的收藏夹的菜单
+				36 container
+					37 滚动区
+						38 HTML 内容 系统设置 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/settings
+							39 link 跳转到主要内容, Value: 211.154.20.65:20018/admin/settings#main-content
+							40 container
+								41 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								42 container 主导航
+									43 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									44 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									45 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									46 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									47 开合三角标记 教学管理
+										48 文本 教学管理
+								49 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								50 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									51 文本 劳振煜
+							52 container
+								53 标题 系统全局设置, Value: 1
+									54 文本 系统全局设置
+								55 文本 管理系统的全局功能开关与参数
+								56 标题 AI 面试官配置, Value: 2
+									57 图像
+									58 文本 AI 面试官配置
+								59 container
+									60 复选框 启用文字对话语音播报 (TTS) 开启后，文字对话中的面试官回复将转换为语音播放。, Value: 1
+									61 文本 启用文字对话语音播报 (TTS)
+									62 文本 开启后，文字对话中的面试官回复将转换为语音播放。
+									63 复选框 启用实时语音交互 开启后，学生可连续与面试官语音对话，并直接开口打断回复。 关闭后隐藏语音交互入口，同时停止正在进行的实时语音会话；学生仍可输入文字回答。, Value: 1
+									64 文本 启用实时语音交互
+									65 container
+										66 text 开启后，学生可连续与面试官语音对话，并直接开口打断回复。 关闭后隐藏语音交互入口，同时停止正在进行的实时语音会话；学生仍可输入文字回答。
+									67 复选框 启用视频面试 (摄像头 & AI 视觉分析) 开启后，学生端将显示摄像头预览窗口；仅在学生提交回答时分析一张当前帧。 关闭后，学生端将隐藏视频相关界面。, Value: 1
+									68 文本 启用视频面试 (摄像头 & AI 视觉分析)
+									69 container
+										70 text 开启后，学生端将显示摄像头预览窗口；仅在学生提交回答时分析一张当前帧。 关闭后，学生端将隐藏视频相关界面。
+									71 标题 存储保留策略, Value: 3
+										72 文本 存储保留策略
+									73 文本 TTS 音频保留（天）
+									74 步进器 (settable, float) 30
+									75 text 到期后删除音频并清除消息中的播放链接；0 表示启动时清理。 临时文件保留（小时）
+									76 步进器 (settable, float) 24
+									77 文本 异常中断遗留的转写或简历临时文件会自动清理。
+									78 标题 面试节奏控制（冷却系统）, Value: 3
+										79 文本 面试节奏控制（冷却系统）
+									80 文本 会话保留时长（分钟）
+									81 步进器 (settable, float) 10
+									82 text 进行中的面试无活动多久后自动判为放弃（expired），默认 10。 放弃罚时（分钟）
+									83 步进器 (settable, float) 5
+									84 text 中途放弃后再次开始面试的冷却时长，默认 10。 完成冷却（分钟）
+									85 步进器 (settable, float) 1
+									86 文本 完成一次面试后再次开始的冷却，默认 30，鼓励先复盘。
+									87 复选框 强制复盘后才能再面 勾选后，完成面试须先查看上次报告才能开始下一次。, Value: 1
+									88 文本 强制复盘后才能再面
+									89 文本 勾选后，完成面试须先查看上次报告才能开始下一次。
+									90 按钮 保存设置
+								91 文本 嘉善技师学院 · AI 智聘平台
+								92 文本 慢慢积累，也慢慢发光。
+				93 标签组 标签页栏
+					94 弹出式按钮 搜索标签页
+					95 container
+						96 标签组
+							97 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								98 按钮 关闭标签页
+							99 标签 (selected, settable, boolean) 系统设置 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 269 MB, Value: on
+								100 按钮 关闭标签页
+							101 滚动区
+					102 按钮 新建标签页
+	103 关闭按钮
+	104 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	105 最小化按钮
+106 menu bar
+	107 Edge
+	108 文件
+	109 编辑
+	110 查看
+	111 历史记录
+	112 收藏夹
+	113 个人资料
+	114 标签页
+	115 窗口
+	116 帮助
+
+The focused UI element is 38 HTML 内容 系统设置 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/settings

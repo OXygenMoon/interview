@@ -1,0 +1,142 @@
+Window: "企业岗位管理 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 企业岗位管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/company, Secondary Actions: Raise
+	1 container 企业岗位管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/company
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/company, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 企业岗位管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/company
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/admin/company#main-content
+							41 container
+								42 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								43 container 主导航
+									44 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									45 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									46 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									47 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									48 开合三角标记 教学管理
+										49 文本 教学管理
+								50 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								51 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									52 文本 劳振煜
+							53 container
+								54 标题 🏢 企业与岗位库管理, Value: 2
+									55 文本 🏢 企业与岗位库管理
+								56 文本 配置公司信息及其招聘岗位（含面试提示词）
+								57 按钮 + 新增公司
+								58 文本 公司列表
+								59 container
+									60 text AI漫剧 1个岗位
+									61 按钮 ✎
+									62 按钮 ✕
+								63 container
+									64 text 杭州图灵云计算有限公司 4个岗位
+									65 按钮 ✎
+									66 按钮 ✕
+								67 container
+									68 text 浙江创智科技 3个岗位
+									69 按钮 ✎
+									70 按钮 ✕
+								71 container
+									72 text 仟玖科技 1个岗位
+									73 按钮 ✎
+									74 按钮 ✕
+								75 container
+									76 text 嘉兴聚泽网络科技 1个岗位
+									77 按钮 ✎
+									78 按钮 ✕
+								79 container
+									80 text 日善 2个岗位
+									81 按钮 ✎
+									82 按钮 ✕
+								83 container
+									84 text 嘉善富鼎电子科技 1个岗位
+									85 按钮 ✎
+									86 按钮 ✕
+								87 container
+									88 text 通用服务集团 11个岗位
+									89 按钮 ✎
+									90 按钮 ✕
+								91 文本 请选择公司进行管理
+								92 标题 新增公司, Value: 3
+									93 文本 新增公司
+								94 container
+									95 文本 公司名称
+									96 文本栏 (settable)
+									97 文本 公司介绍 (Markdown)
+									98 文本输入区 (settable) 支持 Markdown 格式
+								99 按钮 取消
+								100 按钮 保存
+								101 标题 新增岗位, Value: 3
+									102 文本 新增岗位
+								103 container
+									104 文本 岗位名称
+									105 文本栏 (settable)
+									106 文本 岗位要求与提示词 (Markdown)
+									107 文本输入区 (settable) 此内容将作为 AI 面试官的背景资料
+									108 文本 此内容对学生可见，同时会注入到 AI Prompt 中。
+								109 按钮 取消
+								110 按钮 保存
+								111 文本 嘉善技师学院 · AI 智聘平台
+								112 文本 慢慢积累，也慢慢发光。
+				113 标签组 标签页栏
+					114 弹出式按钮 搜索标签页
+					115 container
+						116 标签组
+							117 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								118 按钮 关闭标签页
+							119 标签 (selected, settable, boolean) 企业岗位管理 - 嘉善技师学院 AI 智聘平台, Value: on
+								120 按钮 关闭标签页
+							121 滚动区
+					122 按钮 新建标签页
+	123 关闭按钮
+	124 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	125 最小化按钮
+126 menu bar
+	127 Edge
+	128 文件
+	129 编辑
+	130 查看
+	131 历史记录
+	132 收藏夹
+	133 个人资料
+	134 标签页
+	135 窗口
+	136 帮助
+
+The focused UI element is 39 HTML 内容 企业岗位管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/company

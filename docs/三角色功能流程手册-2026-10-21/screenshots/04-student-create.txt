@@ -1,0 +1,2 @@
+There has been no change in the accessibility tree for Window: "面试大厅 - 嘉善技师学院 AI 智聘平台".
+The focused UI element is 107 按钮 关闭面试配置

@@ -1,0 +1,147 @@
+{
+  "evaluated_at": "2026-10-09T09:35:52.301614+08:00",
+  "sample_type": "Interview 225's actual questions and answers read from the user's report. Identifying details in the introduction are redacted; all other answer wording is preserved. Not a new live interview.",
+  "fixtures_sha256": "dff2c0fbdce047baf98aa3bd0de27b6ca81fa1c4e08f4715fa1e40b9ea8f6baa",
+  "prompt_sha256": "8b9ab84bebc8c3487e1eca846ebf274f2b03a72399bee85a6383ea7c9f9a2c95",
+  "chat_prompt_version": "interview-chat-v8-vocational-basics",
+  "report_prompt_version": "interview-report-v9-question-evidence",
+  "report_model": "deepseek-flash",
+  "limitations": [
+    "Reconstructed answers, not an original student transcript.",
+    "Single replay per case and mode; scores may vary on subsequent calls.",
+    "No business database reads or writes."
+  ],
+  "cases": [
+    {
+      "case_id": "interview_225_actual_answers",
+      "difficulty": "新手模式",
+      "round_num": 1,
+      "status": "evaluated",
+      "report": {
+        "overall": {
+          "scores": {
+            "专业技能": 88,
+            "逻辑思维": 88,
+            "语言表达": 88,
+            "抗压能力": 88,
+            "礼仪态度": 91
+          },
+          "evaluated_dimensions": [
+            "专业技能",
+            "逻辑思维",
+            "语言表达",
+            "抗压能力",
+            "礼仪态度"
+          ],
+          "total_score": 88,
+          "comment": "本分数为新手模式下已考察范围的入门练习得分。本轮为新手模式初面练习，已考察岗位基本职责、求职动机、小经历、逻辑顺序、抗压应对和礼貌沟通。你正确说出售前技术支持需要理解产品、了解客户并制定方案，任务步骤清晰，遇到时间紧张能求助同学和老师，礼貌确认资料也表达自然。五个维度均达到基础正确水平，整体练习得分约89分。下一步可以练习用一两句话补充一个课堂或实训中的具体小例子，让回答更有画面感。",
+          "question_scores": [
+            {
+              "question_index": 1,
+              "scores": {
+                "语言表达": 88,
+                "礼仪态度": 90
+              },
+              "reason": "自我介绍回应了个人背景、专业和求职方向，表达清楚、态度礼貌；未要求具体成果或实训故事，不扣分。"
+            },
+            {
+              "question_index": 2,
+              "scores": {
+                "专业技能": 88
+              },
+              "reason": "正确说出理解产品功能与性能、了解客户需要、制定方案，符合售前技术支持岗位的基础职责，达到新手模式基础正确要求。"
+            },
+            {
+              "question_index": 3,
+              "scores": {
+                "逻辑思维": 88
+              },
+              "reason": "给出明确目标—分解步骤—逐步完成—反思总结的合理顺序，满足题目两个简单步骤的要求，逻辑连贯。"
+            },
+            {
+              "question_index": 4,
+              "scores": {
+                "抗压能力": 88
+              },
+              "reason": "面对实训截止时间压力，提出请同学帮助收尾并向老师说明申请延期，有实际应对和求助行为，符合入门应对要求。"
+            },
+            {
+              "question_index": 5,
+              "scores": {
+                "语言表达": 88
+              },
+              "reason": "用一两句话向不了解岗位的人说明工作内容，意思清楚、直接回应问题，达到基础表达要求。"
+            },
+            {
+              "question_index": 6,
+              "scores": {
+                "礼仪态度": 92
+              },
+              "reason": "用礼貌确认的句式向同学询问资料中不清楚的地方，体现基本沟通和礼貌态度，具体可行。"
+            }
+          ]
+        },
+        "details_list": [
+          {
+            "suggestion": "介绍了学校、专业和求职方向，表达清楚礼貌，符合简单自我介绍要求。下一步可练习把“两项核心能力”各配一个课堂或实训中的小例子，让介绍更有画面感。",
+            "reference": "示例思路：面试官好，我是XX学校网络与信息安全专业的学生，平时学过网络基础、客户沟通等课程。我申请售前技术支持，是因为我喜欢把产品讲清楚、帮客户解决问题。希望能有机会在贵公司学习和锻炼。",
+            "is_good": true,
+            "message_id": 2
+          },
+          {
+            "suggestion": "正确说出理解产品、了解客户需要、制定方案，方向准确，达到基础要求。下一步可以练习用一句自己的话举一个课堂或实训中接触过的产品例子，让说明更具体。",
+            "reference": "示例思路：售前技术支持主要是了解客户需要什么，然后把公司产品的功能和优点讲给客户听，帮客户想一个合适的方案。比如实训里给同学介绍一款软件时，先问清楚他们想解决什么问题，再说明这个软件能怎么帮上忙。",
+            "is_good": true,
+            "message_id": 4
+          },
+          {
+            "suggestion": "给出明确目标、分解步骤、逐步完成、反思总结的合理顺序，逻辑清楚，满足题目要求。下一步可以练习把其中一步再拆细一点，比如“分解步骤”时先列出要做的几件事。",
+            "reference": "示例思路：先明确任务要做什么、做到什么程度，再把任务拆成几个小步骤，按顺序一步步完成，最后检查一遍并总结哪里可以做得更好。",
+            "is_good": true,
+            "message_id": 6
+          },
+          {
+            "suggestion": "提出请同学帮助收尾并向老师说明申请延期，有实际求助和应对，符合基础要求。下一步可以练习把“怎么安排剩余任务”说得更具体，比如先做哪部分、请同学帮哪部分。",
+            "reference": "示例思路：先看还剩多少没完成，把最要紧的部分先做；如果时间不够，就请同学帮忙一起收尾，同时向老师说明情况，问能不能晚一点交，并保证认真完成。",
+            "is_good": true,
+            "message_id": 8
+          },
+          {
+            "suggestion": "用一两句话说明向客户定制产品落地方案，意思清楚，直接回应问题，达到基础要求。下一步可以练习换一种更口语的说法，比如“帮客户想清楚产品怎么用起来”。",
+            "reference": "示例思路：售前技术支持就是帮客户想清楚，我们的产品怎么用才能解决他们的问题，给客户一个合适的方案。",
+            "is_good": true,
+            "message_id": 10
+          },
+          {
+            "suggestion": "用礼貌句式向同学确认资料中不清楚的地方，具体可行，符合基础沟通要求。下一步可以练习在确认后补一句“谢谢”，让表达更完整自然。",
+            "reference": "示例思路：同学你好，我想确认一下，你给的方案资料里这一处我不太理解，能麻烦你帮我解释一下吗？谢谢。",
+            "is_good": true,
+            "message_id": 12
+          }
+        ]
+      },
+      "checks": [
+        {
+          "check": "provisional_score_range",
+          "passed": true
+        },
+        {
+          "check": "review_count",
+          "passed": true
+        },
+        {
+          "check": "high_total_has_some_acceptable_answers",
+          "passed": true
+        },
+        {
+          "check": "basic_answer_acceptance",
+          "passed": true
+        },
+        {
+          "check": "assessed_basics_not_scored_low",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

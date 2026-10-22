@@ -71,7 +71,7 @@
                             <div class="flex items-center gap-2.5 overflow-hidden">
                                 <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded
                                     {{ 'bg-amber-100 text-amber-600' if item.material_type == 'quiz' else 'bg-blue-100 text-blue-600' }}">
-                                    {{ 'Quiz' if item.material_type == 'quiz' else 'Doc' }}
+                                    {{ 'Quiz' if item.material_type == 'quiz' else '视频' if item.material_type == 'video' else 'Doc' }}
                                 </span>
                                 <span class="truncate text-sm">{{ item.title }}</span>
                             </div>
@@ -104,15 +104,22 @@
 
             <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
 
-                {% if lesson.material_type == 'article' %}
-                    {% if lesson.video_url %}
-                    <div class="bg-black relative group">
-                        <figure class="aspect-video max-h-[500px] mx-auto bg-black">
-                            <video controls class="w-full h-full object-contain">
-                                <source src="{{ url_for('static', filename=lesson.video_url) }}" type="video/mp4">
-                                您的浏览器不支持视频标签。
-                            </video>
-                        </figure>
+                {% if lesson.material_type in ['article', 'video'] %}
+                    {% if lesson.material_type == 'video' and lesson.video_url %}
+                    <div class="bg-black" data-testid="lesson-video">
+                        {% if lesson.video_source == 'bilibili' %}
+                        <iframe src="{{ lesson.video_url }}" title="{{ lesson.title }} - B 站视频"
+                                class="w-full aspect-video" style="border:0; aspect-ratio:16/9; display:block"
+                                allow="fullscreen; picture-in-picture" allowfullscreen
+                                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                        {% elif lesson.video_source == 'upload' %}
+                        <video controls playsinline preload="metadata" class="w-full aspect-video object-contain"
+                               style="aspect-ratio:16/9; max-height:600px" aria-label="{{ lesson.title }}"
+                               src="{{ url_for('routes.learning_video', material_id=lesson.id) }}">
+                            您的浏览器不支持视频播放，请使用新版浏览器。
+                        </video>
+                        <p id="video-error" class="p-4 text-white text-sm" role="alert" hidden>视频暂时无法播放，请刷新重试或联系管理员检查视频格式。</p>
+                        {% endif %}
                     </div>
                     {% endif %}
 
@@ -136,7 +143,7 @@
                             {% else %}
                                 <button onclick="markAsRead({{ lesson.id }})" class="btn btn-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-none shadow-xl shadow-indigo-200 px-12 rounded-full group">
                                     <span class="loading loading-spinner loading-sm hidden group-[.loading]:inline-block"></span>
-                                    标记已读，下一课
+                                    {{ '标记本节已学完' if lesson.material_type == 'video' else '标记已读，下一课' }}
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                 </button>
                             {% endif %}
@@ -332,6 +339,9 @@
 </style>
 
 <script>
+    document.querySelector('video')?.addEventListener('error', () => {
+        document.getElementById('video-error').hidden = false;
+    });
     async function markAsRead(id) {
         const btn = document.querySelector('button[onclick^="markAsRead"]');
         if(btn) btn.classList.add('loading');

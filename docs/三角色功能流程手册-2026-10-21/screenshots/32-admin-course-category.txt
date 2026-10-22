@@ -1,0 +1,134 @@
+Window: "课程内容管理 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 课程内容管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/learning, Secondary Actions: Raise
+	1 container 课程内容管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/learning
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/learning, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 课程内容管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/learning
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/admin/learning#main-content
+							41 container
+								42 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								43 container 主导航
+									44 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									45 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									46 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									47 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									48 开合三角标记 教学管理
+										49 文本 教学管理
+								50 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								51 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									52 文本 劳振煜
+							53 container
+								54 标题 📚 知识充电站内容管理, Value: 2
+									55 文本 📚 知识充电站内容管理
+								56 文本 管理学习分类、上传文章和配置测验题库
+								57 按钮 + 新建分类
+								58 文本 课程分类
+								59 container
+									60 文本 📚 礼仪
+									61 按钮 ✕
+								62 文本 📚 表达
+								63 文本 📚 如果你要做服务行业
+								64 文本 📚 面试
+								65 文本 📚 职场能力
+								66 container
+									67 标题 礼仪, Value: 3
+										68 文本 礼仪
+									69 按钮 + 添加内容
+									70 表格
+										71 row
+											72 列标题
+												73 文本 标题
+											74 列标题
+												75 文本 类型
+											76 列标题
+												77 文本 操作
+										78 row
+											79 单元格
+												80 文本 常见礼仪
+											81 单元格
+												82 文本 article
+											83 单元格
+												84 按钮 删除
+										85 row
+											86 单元格
+												87 文本 礼仪测验
+											88 单元格
+												89 文本 quiz
+											90 单元格
+												91 按钮 删除
+								92 container
+									93 标题 添加学习内容, Value: 3
+										94 文本 添加学习内容
+									95 文本栏 (settable) 标题 (例如: 面试着装指南)
+									96 弹出式按钮 文章 (Article)
+										97 (selected) 文章 (Article)
+									98 文本 内容 (HTML文本 或 JSON题目)
+									99 文本 填入示例模板
+									100 文本输入区 (settable) 在此输入内容...
+									101 按钮 取消
+									102 按钮 保存
+								103 container
+									104 text 嘉善技师学院 · AI 智聘平台 慢慢积累，也慢慢发光。
+				105 标签组 标签页栏
+					106 弹出式按钮 搜索标签页
+					107 container
+						108 标签组
+							109 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								110 按钮 关闭标签页
+							111 标签 (selected, settable, boolean) 课程内容管理 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 209 MB, Value: on
+								112 按钮 关闭标签页
+							113 滚动区
+					114 按钮 新建标签页
+	115 关闭按钮
+	116 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	117 最小化按钮
+118 menu bar
+	119 Edge
+	120 文件
+	121 编辑
+	122 查看
+	123 历史记录
+	124 收藏夹
+	125 个人资料
+	126 标签页
+	127 窗口
+	128 帮助
+
+The focused UI element is 53 container

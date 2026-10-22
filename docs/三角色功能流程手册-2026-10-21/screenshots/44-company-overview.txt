@@ -1,0 +1,217 @@
+Window: "公司概览 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 公司概览 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company, Secondary Actions: Raise
+	1 container 公司概览 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/company, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 公司概览 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/company#main-content
+							41 container
+								42 link AI 智聘 企业招聘工作台首页, Value: 211.154.20.65:20018/company
+								43 container 主导航
+									44 link 公司概览, Value: 211.154.20.65:20018/company
+									45 link 面试岗位, Value: 211.154.20.65:20018/company/positions
+									46 link 学生面试记录, Value: 211.154.20.65:20018/company/interviews
+								47 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								48 开合三角标记 打开个人账号菜单, Help: 宋经理
+									49 文本 宋经理
+							50 container
+								51 文本 校企合作 / 企业招聘工作台
+								52 标题 浙江创智科技, Value: 1
+									53 文本 浙江创智科技
+								54 文本 管理面试岗位，从学生的实际回答中发现合适的人选。
+								55 link + 新增面试岗位, Value: 211.154.20.65:20018/company/positions/new
+								56 文本 面试岗位
+								57 文本 3
+								58 link 管理岗位 →, Value: 211.154.20.65:20018/company/positions
+								59 文本 面试记录
+								60 文本 17
+								61 link 查看记录 →, Value: 211.154.20.65:20018/company/interviews
+								62 文本 参与学生
+								63 文本 8
+								64 文本 同一学生多轮面试计为一人
+								65 标题 最近面试, Value: 2
+									66 文本 最近面试
+								67 link 全部记录 →, Value: 211.154.20.65:20018/company/interviews
+								68 表格
+									69 row
+										70 列标题
+											71 文本 ID
+										72 列标题
+											73 文本 学生信息
+										74 列标题
+											75 文本 面试岗位
+										76 列标题
+											77 文本 得分
+										78 列标题
+											79 文本 开始时间
+										80 列标题
+											81 文本 耗时
+										82 列标题
+											83 文本 状态
+										84 列标题
+											85 文本 操作
+									86 row
+										87 单元格
+											88 文本 #225
+										89 单元格
+											90 text 刘海 222308 | 2223
+										91 单元格
+											92 文本 售前技术支持
+										93 单元格
+											94 文本 89
+										95 单元格
+											96 文本 2026-10-09 01:11
+											97 文本 1 周前
+										98 单元格
+											99 文本 8.1 min
+										100 单元格
+											101 文本 完成
+										102 单元格
+											103 link 查看报告, Value: 211.154.20.65:20018/company/interviews/225
+											104 link 对话记录, Value: 211.154.20.65:20018/company/interviews/225/conversation
+											105 link 递交简历, Value: 211.154.20.65:20018/company/interviews/225/resume
+									106 row
+										107 单元格
+											108 文本 #224
+										109 单元格
+											110 text 刘海 222308 | 2223
+										111 单元格
+											112 文本 网络安全服务工程师
+										113 单元格
+											114 文本 36
+										115 单元格
+											116 文本 2026-10-09 00:36
+											117 文本 1 周前
+										118 单元格
+											119 文本 3.5 min
+										120 单元格
+											121 文本 完成
+										122 单元格
+											123 link 查看报告, Value: 211.154.20.65:20018/company/interviews/224
+											124 link 对话记录, Value: 211.154.20.65:20018/company/interviews/224/conversation
+											125 link 递交简历, Value: 211.154.20.65:20018/company/interviews/224/resume
+									126 row
+										127 单元格
+											128 文本 #222
+										129 单元格
+											130 text 刘海 222308 | 2223
+										131 单元格
+											132 文本 售前技术支持
+										133 单元格
+											134 文本 48
+										135 单元格
+											136 文本 2026-10-08 23:55
+											137 文本 1 周前
+										138 单元格
+											139 文本 6.9 min
+										140 单元格
+											141 文本 完成
+										142 单元格
+											143 link 查看报告, Value: 211.154.20.65:20018/company/interviews/222
+											144 link 对话记录, Value: 211.154.20.65:20018/company/interviews/222/conversation
+											145 link 递交简历, Value: 211.154.20.65:20018/company/interviews/222/resume
+									146 row
+										147 单元格
+											148 文本 #217
+										149 单元格
+											150 text 王旭 222305 | 2223
+										151 单元格
+											152 文本 售前技术支持
+										153 单元格
+											154 文本 0
+										155 单元格
+											156 文本 2026-10-08 10:57
+											157 文本 1 周前
+										158 单元格
+											159 文本 1.6 min
+										160 单元格
+											161 文本 完成
+										162 单元格
+											163 link 查看报告, Value: 211.154.20.65:20018/company/interviews/217
+											164 link 对话记录, Value: 211.154.20.65:20018/company/interviews/217/conversation
+											165 link 递交简历, Value: 211.154.20.65:20018/company/interviews/217/resume
+									166 row
+										167 单元格
+											168 文本 #216
+										169 单元格
+											170 text 王旭 222305 | 2223
+										171 单元格
+											172 文本 售前技术支持
+										173 单元格
+											174 文本 6
+										175 单元格
+											176 文本 2026-10-08 10:40
+											177 文本 1 周前
+										178 单元格
+											179 文本 2.3 min
+										180 单元格
+											181 文本 完成
+										182 单元格
+											183 link 查看报告, Value: 211.154.20.65:20018/company/interviews/216
+											184 link 对话记录, Value: 211.154.20.65:20018/company/interviews/216/conversation
+											185 link 递交简历, Value: 211.154.20.65:20018/company/interviews/216/resume
+								186 文本 嘉善技师学院 · AI 智聘平台
+								187 文本 慢慢积累，也慢慢发光。
+				188 标签组 标签页栏
+					189 弹出式按钮 搜索标签页
+					190 container
+						191 标签组
+							192 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								193 按钮 关闭标签页
+							194 标签 (selected, settable, boolean) 公司概览 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 183 MB, Value: on
+								195 按钮 关闭标签页
+							196 滚动区
+					197 按钮 新建标签页
+	198 关闭按钮
+	199 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	200 最小化按钮
+201 menu bar
+	202 Edge
+	203 文件
+	204 编辑
+	205 查看
+	206 历史记录
+	207 收藏夹
+	208 个人资料
+	209 标签页
+	210 窗口
+	211 帮助
+
+The focused UI element is 39 HTML 内容 公司概览 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company

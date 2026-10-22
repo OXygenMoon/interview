@@ -3,7 +3,7 @@ import secrets
 
 import pandas as pd
 from io import BytesIO
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, send_from_directory, abort, current_app
 from flask_login import login_required, current_user
 from collections import Counter
 from datetime import datetime
@@ -13,6 +13,8 @@ from .config import Config
 from .decorators import teacher_required, admin_required
 from .services.question_bank import get_random_interview_questions, sanitize_questions
 from .services.visual_review import visual_record
+from .services.learning_media import (normalize_bilibili_url, save_uploaded_video,
+    delete_uploaded_video, video_directory, valid_video_filename)
 from .utils.session_state import (
     mark_reviewed,
     expire_stale_sessions,
@@ -1579,10 +1581,13 @@ def admin_learning():
             'name': cat.name,
             'icon': cat.icon,
             # 在这里预先处理好 materials 列表
-            'materials': [{'id': m.id, 'title': m.title, 'type': m.material_type} for m in cat.materials]
+            'materials': [{'id': m.id, 'title': m.title, 'type': m.material_type,
+                           'content': m.content, 'video_source': m.video_source,
+                           'video_url': m.video_url} for m in cat.materials]
         })
 
-    return render_template('admin_learning.html', categories=categories_data)
+    return render_template('admin_learning.html', categories=categories_data,
+        video_max_mb=current_app.config['LEARNING_VIDEO_MAX_BYTES'] // (1024 * 1024))
 
 @bp.route('/api/admin/learning/category/add', methods=['POST'])
 @login_required
@@ -1618,8 +1623,11 @@ def delete_learning_category(cat_id):
             return jsonify({
                 'error': f'该分类已有 {record_count} 条学习记录，不能删除'
             }), 400
+    uploads = [m.video_url for m in cat.materials if m.video_source == 'upload']
     db.session.delete(cat)
     db.session.commit()
+    for filename in uploads:
+        delete_uploaded_video(filename)
     return jsonify({'status': 'success'})
 
 
@@ -1627,31 +1635,84 @@ def delete_learning_category(cat_id):
 @login_required
 @admin_required
 def add_learning_material():
-    data = request.get_json(silent=True) or {}
-    category_id = data.get('category_id')
-    title = data.get('title')
-    m_type = data.get('type')  # article 或 quiz
-    content = data.get('content')
+    return _save_learning_material()
 
-    if not all([category_id, title, m_type, content]):
-        return jsonify({'error': '参数不完整'}), 400
 
-    # 如果是 quiz，校验一下 JSON 格式
-    if m_type == 'quiz':
+@bp.route('/api/admin/learning/material/update/<int:m_id>', methods=['POST'])
+@login_required
+@admin_required
+def update_learning_material(m_id):
+    return _save_learning_material(LearningMaterial.query.get_or_404(m_id))
+
+
+def _save_learning_material(material=None):
+    data = request.form if request.mimetype == 'multipart/form-data' else request.get_json(silent=True)
+    if not data or not hasattr(data, 'get'):
+        return jsonify(error='参数不完整'), 400
+    title = data.get('title', '')
+    kind = data.get('type')
+    content = data.get('content', '')
+    if not isinstance(title, str) or not title.strip() or len(title.strip()) > 100:
+        return jsonify(error='请输入不超过 100 字的课程标题'), 400
+    if not isinstance(kind, str) or kind not in {'article', 'quiz', 'video'} or not isinstance(content, str):
+        return jsonify(error='课程类型或内容无效'), 400
+    try:
+        category_id = int(data.get('category_id'))
+    except (TypeError, ValueError):
+        return jsonify(error='请选择有效的课程分类'), 400
+    if not db.session.get(LearningCategory, category_id):
+        return jsonify(error='课程分类不存在'), 400
+    if kind != 'video' and not content.strip():
+        return jsonify(error='内容不能为空'), 400
+    if kind == 'quiz':
         try:
             json.loads(content)
-        except:
-            return jsonify({'error': '题目内容必须是合法的 JSON 格式'}), 400
+        except (TypeError, ValueError):
+            return jsonify(error='题目内容必须是合法的 JSON 格式'), 400
+    if material and material.material_type != kind:
+        records = (UserLearningProgress.query.filter_by(material_id=material.id).count()
+                   + LearningAttempt.query.filter_by(material_id=material.id).count())
+        if records:
+            return jsonify(error='该课程已有学习记录，不能更改内容类型'), 400
 
-    mat = LearningMaterial(
-        category_id=category_id,
-        title=title,
-        material_type=m_type,
-        content=content
-    )
-    db.session.add(mat)
-    db.session.commit()
-    return jsonify({'status': 'success'})
+    source, video_url, new_upload = None, None, None
+    if kind == 'video':
+        source = data.get('video_source')
+        try:
+            if source == 'bilibili':
+                raw_url = data.get('video_url', '')
+                if not isinstance(raw_url, str):
+                    raise ValueError('请输入 B 站视频链接')
+                video_url = normalize_bilibili_url(raw_url)
+            elif source == 'upload':
+                upload = request.files.get('video')
+                if upload and upload.filename:
+                    new_upload = video_url = save_uploaded_video(upload)
+                elif material and material.video_source == 'upload' and material.video_url:
+                    video_url = material.video_url
+                else:
+                    raise ValueError('请选择要上传的视频文件')
+            else:
+                raise ValueError('请选择视频来源')
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
+
+    old_upload = material.video_url if material and material.video_source == 'upload' else None
+    mat = material or LearningMaterial(
+        sort_order=LearningMaterial.query.filter_by(category_id=category_id).count() + 1)
+    mat.category_id, mat.title, mat.material_type = category_id, title.strip(), kind
+    mat.content, mat.video_source, mat.video_url = content, source, video_url
+    try:
+        db.session.add(mat)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        if new_upload:
+            delete_uploaded_video(new_upload)
+        raise
+    if old_upload and old_upload != video_url:
+        delete_uploaded_video(old_upload)
+    return jsonify(status='success', id=mat.id)
 
 
 @bp.route('/api/admin/learning/material/delete/<int:m_id>', methods=['POST'])
@@ -1665,9 +1726,25 @@ def delete_learning_material(m_id):
     )
     if record_count:
         return jsonify({'error': f'已有 {record_count} 条学习记录，不能删除该材料'}), 400
+    old_upload = mat.video_url if mat.video_source == 'upload' else None
     db.session.delete(mat)
     db.session.commit()
+    if old_upload:
+        delete_uploaded_video(old_upload)
     return jsonify({'status': 'success'})
+
+
+@bp.route('/learning/material/<int:material_id>/video')
+@login_required
+def learning_video(material_id):
+    material = LearningMaterial.query.get_or_404(material_id)
+    if material.video_source != 'upload' or not valid_video_filename(material.video_url):
+        abort(404)
+    mimetype = 'video/webm' if material.video_url.endswith('.webm') else 'video/mp4'
+    response = send_from_directory(video_directory(), material.video_url,
+                                   mimetype=mimetype, conditional=True)
+    response.headers['Cache-Control'] = 'private, no-cache'
+    return response
 
 
 # ===============================================================
@@ -1808,7 +1885,7 @@ def complete_learning_material(material_id):
     existing = UserLearningProgress.query.filter_by(user_id=current_user.id, material_id=material.id).first()
 
     # 1. 文章类型：直接完成
-    if material.material_type == 'article':
+    if material.material_type in {'article', 'video'}:
         if existing:
             return jsonify({'status': 'already_completed', 'score': existing.score})
         prog = UserLearningProgress(user_id=current_user.id, material_id=material.id, score=100)

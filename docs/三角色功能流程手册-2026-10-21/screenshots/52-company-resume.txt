@@ -1,0 +1,131 @@
+Window: "递交简历 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 递交简历 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company/interviews/225/resume, Secondary Actions: Raise
+	1 container 递交简历 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/company/interviews/225/resume
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/company/interviews/225/resume, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 递交简历 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company/interviews/225/resume
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/company/interviews/225/resume#main-content
+							41 container
+								42 link AI 智聘 企业招聘工作台首页, Value: 211.154.20.65:20018/company
+								43 container 主导航
+									44 link 公司概览, Value: 211.154.20.65:20018/company
+									45 link 面试岗位, Value: 211.154.20.65:20018/company/positions
+									46 link 学生面试记录, Value: 211.154.20.65:20018/company/interviews
+								47 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								48 开合三角标记 打开个人账号菜单, Help: 宋经理
+									49 文本 宋经理
+							50 container
+								51 文本 只读预览
+								52 标题 刘海 · 刘海的简历, Value: 2
+									53 文本 刘海 · 刘海的简历
+								54 文本 数字经济系 / 2223 
+								55 文本 |
+								56 文本  学号：222308
+								57 文本 面试时递交于 2026-10-09 01:11
+								58 link 返回面试详情, Value: 211.154.20.65:20018/company/interviews/225
+								59 弹出式按钮 简历模板, Value: 经典商务 (Classic)
+									60 (selected) 经典商务 (Classic)
+								61 按钮 智能一页纸
+								62 按钮 打印 / PDF
+								63 文本 刘海
+								64 文本 16601835009 | 2055541334@qq.com | 嘉兴市
+								65 文本 求职意向：
+								66 文本 自我评价
+								67 文本 教育背景
+								68 文本 嘉善技师学院 - 网络与信息安全
+								69 文本 2022-2027
+								70 文本 校园内经历
+								71 文本 班级 - 副班长
+								72 文本 数字产品检测与维护 - 代理教练
+								73 文本 获奖
+								74 文本 全国青少年信息素养大赛 互联网+无人驾驶主题赛 - 二等奖
+								75 文本 国
+								76 文本 浙江省中等职业学校技能节 数字产品检测与维护项目 - 银牌
+								77 文本 省
+								78 文本 中等职业学校技能节 数字产品检测与维护项目 - 金牌
+								79 文本 市
+								80 文本 2024年嘉善县中职学校师生职业能力大赛学生组python编程 - 一等奖
+								81 文本 县
+								82 文本 2024嘉兴市中小学信息素养提升时间活动机器人竞赛 - 三等奖
+								83 文本 市
+								84 文本 技能月赛python编程 - 一等奖
+								85 文本 校
+								86 文本 2023第一学期节能月赛网页设计与制作 - 三等奖
+								87 文本 校
+								88 文本 2025嘉善县python编程 - 一等奖
+								89 文本 县
+								90 文本 2025吴江区中等职业学校技能比赛 数字产品检测与维护 - 二等奖
+								91 文本 市
+								92 文本 2025编程思维挑战赛 - 一等奖
+								93 文本 校
+								94 文本 2023嘉善县中职学校师生职业能力大赛 flash 动画 - 一等奖
+								95 文本 县
+								96 文本 2022第二学期技能月赛flash - 特等奖
+								97 文本 校
+								98 文本 全国青少年信息素养大赛 互联网+无人驾驶主题赛 - 二等奖
+								99 文本 省
+								100 文本 嘉善技师学院 · AI 智聘平台
+								101 文本 慢慢积累，也慢慢发光。
+				102 标签组 标签页栏
+					103 弹出式按钮 搜索标签页
+					104 container
+						105 标签组
+							106 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								107 按钮 关闭标签页
+							108 标签 (selected, settable, boolean) 递交简历 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 191 MB, Value: on
+								109 按钮 关闭标签页
+							110 滚动区
+					111 按钮 新建标签页
+	112 关闭按钮
+	113 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	114 最小化按钮
+115 menu bar
+	116 Edge
+	117 文件
+	118 编辑
+	119 查看
+	120 历史记录
+	121 收藏夹
+	122 个人资料
+	123 标签页
+	124 窗口
+	125 帮助
+
+The focused UI element is 39 HTML 内容 递交简历 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/company/interviews/225/resume

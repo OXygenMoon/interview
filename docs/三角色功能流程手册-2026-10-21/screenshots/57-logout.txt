@@ -1,0 +1,97 @@
+Window: "登录 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 登录 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/login, Secondary Actions: Raise
+	1 container 登录 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/login
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/login, Placeholder: 搜索或输入 Web 地址
+						11 按钮 管理密码
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 登录 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/login
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/login#main-content
+							41 container
+								42 link AI 智聘 你的成长练习站首页, Value: 211.154.20.65:20018/
+								43 container 主导航
+									44 文本 练习一次，多一点底气。
+									45 link 返回登录, Value: 211.154.20.65:20018/login
+									46 link 测试账号, Value: 211.154.20.65:20018/test-accounts
+								47 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+							48 container
+								49 文本 嘉善技师学院 · AI 智聘平台
+								50 标题 把紧张放一边， 把经验说出来。, Value: 1
+									51 text 把紧张放一边， 把经验说出来。
+								52 container
+									53 text 从一次练习开始，把知识整理成答案。 每一步积累，都会成为你的底气。
+								54 标题 欢迎登录, Value: 2
+									55 文本 欢迎登录
+								56 文本 使用管理员开通的账号登录，进入学生、教学或企业工作台。
+								57 container
+									58 文本 账号
+									59 文本栏 (settable) 账号, Placeholder: 请输入用户名
+									60 文本 密码
+									61 安全文本栏 (settable) 密码, Placeholder: 请输入密码
+									62 切换按钮 显示密码, Value: 0
+									63 按钮 登录并继续 →
+								64 文本 没有账号或忘记密码，请联系学院管理员。
+								65 link 使用测试账号体验 →, Value: 211.154.20.65:20018/test-accounts
+								66 文本 嘉善技师学院 · AI 智聘平台
+								67 文本 慢慢积累，也慢慢发光。
+				68 标签组 标签页栏
+					69 弹出式按钮 搜索标签页
+					70 container
+						71 标签组
+							72 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								73 按钮 关闭标签页
+							74 标签 (selected, settable, boolean) 登录 - 嘉善技师学院 AI 智聘平台, Value: on
+								75 按钮 关闭标签页
+							76 滚动区
+					77 按钮 新建标签页
+	78 关闭按钮
+	79 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	80 最小化按钮
+81 menu bar
+	82 Edge
+	83 文件
+	84 编辑
+	85 查看
+	86 历史记录
+	87 收藏夹
+	88 个人资料
+	89 标签页
+	90 窗口
+	91 帮助
+
+The focused UI element is 39 HTML 内容 登录 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/login

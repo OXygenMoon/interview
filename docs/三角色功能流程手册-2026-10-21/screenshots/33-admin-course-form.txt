@@ -1,0 +1,80 @@
+Window: "课程内容管理 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 课程内容管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/learning, Secondary Actions: Raise
+	1 container 课程内容管理 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/admin/learning
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/admin/learning, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 课程内容管理 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/admin/learning
+							40 container
+								41 标题 添加学习内容, Value: 3
+									42 文本 添加学习内容
+								43 文本栏 (settable) 标题 (例如: 面试着装指南)
+								44 弹出式按钮 文章 (Article)
+									45 (selected) 文章 (Article)
+								46 文本 内容 (HTML文本 或 JSON题目)
+								47 文本 填入示例模板
+								48 文本输入区 (settable) 在此输入内容...
+								49 按钮 取消
+								50 按钮 保存
+				51 标签组 标签页栏
+					52 弹出式按钮 搜索标签页
+					53 container
+						54 标签组
+							55 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								56 按钮 关闭标签页
+							57 标签 (selected, settable, boolean) 课程内容管理 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 209 MB, Value: on
+								58 按钮 关闭标签页
+							59 滚动区
+					60 按钮 新建标签页
+	61 关闭按钮
+	62 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	63 最小化按钮
+64 menu bar
+	65 Edge
+	66 文件
+	67 编辑
+	68 查看
+	69 历史记录
+	70 收藏夹
+	71 个人资料
+	72 标签页
+	73 窗口
+	74 帮助
+
+The focused UI element is 43 文本栏 (settable) 标题 (例如: 面试着装指南)

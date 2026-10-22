@@ -1,0 +1,130 @@
+Window: "学生花名册 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 学生花名册 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/teacher/students, Secondary Actions: Raise
+	1 container 学生花名册 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/teacher/students
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/teacher/students, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 学生花名册 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/teacher/students
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/teacher/students#main-content
+							41 container
+								42 link AI 智聘 教学工作空间首页, Value: 211.154.20.65:20018/dashboard
+								43 container 主导航
+									44 link 教学概览, Value: 211.154.20.65:20018/dashboard
+									45 link 学生名册, Value: 211.154.20.65:20018/teacher/students
+									46 link 面试记录, Value: 211.154.20.65:20018/admin/interviews
+									47 link 能力画像, Value: 211.154.20.65:20018/admin/capability_profile
+									48 开合三角标记 教学管理
+										49 文本 教学管理
+								50 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								51 开合三角标记 打开个人账号菜单, Help: 劳振煜
+									52 文本 劳振煜
+							53 container
+								54 标题 学生学情名册, Value: 2
+									55 文本 学生学情名册
+								56 文本 共找到 
+								57 文本 1
+								58 文本  名学生
+								59 弹出式按钮 所有系部
+									60 (selected) 所有系部
+								61 弹出式按钮 所有班级
+									62 (selected) 所有班级
+								63 文本栏 (settable) Value: 222308, Placeholder: 搜索姓名或学号...
+								64 按钮
+								65 表格
+									66 row
+										67 列标题
+											68 文本 学生信息
+										69 列标题
+											70 文本 班级/系部
+										71 列标题
+											72 文本 练习勤奋度
+										73 列标题
+											74 文本 平均得分
+										75 列标题
+											76 文本 最近活跃
+										77 列标题
+											78 文本 操作
+									79 row
+										80 单元格
+											81 文本 刘
+											82 文本 刘海
+											83 文本 222308
+										84 单元格
+											85 文本 2223
+											86 文本 数字经济系
+										87 单元格
+											88 text 21 场
+											89 container
+												90 text 勤奋之星 🌟
+										91 单元格
+											92 文本 63.3
+										93 单元格
+											94 文本 10-09 01:44
+										95 单元格
+											96 link 查看详情, Value: 211.154.20.65:20018/teacher/student/51
+											97 按钮 重置密码
+											98 按钮 停用
+								99 文本 嘉善技师学院 · AI 智聘平台
+								100 文本 慢慢积累，也慢慢发光。
+				101 标签组 标签页栏
+					102 弹出式按钮 搜索标签页
+					103 container
+						104 标签组
+							105 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								106 按钮 关闭标签页
+							107 标签 (selected, settable, boolean) 学生花名册 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 251 MB, Value: on
+								108 按钮 关闭标签页
+							109 滚动区
+					110 按钮 新建标签页
+	111 关闭按钮
+	112 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	113 最小化按钮
+114 menu bar
+	115 Edge
+	116 文件
+	117 编辑
+	118 查看
+	119 历史记录
+	120 收藏夹
+	121 个人资料
+	122 标签页
+	123 窗口
+	124 帮助
+
+The focused UI element is 63 文本栏 (settable) Value: 222308, Placeholder: 搜索姓名或学号...

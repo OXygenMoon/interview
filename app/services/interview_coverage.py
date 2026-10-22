@@ -57,7 +57,7 @@ def _question_dimension(content, questions):
         r'[？?]|怎么|怎样|如何|什么|为什么|请.*(?:说|讲|介绍|说明)|说说|讲讲|用.*(?:介绍|说明|描述)|向.*(?:介绍|说明)', s))
     patterns = (
         ('礼仪态度', r'礼貌|怎样.*(?:开口|确认|沟通)|怎么.*(?:开口|确认|沟通)|你会.*(?:说的话|怎么说)'),
-        ('抗压能力', r'来不及|截止|快到.*(?:时间|交付|提交)|时间.*(?:紧|不够|不足)|需求.*(?:改变|变化)|任务.*(?:冲突|变化)|遇到.*(?:困难|突发)|压力.*(?:应对|处理)'),
+        ('抗压能力', r'来不及|截止|快到.*(?:时间|交付|提交)|(?:离|距离).*(?:提交|交付).*只剩|只剩.*(?:小时|分钟)|时间.*(?:紧|不够|不足)|需求.*(?:改变|变化)|任务.*(?:冲突|变化)|遇到.*(?:困难|突发)|压力.*(?:应对|处理)'),
         ('语言表达', r'用.*(?:一句|两句|一两句|几句|自己的话).*(?:介绍|说明|描述)|向.*(?:不了解|不熟悉).*(?:介绍|说明)'),
         ('逻辑思维', r'先.*再|步骤|顺序|流程|怎样安排|怎么安排|如何安排'),
         ('专业技能', r'岗位.*(?:做什么|职责|工作|技能|工具)|主要.*(?:做什么|工作|职责)|工具.*用途|技能.*用途|怎样.*(?:学习|完成).*任务|(?:项目|实训|操作|产品|业务).*(?:介绍|说明|怎么|怎样|如何)|(?:介绍|说说|讲讲).*(?:项目|技能|经历|工作)'),
@@ -68,17 +68,29 @@ def _question_dimension(content, questions):
     return None
 
 
+def question_dimension(content, difficulty, round_num=1):
+    """Identify what was asked, without inferring unasked job requirements."""
+    return _question_dimension(content, required_questions(difficulty, round_num))
+
+
 def _is_nonanswer(content):
     text = _normalized(content)
     clarification = re.fullmatch(
         r'(?:请|能不能|可以|能|麻烦|帮我)*(?:再说一遍|重复一下|解释一下)(?:题意|问题|这道题|这个问题)?'
         r'|(?:这个问题|这道题|题目|问题)(?:是)?什么意思', text)
-    return (bool(clarification) or text.isdigit() or text in {
+    already_answered = re.fullmatch(
+        r'(?:这个问题|这道题|这题)(?:我)?(?:刚才|之前|已经|刚刚)*(?:已经)?(?:回答|答)过(?:了)?', text)
+    return (bool(clarification) or bool(already_answered) or bool(re.fullmatch(r'喂+', text))
+            or text.isdigit() or text in {
         '谢谢', '再见', '结束', '结束面试', '面试结束', '我要结束面试',
         '我想结束面试', '请结束面试', '不想继续了', '我不知道该怎么说',
         '请解释题意', '什么意思', '没听清', '请再说一遍', '好', '好的',
         '继续', '请继续', '这题问过了', '这个问题已经回答过了',
     })
+
+
+def is_nonanswer(content):
+    return _is_nonanswer(content)
 
 
 def dimension_answers(history, difficulty, round_num=1):

@@ -97,6 +97,9 @@ def create_app():
                 ),
             )
 
+    from .services.learning_media import init_learning_media
+    init_learning_media(app)
+
     from .security import init_csrf_protection
     init_csrf_protection(app)
 

@@ -12,7 +12,7 @@ from .interview_prompts import (
 )
 from .local_asr import ASRUnavailableError, AudioDecodeError, transcribe_local_audio
 from .visual_review import normalize_visual_feedback
-from .interview_coverage import DIMENSIONS, coverage_instructions, dimension_answers, planned_response
+from .interview_coverage import DIMENSIONS, coverage_instructions, dimension_answers, is_nonanswer, planned_response, question_dimension
 
 # 面试文本及视觉请求使用配置的 OpenAI 兼容服务。
 client = OpenAI(
@@ -232,13 +232,25 @@ def generate_interview_report(history_messages, target_role, round_num=1,
     round_count = len(qa_pairs)  # Legacy metadata, not proof of completeness.
     overall_data = _get_overall_score(
         full_text, target_role, round_count, round_num, difficulty, position_context,
+        question_pairs=qa_pairs,
     )
-    details_list = _get_details_feedback(qa_pairs, target_role, round_num, difficulty)
+    details_list = _get_details_feedback(
+        qa_pairs, target_role, round_num, difficulty,
+        question_assessments=overall_data.get('question_scores'),
+    )
     identified_details = []
-    for message_id, detail in zip(qa_message_ids, details_list):
+    for index, (message_id, detail) in enumerate(zip(qa_message_ids, details_list)):
         if isinstance(detail, dict):
             detail = dict(detail)
             detail['message_id'] = message_id
+            grades = overall_data.get('question_scores')
+            if grades is not None:
+                # The coach must not overturn the question-based grade using
+                # another, stricter interpretation of the job or round scope.
+                scores = grades[index]['scores']
+                primary = question_dimension(qa_pairs[index]['question'], difficulty, round_num)
+                grade = scores.get(primary, 0) if primary else min(scores.values(), default=0)
+                detail['is_good'] = grade >= 80
         identified_details.append(detail)
 
     return {
@@ -246,8 +258,45 @@ def generate_interview_report(history_messages, target_role, round_num=1,
         "details_list": identified_details
     }
 
+def _aggregate_question_scores(reviews, questions):
+    """Derive dimensions only from scored questions, never a job skills checklist."""
+    if not isinstance(reviews, list) or len(reviews) != len(questions):
+        raise ValueError('question score count does not match answers')
+    values = {dimension: [] for dimension in REQUIRED_SCORE_DIMENSIONS}
+    for index, (review, question) in enumerate(zip(reviews, questions), 1):
+        if not isinstance(review, dict) or review.get('question_index') != index:
+            raise ValueError('question scores must match question order')
+        scores = review.get('scores')
+        if not isinstance(scores, dict) or not str(review.get('reason') or '').strip():
+            raise ValueError('missing question scores or evidence reason')
+        for dimension, score in scores.items():
+            if dimension not in values or type(score) is not int or not 0 <= score <= 100:
+                raise ValueError('invalid question dimension score')
+        # Connection checks, clarifications and repeated-question notices are
+        # not ability answers, even if the model attaches a grade to them.
+        if is_nonanswer(question['answer']):
+            review['scores'] = {}
+            continue
+        primary = question['primary_dimension']
+        if primary and not scores:
+            raise ValueError('actual answer cannot be excluded from scoring')
+        if primary and scores:
+            if primary not in scores:
+                raise ValueError('answered question is missing its tested dimension')
+            # Keep the valid assessment and discard unrelated model grades.
+            # An extra dimension must neither affect averages nor abort a report.
+            scores = {d: s for d, s in scores.items()
+                      if d in {primary, '语言表达', '礼仪态度'}}
+            review['scores'] = scores
+        for dimension, score in scores.items():
+            values[dimension].append(score)
+    evaluated = [d for d, scores in values.items() if scores]
+    scores = {d: (sum(v) + len(v) // 2) // len(v) if v else 0 for d, v in values.items()}
+    return scores, evaluated
+
+
 def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
-                       difficulty="标准模式", position_context=None):
+                       difficulty="标准模式", position_context=None, question_pairs=None):
     """Evaluate recorded evidence with the compatible numeric report contract."""
     print("📊 正在进行整体打分...")
     # Correct student answers are graded within their assessed scope. Finishing
@@ -262,6 +311,12 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         history = []
     evidence = dimension_answers(history, difficulty, round_num)
     complete_coverage = set(evidence) == set(REQUIRED_SCORE_DIMENSIONS)
+    questions = None
+    if difficulty in STUDENT_MODES and question_pairs is not None:
+        questions = [{
+            **pair, 'question_index': index,
+            'primary_dimension': question_dimension(pair['question'], difficulty, round_num),
+        } for index, pair in enumerate(question_pairs, 1)]
     if complete_coverage:
         system_prompt += (
             '\n【五维已完成，必须全部评分】\n'
@@ -281,6 +336,7 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         "message_count": round_count,
         "legacy_total_cap": cap,
         "required_dimension_evidence": evidence,
+        "qa_pairs": questions,
         "transcript": full_text,
     }, ensure_ascii=False)
 
@@ -298,6 +354,12 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         result = parse_json_safely(response.choices[0].message.content)
         if not isinstance(result, dict):
             raise ValueError('overall result is not an object')
+        question_scores = None
+        if questions is not None:
+            question_scores = result.get('question_scores')
+            derived_scores, derived_dimensions = _aggregate_question_scores(question_scores, questions)
+            result['scores'] = derived_scores
+            result['evaluated_dimensions'] = derived_dimensions
         scores = result.get('scores')
         if not isinstance(scores, dict):
             raise ValueError('missing scores')
@@ -324,11 +386,6 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
             raise ValueError('unassessed dimension has a score')
         if complete_coverage and set(evaluated_dimensions) != set(REQUIRED_SCORE_DIMENSIONS):
             raise ValueError('completed interview must score all five dimensions')
-        if difficulty in STUDENT_MODES:
-            if '专业技能' not in evaluated_dimensions:
-                cap = 0
-            elif clean_scores['专业技能'] < 60:
-                cap = min(cap, 59)
         weighted_points = 0
         weight_sum = 0
         for dimension, weight in zip(REQUIRED_SCORE_DIMENSIONS, SCORE_WEIGHTS):
@@ -345,6 +402,8 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
             'total_score': min(weighted_score, cap),
             'comment': comment,
         }
+        if question_scores is not None:
+            result['question_scores'] = question_scores
         unassessed = [d for d in REQUIRED_SCORE_DIMENSIONS if d not in evaluated_dimensions]
         scope_note = (f'本分数为{difficulty}下已考察范围的入门练习得分。'
                       if difficulty in STUDENT_MODES else '本分数为本轮已考察范围的表现得分。')
@@ -357,7 +416,8 @@ def _get_overall_score(full_text, target_role, round_count=0, round_num=1,
         raise AIServiceError('整体报告评分失败') from e
 
 
-def _get_details_feedback(user_answers, target_role, round_num=1, difficulty="标准模式"):
+def _get_details_feedback(user_answers, target_role, round_num=1, difficulty="标准模式",
+                          question_assessments=None):
     """
     内部函数：请求 AI 对用户回答列表进行逐一按顺序点评
     user_answers: 按顺序排列的 question / answer 对象列表
@@ -368,11 +428,20 @@ def _get_details_feedback(user_answers, target_role, round_num=1, difficulty="�
     print(f"📝 正在分析 {len(user_answers)} 组问答数据 (生成点评+范例)...")
 
     system_prompt = get_assessment_prompt(DETAILS_PROMPT, difficulty, round_num)
+    if question_assessments is not None:
+        system_prompt += (
+            '\n【点评与逐题评分一致】\n'
+            'question_assessments是同一批问答的逐题评分与证据。点评遵循其中的本题要求，'
+            '不再按岗位技术清单重新判断。基础分档80分及以上先明确回答到位；'
+            '不以“但缺少/未体现”把没有要求的年级、项目、例子或步骤列为缺项。'
+            '下一步建议是可选拓展，不能把符合题意的答案判成不合格。'
+        )
     user_prompt = json.dumps({
         "target_role": target_role,
         "round_scope": get_round_scope(round_num, difficulty),
         "difficulty": difficulty,
         "qa_pairs": user_answers,
+        "question_assessments": question_assessments,
     }, ensure_ascii=False)
 
     try:

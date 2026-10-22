@@ -92,6 +92,8 @@ def test_early_ended_interview_with_answers_can_generate_a_report():
         'scores': dict(zip(DIMENSIONS, [92, 0, 92, 0, 0])),
         'evaluated_dimensions': ['专业技能', '语言表达'],
         'total_score': 60, 'comment': '本轮提前结束，仅评已展示内容。',
+        'question_scores': [{'question_index': 1, 'scores': {'专业技能': 92, '语言表达': 92},
+                             'reason': '正确说明工作内容。'}],
     }
     details = {'reviews': [{'suggestion': '回答相关。', 'reference': '示例。', 'is_good': True}]}
     responses = [SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(p)))])
@@ -158,6 +160,21 @@ def test_paraphrased_questions_and_omitted_hints_are_not_repeated():
                for s, c in [('ai', q), ('user', '我会先看要求，再沟通和行动。')]]
     assert missing_dimensions(history, '新手模式') == []
     assert closing_response(history, '新手模式') is not None
+
+
+def test_interview_226_deadline_and_connection_check_keep_pressure_answer():
+    from app.services.interview_coverage import question_dimension, planned_response
+    question = '假设现在你在做实训的漫剧剪辑任务，离提交只剩半小时，但还有一小段没剪完、字幕也没核对，你会怎么办？'
+    assert question_dimension(question, '标准模式') == '抗压能力'
+    history = paired_history('标准模式')[:4] + [
+        SimpleNamespace(sender='ai', content=question),
+        SimpleNamespace(sender='user', content='喂喂喂。'),
+        SimpleNamespace(sender='user', content='请同伴帮忙收尾，向老师说明进度并申请一点时间。'),
+    ]
+    evidence = dimension_answers(history, '标准模式')
+    assert evidence['抗压能力']['answer'].startswith('请同伴')
+    assert evidence['专业技能']['answer'] == '整理文件和录入资料。'
+    assert required_questions('标准模式')['语言表达'] in planned_response(history, '标准模式')
 
 
 @pytest.mark.parametrize('difficulty', ['新手模式', '标准模式', '压力模式'])

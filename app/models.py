@@ -254,8 +254,10 @@ class LearningMaterial(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('learning_categories.id'))
     title = db.Column(db.String(100), nullable=False)
 
-    # 类型: 'article' (文章) 或 'quiz' (测验)
+    # 类型: article (文章)、quiz (测验)、video (视频)
     material_type = db.Column(db.String(20), default='article')
+    video_source = db.Column(db.String(20))  # upload / bilibili
+    video_url = db.Column(db.Text)  # 私有上传文件名或规范化后的 B 站播放器 URL
 
     # 内容:
     # 如果是 article: 存储 HTML/Markdown 文本

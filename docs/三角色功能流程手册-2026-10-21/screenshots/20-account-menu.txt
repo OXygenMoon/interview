@@ -1,0 +1,2 @@
+There has been no change in the accessibility tree for Window: "随机问题面试 - 嘉善技师学院 AI 智聘平台".
+The focused UI element is 116 开合三角标记 打开个人账号菜单, Help: 刘海

@@ -1,0 +1,2 @@
+There has been no change in the accessibility tree for Window: "全校数据大盘 - 嘉善技师学院 AI 智聘平台".
+The focused UI element is 308 开合三角标记 教学管理

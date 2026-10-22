@@ -1,0 +1,2 @@
+There has been no change in the accessibility tree for Window: "面试大厅 - 嘉善技师学院 AI 智聘平台".
+The focused UI element is 103 HTML 内容 面试大厅 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/

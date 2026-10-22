@@ -1,0 +1,186 @@
+Window: "智能简历中心 - 嘉善技师学院 AI 智聘平台", App: Microsoft Edge.
+0 标准窗口 智能简历中心 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/resume_dashboard, Secondary Actions: Raise
+	1 container 智能简历中心 - 嘉善技师学院 AI 智聘平台 - Microsoft Edge, URL: 211.154.20.65:20018/resume_dashboard
+		2 container
+			3 container
+				4 工具栏 应用栏
+					5 按钮 返回
+					6 按钮 刷新
+					7 按钮 主页
+					8 container
+						9 弹出式按钮 查看站点信息
+						10 文本栏 (settable) 地址和搜索栏, Value: 211.154.20.65:20018/resume_dashboard, Placeholder: 搜索或输入 Web 地址
+						11 按钮 进入阅读模式(F9)
+						12 按钮 将此页面添加到收藏夹(⌘D)
+					13 container
+						14 弹出式按钮 某些 URL 受到浏览器或设置限制！
+有权访问此网站
+						15 弹出式按钮 脚本猫
+有权访问此网站
+						16 弹出式按钮 扩展
+					17 按钮 收藏夹
+					18 按钮 学校 个人资料
+					19 按钮 设置及其他
+				20 工具栏 收藏夹栏
+					21 container 资源下载
+					22 container 摄影
+					23 container 设计
+					24 container 编程
+					25 container 教师平台
+					26 container 出版社申请样书
+					27 container 大语言模型
+					28 container 校内开发
+					29 container Seedance 2.0 & Seedream 5.0 免费体验 - 火山引擎 AI 体验中心
+					30 container NAS
+					31 container 幼儿全过程动态分析系统
+					32 container 中文数据库
+					33 container 独立游戏开发 | indienova 独立游戏
+					34 container 嘉兴市专业技术人员继续教育平台
+					35 container My Game Cards | SEAGM
+					36 弹出式按钮 包含隐藏的收藏夹的菜单
+				37 container
+					38 滚动区
+						39 HTML 内容 智能简历中心 - 嘉善技师学院 AI 智聘平台, URL: 211.154.20.65:20018/resume_dashboard
+							40 link 跳转到主要内容, Value: 211.154.20.65:20018/resume_dashboard#main-content
+							41 container
+								42 link AI 智聘 你的成长练习站首页, Value: 211.154.20.65:20018/
+								43 container 主导航
+									44 link 面试大厅, Value: 211.154.20.65:20018/
+									45 link 学习资料, Value: 211.154.20.65:20018/learning
+									46 link 能力成长, Value: 211.154.20.65:20018/radar
+									47 link 练习记录, Value: 211.154.20.65:20018/history
+									48 link 智能简历中心, Value: 211.154.20.65:20018/resume_dashboard
+									49 link 基本资料, Value: 211.154.20.65:20018/profile/basic
+									50 link 班级风云榜, Value: 211.154.20.65:20018/leaderboard
+								51 按钮 选择主题，当前为亮色 · 奶油, Help: 选择主题
+								52 container 选择主题
+									53 标题 选择主题, Value: 2
+										54 文本 选择主题
+									55 container 外观
+										56 文本 外观
+										57 container
+											58 单选按钮 亮色主题, Value: 1
+											59 文本 亮色主题
+										60 container
+											61 单选按钮 暗色主题, Value: 0
+											62 文本 暗色主题
+									63 container 亮色色调
+										64 文本 亮色色调
+										65 container
+											66 单选按钮 奶油, Value: 1
+											67 文本 奶油
+										68 container
+											69 单选按钮 鼠尾草, Value: 0
+											70 文本 鼠尾草
+										71 container
+											72 单选按钮 雾蓝, Value: 0
+											73 文本 雾蓝
+										74 container
+											75 单选按钮 薰衣草, Value: 0
+											76 文本 薰衣草
+										77 container
+											78 单选按钮 玫瑰, Value: 0
+											79 文本 玫瑰
+									80 文本 偏好会自动保存
+								81 开合三角标记 打开个人账号菜单, Help: 刘海
+									82 文本 刘海
+							83 container
+								84 文本 基础信息已保存
+								85 文本 刘
+								86 标题 刘海, Value: 1
+									87 文本 刘海
+								88 图像
+								89 文本 未填写
+								90 图像
+								91 文本 222308@example.com
+								92 按钮 维护档案
+								93 按钮 新建简历
+								94 标题 我的简历库 (3/5), Value: 3
+									95 text 我的简历库 (3/5)
+								96 文本 刘
+								97 图像
+								98 标题 刘海的简历, Value: 2
+									99 文本 刘海的简历
+								100 图像
+								101 文本 2026-05-08 00:02
+								102 link 进入编辑器, Value: 211.154.20.65:20018/resume/edit/17
+								103 文本 我
+								104 图像
+								105 标题 我的简历, Value: 2
+									106 文本 我的简历
+								107 图像
+								108 文本 2026-04-29 01:24
+								109 link 进入编辑器, Value: 211.154.20.65:20018/resume/edit/42
+								110 文本 刘
+								111 图像
+								112 标题 刘海的简历, Value: 2
+									113 文本 刘海的简历
+								114 图像
+								115 文本 2026-04-24 00:02
+								116 link 进入编辑器, Value: 211.154.20.65:20018/resume/edit/4
+								117 图像
+								118 文本 新建简历
+								119 标题 维护基础档案, Value: 3
+									120 文本 维护基础档案
+								121 按钮 ✕
+								122 container
+									123 图像
+									124 text 此处维护的信息可作为"母版"，在新建简历时一键导入。 姓名
+									125 文本栏 (settable) 刘海
+									126 文本 意向岗位
+									127 文本栏 (settable) 例如：产品经理
+									128 文本 电话
+									129 文本栏 (settable)
+									130 文本 邮箱
+									131 邮箱 (settable) 222308@example.com
+									132 文本 所在城市
+									133 文本栏 (settable)
+									134 文本 自我评价
+									135 文本输入区 (settable) 简要介绍您的核心优势...
+									136 按钮 取消
+									137 按钮 保存档案
+								138 标题 新建简历, Value: 3
+									139 文本 新建简历
+								140 文本 简历名称
+								141 文本栏 (settable) 例如：产品经理求职简历
+								142 container
+									143 复选框 一键导入基础档案, Value: 1
+									144 文本 一键导入基础档案
+								145 文本 将自动填充您在上方「基础档案」中维护的姓名、电话、邮箱等信息。
+								146 按钮 取消
+								147 按钮 立即创建
+								148 按钮 close
+								149 标题 重命名简历, Value: 3
+									150 文本 重命名简历
+								151 文本栏 (settable)
+								152 按钮 取消
+								153 按钮 保存
+								154 按钮 close
+								155 文本 嘉善技师学院 · AI 智聘平台
+								156 文本 慢慢积累，也慢慢发光。
+				157 标签组 标签页栏
+					158 弹出式按钮 搜索标签页
+					159 container
+						160 标签组
+							161 标签 (settable, boolean) 新标签页 - 内存使用率 - 43.5 MB, Value: off
+								162 按钮 关闭标签页
+							163 标签 (selected, settable, boolean) 智能简历中心 - 嘉善技师学院 AI 智聘平台 - 内存使用率 - 204 MB, Value: on
+								164 按钮 关闭标签页
+							165 滚动区
+					166 按钮 新建标签页
+	167 关闭按钮
+	168 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	169 最小化按钮
+170 menu bar
+	171 Edge
+	172 文件
+	173 编辑
+	174 查看
+	175 历史记录
+	176 收藏夹
+	177 个人资料
+	178 标签页
+	179 窗口
+	180 帮助
+
+The focused UI element is 58 单选按钮 亮色主题, Value: 1

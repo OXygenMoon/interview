@@ -26,7 +26,11 @@ python run.py
 `deepseek-flash`），服务地址为 `https://api.deepseek.com`。`LLM_API_KEY`
 填写 DeepSeek 密钥；模型与地址可通过 `.env.example` 中的配置覆盖。面试
 默认关闭思考模式（`LLM_THINKING=disabled`），以减少短回复延迟。
-共享的简历和能力分析功能也使用此文本模型。模拟面试的「开始实时对话」
+简历 AI 润色和能力分析功能也使用此文本模型。按 2026-10-22 的
+[DeepSeek 官方文档](https://api-docs.deepseek.com/guides/search_fetch)，
+`deepseek-flash` 当前对应 DeepSeek-V4.1-Flash-1017。简历润色直接读取
+当前 Flask 应用的模型和思考模式配置，无需初始化面试客户端。
+模拟面试的「开始实时对话」
 使用豆包 3.0 全双工语音模型，持续上传麦克风音频并流式返回文字和语音，
 支持开口打断、手动打断和静音；文字回答与评分报告仍使用 DeepSeek。
 单题练习和录音转写接口保留部署机器上的 SenseVoice。

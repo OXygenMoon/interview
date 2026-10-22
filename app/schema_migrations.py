@@ -13,6 +13,10 @@ from . import db
 
 
 SQLITE_COLUMNS = {
+    'learning_materials': {
+        'video_source': 'VARCHAR(20)',
+        'video_url': 'TEXT',
+    },
     'users': {
         'active': 'BOOLEAN NOT NULL DEFAULT 1',
         'must_change_password': 'BOOLEAN NOT NULL DEFAULT 0',
