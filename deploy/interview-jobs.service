@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh Jiashan and Jiaxing public recruitment listings
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/projects/interview
+# run.py loads the project's .env, including DATABASE_URL.
+ExecStart=/root/projects/interview/venv/bin/flask --app run.py sync-jobs --limit 30
+TimeoutStartSec=8min
+UMask=0027

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}本地招聘{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/recruitment.css') }}">{% endblock %}
+{% block content %}
+<div class="jobs-page" data-testid="jobs-page">
+    <header class="jobs-heading">
+        <div><p class="jobs-eyebrow">在家附近，找到下一站</p><h1>嘉善 · 嘉兴本地招聘</h1><p class="jobs-muted">汇总本地招聘信息，同企业、同岗位、同区县合并展示。查看详情后，可前往原网站沟通或投递。</p></div>
+        <div class="jobs-count"><strong>{{ total }}</strong><span>个近期收录岗位 · 嘉善 {{ local_total }} 个</span></div>
+    </header>
+    <form method="GET" class="jobs-search" role="search" aria-label="搜索本地招聘">
+        <div class="jobs-query"><label for="job-q">岗位、企业或关键词</label><input id="job-q" name="q" value="{{ filters.q }}" placeholder="例如：机械设计、运营、实习" maxlength="100"></div>
+        <div><label for="job-district">工作地区</label><select id="job-district" name="district"><option value="">嘉兴全域（含嘉善）</option>{% for district in districts %}<option value="{{ district }}" {{ 'selected' if filters.district == district else '' }}>{{ '嘉兴（区县未注明）' if district == '嘉兴' else district }}</option>{% endfor %}</select></div>
+        <div><label for="job-source">信息来源</label><select id="job-source" name="source"><option value="">全部来源</option>{% for key, source in sources.items() %}<option value="{{ key }}" {{ 'selected' if filters.source == key else '' }}>{{ source.name }}</option>{% endfor %}</select></div>
+        <div><label for="job-sort">排序方式</label><select id="job-sort" name="sort">{% for key, label in [('recent', '最近采集'), ('title', '岗位名称'), ('company', '企业名称')] %}<option value="{{ key }}" {{ 'selected' if filters.sort == key else '' }}>{{ label }}</option>{% endfor %}</select></div>
+        <button type="submit" class="jobs-button jobs-primary">查询岗位</button>
+        <div class="jobs-search-footer"><label class="jobs-checkbox"><input type="checkbox" name="include_old" value="1" {{ 'checked' if filters.include_old else '' }}> 包含已过期或超过 30 天未更新的记录</label><a href="{{ url_for('recruitment.index') }}">重置筛选</a></div>
+    </form>
+    <div class="jobs-results-heading"><h2>招聘岗位 <span>{{ pagination.total }}</span></h2><p class="jobs-muted">薪资和在招状态以原网站为准</p></div>
+    {% if jobs %}
+    <ul class="jobs-list" aria-label="招聘岗位记录">
+        {% for group in jobs %}{% set job = group.job %}
+        <li class="jobs-row">
+            <div class="jobs-row-main"><h3><a href="{{ url_for('recruitment.detail', group_key=group.key, page=pagination.page, **filters) }}">{{ job.title }}</a></h3><p class="jobs-company">{{ job.company }}</p><p class="jobs-meta"><span>{{ job.district }}</span><span>{{ job.experience }}</span><span>{{ job.education }}</span></p></div>
+            <div class="jobs-row-side"><strong class="jobs-salary">{{ job.salary }}</strong><div class="jobs-tags">{% for key in group.sources %}<span>{{ sources[key].name }}</span>{% endfor %}{% if group.origins|length > 1 %}<span>{{ group.origins|length }} 条来源记录已合并</span>{% endif %}</div><p class="jobs-muted">采集于 {{ job.last_seen_at|job_time }}{% if group.stale %} · 信息待确认{% endif %}</p><a class="jobs-detail-link" href="{{ url_for('recruitment.detail', group_key=group.key, page=pagination.page, **filters) }}">查看岗位详情 <span aria-hidden="true">→</span></a></div>
+        </li>
+        {% endfor %}
+    </ul>
+    <nav class="jobs-pagination" aria-label="岗位列表分页">{% if previous_url %}<a class="jobs-button" href="{{ previous_url }}">上一页</a>{% endif %}<span>第 {{ pagination.page }} / {{ pagination.pages }} 页 · 每页 15 个岗位</span>{% if next_url %}<a class="jobs-button" href="{{ next_url }}">下一页</a>{% endif %}</nav>
+    {% else %}
+    <div class="jobs-empty" role="status"><h3>{{ '没有找到符合条件的岗位' if total else '招聘信息正在等待收录' }}</h3><p>{{ '试试其他关键词，或放宽地区和来源筛选。' if total else '可先到下方招聘网站查看。来源采集完成后，岗位记录会显示在这里。' }}</p><a class="jobs-button" href="{{ url_for('recruitment.index') }}">查看全部近期岗位</a></div>
+    {% endif %}
+    <section class="jobs-sources" aria-labelledby="sources-heading"><h2 id="sources-heading">来源与更新</h2><p class="jobs-muted">各平台独立更新。超过 7 天未采集的信息需确认，超过 30 天的记录默认隐藏；来源访问失败时保留已有记录。</p>
+        <div class="jobs-source-grid">{% for key, source in sources.items() %}{% set state = states.get(key) %}
+            <div class="jobs-source"><div class="jobs-source-title"><h3>{{ source.name }}</h3><span class="jobs-state {{ 'jobs-state-ok' if state and state.status == 'success' else '' }}">{{ {'never':'尚未采集','running':'更新中','success':'已更新','partial':'部分更新','failed':'暂不可用'}.get(state.status, '尚未采集') if state else '尚未采集' }}</span></div><p>{{ state.message if state else '等待首次采集，可先前往原网站查询。' }}</p><p class="jobs-muted">最近成功：{{ state.succeeded_at|job_time if state else '尚未更新' }}</p><a href="{{ source.pages[0] }}" target="_blank" rel="noopener noreferrer">前往{{ source.name }}查询 ↗</a>
+            {% if current_user.is_admin %}<form method="POST" action="{{ url_for('recruitment.sync') }}" data-job-sync><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="source" value="{{ key }}"><button class="jobs-button" type="submit">更新此来源</button><span class="jobs-muted jobs-sync-progress" role="status" hidden>正在读取来源，请稍候…</span></form>{% endif %}</div>
+        {% endfor %}</div>
+    </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/recruitment.js') }}" defer></script>{% endblock %}

@@ -18,6 +18,7 @@
             {% if company_user %}
                 {{ nav_link('公司概览', 'company_portal.dashboard', endpoint == 'company_portal.dashboard') }}
                 {{ nav_link('面试岗位', 'company_portal.positions', endpoint in ['company_portal.positions', 'company_portal.edit_position', 'company_portal.recommendations']) }}
+                {{ nav_link('本地招聘', 'recruitment.index', endpoint in ['recruitment.index', 'recruitment.detail']) }}
                 {{ nav_link('学生面试记录', 'company_portal.interviews', endpoint in ['company_portal.interviews', 'company_portal.interview_detail', 'company_portal.conversation', 'company_portal.submitted_resume']) }}
             {% elif teaching %}
                 {{ nav_link('教学概览', 'routes.dashboard', endpoint == 'routes.dashboard') }}
@@ -27,6 +28,7 @@
                 <details class="app-nav-more">
                     <summary class="app-nav-link {{ 'is-active' if endpoint in ['routes.dashboard_compare', 'routes.admin_resumes', 'routes.admin_resume_preview', 'routes.admin_learning', 'routes.admin_organization', 'routes.admin_company', 'company_portal.partnerships', 'routes.admin_random_questions', 'routes.admin_settings'] else '' }}">{{ '教学管理' if current_user.role == 'admin' else '更多分析' }} <span aria-hidden="true">⌄</span></summary>
                     <div class="app-nav-dropdown">
+                        {{ nav_link('本地招聘', 'recruitment.index', endpoint in ['recruitment.index', 'recruitment.detail']) }}
                         {{ nav_link('班级对比看板', 'routes.dashboard_compare', endpoint == 'routes.dashboard_compare') }}
                         {% if current_user.role == 'admin' %}
                             {{ nav_link('学生简历预览', 'routes.admin_resumes', endpoint in ['routes.admin_resumes', 'routes.admin_resume_preview']) }}
@@ -41,6 +43,7 @@
                 </details>
             {% else %}
                 {{ nav_link('面试大厅', 'routes.home', endpoint in ['routes.home', 'routes.random_interview_page', 'routes.interview_room']) }}
+                {{ nav_link('本地招聘', 'recruitment.index', endpoint in ['recruitment.index', 'recruitment.detail']) }}
                 {{ nav_link('学习资料', 'routes.learning_index', endpoint in ['routes.learning_index', 'routes.learning_detail', 'routes.submit_quiz']) }}
                 {{ nav_link('能力成长', 'routes.ability_radar', endpoint == 'routes.ability_radar') }}
                 {{ nav_link('练习记录', 'routes.history', endpoint in ['routes.history', 'routes.interview_summary']) }}

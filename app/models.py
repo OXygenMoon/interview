@@ -364,3 +364,38 @@ class AccountLinkTicket(db.Model):
     state_digest = db.Column(db.String(64))
     expires_at = db.Column(db.DateTime, nullable=False, index=True)
     consumed = db.Column(db.Boolean, nullable=False, default=False)
+
+
+class RecruitmentJob(db.Model):
+    """One source's version of a local vacancy; group_key joins exact matches."""
+    __tablename__ = 'recruitment_jobs'
+    id = db.Column(db.Integer, primary_key=True)
+    source = db.Column(db.String(30), nullable=False)
+    source_url = db.Column(db.String(1000), nullable=False)
+    group_key = db.Column(db.String(64), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    company = db.Column(db.String(300), nullable=False)
+    district = db.Column(db.String(30), nullable=False, index=True)
+    address = db.Column(db.String(500), nullable=False, default='')
+    salary = db.Column(db.String(100), nullable=False, default='薪资面议')
+    experience = db.Column(db.String(100), nullable=False, default='未注明')
+    education = db.Column(db.String(100), nullable=False, default='未注明')
+    description = db.Column(db.Text, nullable=False, default='')
+    published_at = db.Column(db.String(100), nullable=False, default='')
+    expires_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    first_seen_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    last_seen_at = db.Column(db.DateTime, nullable=False, index=True)
+    __table_args__ = (db.UniqueConstraint('source', 'source_url', name='uq_recruitment_source_url'),)
+
+
+class RecruitmentSync(db.Model):
+    __tablename__ = 'recruitment_syncs'
+    source = db.Column(db.String(30), primary_key=True)
+    status = db.Column(db.String(30), nullable=False, default='never')
+    message = db.Column(db.String(500), nullable=False, default='尚未采集')
+    started_at = db.Column(db.DateTime)
+    finished_at = db.Column(db.DateTime)
+    succeeded_at = db.Column(db.DateTime)
+    job_count = db.Column(db.Integer, nullable=False, default=0)
+    lease_token = db.Column(db.String(64))

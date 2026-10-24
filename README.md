@@ -271,3 +271,7 @@ pytest -q tests/e2e/test_playful_ui.py tests/e2e/test_theme_switcher.py
 ## Interview / WikiBook 账号关联
 
 两站可通过账号设置建立一对一关联，并从导航一键切换登录。配置、接口、迁移和测试说明见 [账号关联说明](docs/account-linking.md)。未配置共享密钥与两站地址时，功能保持关闭。
+
+### 嘉善 / 嘉兴本地招聘
+
+新增 `/jobs` 招聘查询：多来源采集与精确合并、地区/关键词/来源筛选、岗位详情、各平台原始链接。支持 `flask --app run.py sync-jobs` 增量更新及授权 JSON 导入；部署定时器和数据来源限制见 [本地招聘说明](docs/local-recruitment.md)。更新代码后先运行 `flask --app run.py bootstrap-db`。

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} · 本地招聘{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/recruitment.css') }}">{% endblock %}
+{% block content %}
+<div class="jobs-page" data-testid="job-detail">
+    <a href="{{ back_url }}" class="jobs-back">← 返回岗位列表</a>
+    <header class="jobs-heading jobs-detail-heading"><div><p class="jobs-eyebrow">{{ job.district }} · {{ job.company }}</p><h1>{{ job.title }}</h1><p class="jobs-meta"><span>{{ job.experience }}</span><span>{{ job.education }}</span><span>最近采集 {{ job.last_seen_at|job_time }}</span></p></div><strong class="jobs-salary">{{ job.salary }}</strong></header>
+    {% if not active_ids %}<p class="jobs-notice" role="status">此岗位已过期、停止招聘或超过 30 天未更新，请先到原网站确认在招状态。</p>{% endif %}
+    <div class="jobs-detail-layout"><section class="jobs-description"><h2>岗位详情</h2>{% if job.address %}<h3>工作地址</h3><p>{{ job.address }}</p>{% endif %}<h3>职位描述与要求</h3><div class="jobs-description-text">{{ job.description or '来源未提供可公开读取的详细描述，请前往原网站查看完整要求。' }}</div></section>
+    <aside class="jobs-originals"><h2>原网站招聘信息</h2><p class="jobs-muted">已合并 {{ origins|length }} 条来源记录。各来源的薪资、要求可能不同，请分别核实。</p>{% for origin in origins %}<article class="jobs-origin"><h3>{{ sources[origin.source].name }}</h3><strong class="jobs-salary">{{ origin.salary }}</strong><p class="jobs-muted">{{ origin.experience }} · {{ origin.education }}</p>{% if origin.published_at %}<p>原站发布时间：{{ origin.published_at }}</p>{% endif %}<p class="jobs-muted">最近采集：{{ origin.last_seen_at|job_time }}</p>{% if origin.id not in active_ids %}<p class="jobs-muted">已过期或信息待确认</p>{% endif %}<a class="jobs-button jobs-primary" href="{{ origin.source_url }}" target="_blank" rel="noopener noreferrer">前往{{ sources[origin.source].name }}查看 ↗</a>{% if origin.description and origins|length > 1 %}<details><summary>查看此来源的描述</summary><div class="jobs-description-text">{{ origin.description }}</div>{% if origin.address %}<p>工作地址：{{ origin.address }}</p>{% endif %}</details>{% endif %}</article>{% endfor %}</aside></div>
+</div>
+{% endblock %}

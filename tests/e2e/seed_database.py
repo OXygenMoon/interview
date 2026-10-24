@@ -218,6 +218,13 @@ def main():
                     'comment': f'第 {index + 1} 帧仪态点评：保持头肩自然，调整镜头高度。',
                 }, ensure_ascii=False),
             ))
+        # Recruitment fixtures exist only in the isolated E2E database.
+        from app.services.recruitment import save_jobs
+        fixture_job = dict(title='测试机械设计师', company='端到端测试制造企业', district='嘉善',
+                           salary='8-13K', experience='经验不限', education='大专',
+                           address='嘉善县测试地址', description='测试职责一\n测试职责二')
+        save_jobs('boss', [dict(fixture_job, url='https://www.zhipin.com/job_detail/e2e-only.html')])
+        save_jobs('lagou', [dict(fixture_job, salary='10-15K', url='https://www.lagou.com/jobs/999999999.html')])
         db.session.commit()
 
 
