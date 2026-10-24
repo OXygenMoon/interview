@@ -54,6 +54,17 @@ Nix 的 `LD_LIBRARY_PATH` 只用于项目 Python，不能带入系统 Nginx 的�
 
 ## 日常管理
 
+每次拉取新代码后先备份数据库，再运行以下更新命令。它使用与服务一致的
+项目 Python 安装依赖、检查依赖并迁移数据库，成功后才重启服务：
+
+```bash
+cd /root/projects/interview
+bash run-production.sh update && systemctl restart interview interview-report@1 interview-report@2
+```
+
+不要仅执行全局 `flask --app run.py bootstrap-db`：全局 Python 可能没有项目
+依赖，导致应用导入失败，并连带出现迁移命令不存在的提示。
+
 ```bash
 systemctl status interview interview-report@1 interview-report@2
 systemctl restart interview

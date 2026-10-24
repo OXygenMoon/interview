@@ -22,6 +22,26 @@ python run.py
 
 默认地址为 `http://127.0.0.1:5001`。生产环境必须配置 `SECRET_KEY`、`LLM_API_KEY`，按需配置火山引擎 TTS 参数。
 
+### 服务器更新
+
+服务器拉取新代码后，先备份数据库，再安装依赖和执行迁移，成功后重启服务：
+
+```bash
+cd /root/projects/interview
+bash run-production.sh update && systemctl restart interview interview-report@1 interview-report@2
+```
+
+`update` 使用与生产 Web / Worker 相同的项目 Python，依次执行
+`python -m pip install -r requirements.txt`、`python -m pip check` 和
+`python -m flask --app run.py bootstrap-db`。依赖安装或检查失败会停止，
+迁移失败时不会执行上面命令中的服务重启。首次部署缺少虚拟环境时先运行
+`python3 -m venv venv`。脚本不会自动拉取代码、备份数据库或重启服务。
+
+若看到 `ModuleNotFoundError: No module named 'lxml'` 后又提示
+`No such command 'bootstrap-db'`，说明应用尚未成功导入，迁移命令无法注册。
+`lxml` 已列在依赖文件中；使用上面的更新命令安装到项目环境，不要直接调用
+可能属于全局 Python 的 `pip` 或 `flask`。
+
 面试对话、评分报告和视觉分析默认使用 DeepSeek-V4.1-Flash（API 模型名
 `deepseek-flash`），服务地址为 `https://api.deepseek.com`。`LLM_API_KEY`
 填写 DeepSeek 密钥；模型与地址可通过 `.env.example` 中的配置覆盖。面试

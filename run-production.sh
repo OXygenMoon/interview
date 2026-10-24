@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ./run-production.sh [web|worker]
+# ./run-production.sh [web|worker|update]
 # Web defaults to 4 workers x 16 request threads; run report workers separately.
 set -euo pipefail
 
@@ -7,8 +7,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 MODE="${1:-web}"
-if [ "$#" -gt 1 ] || { [ "$MODE" != web ] && [ "$MODE" != worker ]; }; then
-    echo "Usage: $0 [web|worker]" >&2
+if [ "$#" -gt 1 ] || { [ "$MODE" != web ] && [ "$MODE" != worker ] && [ "$MODE" != update ]; }; then
+    echo "Usage: $0 [web|worker|update]" >&2
     exit 2
 fi
 
@@ -44,6 +44,10 @@ for candidate in \
     fi
 done
 if [ -z "$PY_BIN" ]; then
+    if [ "$MODE" = update ]; then
+        echo "[production] ERROR: 未找到项目虚拟环境，请先运行 python3 -m venv venv" >&2
+        exit 1
+    fi
     PY_BIN="$(command -v python3 || true)"
 fi
 if [ -z "$PY_BIN" ]; then
@@ -54,6 +58,15 @@ fi
 NIX_LIB="${NIX_LIB:-/nix/store/dj06r96j515npcqi9d8af1d1c60bx2vn-gcc-14.3.0-lib/lib}"
 if [ -d "$NIX_LIB" ]; then
     export LD_LIBRARY_PATH="${NIX_LIB}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
+
+if [ "$MODE" = update ]; then
+    echo "[production] 安装依赖并迁移数据库 / Python: $PY_BIN"
+    "$PY_BIN" -m pip install -r "$ROOT_DIR/requirements.txt"
+    "$PY_BIN" -m pip check
+    # Import the application only after dependencies are installed. Calling the
+    # module through this interpreter avoids a globally installed flask CLI.
+    exec "$PY_BIN" -m flask --app run.py bootstrap-db
 fi
 
 if [ "$MODE" = worker ]; then
